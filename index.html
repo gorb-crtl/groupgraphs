@@ -700,7 +700,7 @@ $("chatInput").addEventListener("keydown", (ev) => { if (ev.key === "Enter" && !
 setInterval(() => { if (!document.hidden && S.secret && S.gid) loadComments(true); }, 20000);
 
 /* ---------------- daily reminders ---------------- */
-const PUBKEY = CFG.vapidPublicKey || "";
+let PUBKEY = CFG.vapidPublicKey || "", pubkeyTried = false;
 const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
 const pushOK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -726,7 +726,8 @@ function renderCal(){
 async function renderRemind(){
   renderCal();
   const st = $("pushState"), btn = $("pushBtn"), help = $("pushHelp"); help.hidden = true; btn.hidden = true; st.textContent = "";
-  if (!PUBKEY) { st.textContent = "Phone notifications aren't set up on this site yet."; return; }
+  if (!PUBKEY && !pubkeyTried) { pubkeyTried = true; try { PUBKEY = (await rpc("push_public_key", {})) || ""; } catch (e) {} }
+  if (!PUBKEY) { st.textContent = "Phone notifications aren't switched on for this site yet. The calendar works now."; return; }
   if (isIOS && !isStandalone()) { help.hidden = false; help.textContent = "On iPhone, notifications only work from the home screen app: tap Share, then Add to Home Screen, open GroupGraphs from there, and turn them on here."; return; }
   if (!pushOK) { st.textContent = "This browser can't do notifications. Use a calendar reminder instead."; return; }
   if (Notification.permission === "denied") { st.textContent = "Notifications are blocked for this site in your browser settings."; return; }

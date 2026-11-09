@@ -5,7 +5,7 @@
 -- Each device that turns on notifications stores its push subscription, time zone and the hour it wants
 -- the reminder. A GitHub Action (.github/workflows/reminders.yml) runs every hour, asks push_due() who is
 -- due, sends the pushes, then reports back with push_done(). Only the sender knows the key that unlocks
--- push_due(); its SHA-256 hash is checked below.
+-- push_due(); its SHA-256 hash is stored in gg_settings.
 
 create table if not exists push_subs (
   id bigint generated always as identity primary key,
@@ -38,8 +38,20 @@ begin
   delete from push_subs where person_id = p.id and endpoint = p_endpoint;
 end $$;
 
-create or replace function gg_sender_ok(p_key text) returns boolean language sql immutable as $$
-  select encode(sha256(convert_to(coalesce(p_key, ''), 'UTF8')), 'hex') = '68ab0582ad9d3d69d1764279c1a38753b3a7815a4a5d14d7e2d7efaf0d6fc219';
+-- The notification keys. Fill these in by opening keys.html on the site and running the SQL it gives you.
+create table if not exists gg_settings (k text primary key, v text not null);
+alter table gg_settings enable row level security;
+
+create or replace function gg_sender_ok(p_key text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from gg_settings where k = 'sender_hash'
+                 and v = encode(sha256(convert_to(coalesce(p_key, ''), 'UTF8')), 'hex'));
+$$;
+
+-- The public half of the notification key pair (safe to share; browsers need it to subscribe).
+create or replace function push_public_key() returns text
+language sql stable security definer set search_path = public as $$
+  select v from gg_settings where k = 'vapid_public';
 $$;
 
 -- Devices whose reminder hour is now (in their own time zone), not reminded yet today,
@@ -65,6 +77,6 @@ begin
 end $$;
 
 revoke all on function save_push(uuid, jsonb, text, int), delete_push(uuid, text), gg_sender_ok(text),
-  push_due(text), push_done(text, jsonb, jsonb) from public, anon, authenticated;
+  push_due(text), push_done(text, jsonb, jsonb), push_public_key() from public, anon, authenticated;
 grant execute on function save_push(uuid, jsonb, text, int), delete_push(uuid, text),
-  push_due(text), push_done(text, jsonb, jsonb) to anon, authenticated;
+  push_due(text), push_done(text, jsonb, jsonb), push_public_key() to anon, authenticated;

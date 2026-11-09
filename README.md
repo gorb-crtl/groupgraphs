@@ -16,6 +16,7 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - `config.js`: your Supabase project URL and anon key.
 - `supabase/setup.sql`: run once in Supabase's SQL Editor to create the tables and functions.
 - `supabase/comments.sql`, `supabase/reminders.sql`: the same additions on their own, for a database set up before they existed.
+- `keys.html`: one-time page that makes the notification key pair in your browser.
 - `sw.js`, `manifest.webmanifest`, icons: let the site install to a home screen and receive notifications.
 - `scripts/send-reminders.mjs` + `.github/workflows/reminders.yml`: an hourly GitHub Action that sends the reminders.
 
@@ -24,7 +25,7 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 1. Create a Supabase project, open **SQL Editor**, paste in `supabase/setup.sql` and press **Run**.
 2. Put the project URL and anon (publishable) key into `config.js`. The anon key is meant to be public; the tables are locked and only the functions in `setup.sql` can be called.
 3. In GitHub: **Settings → Pages → Deploy from a branch → `main` / root**. The site appears at `https://<user>.github.io/groupgraphs/`.
-4. For notifications: generate a VAPID key pair (`npx web-push generate-vapid-keys`), put the public key in `config.js` as `vapidPublicKey`, the SHA-256 hex of the private key in `gg_sender_ok()` in the SQL, and the private key in GitHub under **Settings → Secrets and variables → Actions** as `VAPID_PRIVATE_KEY`.
+4. For notifications (optional): open `keys.html` on the live site, save the private key it shows as the GitHub Actions secret `VAPID_PRIVATE_KEY`, and run the SQL it shows in Supabase. The hourly workflow does the rest.
 
 ## Adding questions
 
