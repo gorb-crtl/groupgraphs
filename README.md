@@ -8,8 +8,9 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - **Groups:** permanent rooms. Whoever creates a group is its host and adds friends by username. You can be in several groups.
 - **No peeking:** the database only returns a group's answers to people who've answered that question themselves.
 - **Group chat:** each question has a chat that only your group sees. Post a comment, or add a "rule" (a further constraint like "assume you slept 8 hours") that's pinned above the question.
-- **Your color:** under Groups & profile, pick one of 8 colors and you're that color on every chart. If someone in a group picked it first, you get a free color there.
+- **Your color:** under Groups & profile, pick any color on the color wheel or type a hex code, and you're that color on every chart.
 - **Group streak and nudges:** today's question shows how many days in a row everyone in the group has answered, who's answered today, and a Nudge button next to anyone who hasn't. A nudge can carry a short message; it shows up in the app and as a notification if they turned those on.
+- **Feedback:** members send bugs and ideas from the Feedback box. It all goes to the app owner's inbox (the host of the oldest group when `feedback.sql` is run; change it with `update gg_settings set v = 'username' where k = 'owner';`).
 - **Daily reminder:** under 🔔 Reminder, pick an hour and turn on phone notifications (iPhone: add the site to your Home Screen first), or add a repeating event to Apple/Outlook/Google Calendar. Notifications skip days you've already answered.
 
 ## Files

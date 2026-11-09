@@ -485,7 +485,8 @@ grant execute on function suggest_question(uuid, uuid, jsonb), vote_question(uui
 
 -- ---------- feedback about the app ----------
 --
--- Members send feedback from inside a group; that group's host reads it.
+-- Members send feedback from inside a group. It goes to the app's owner (the 'owner' username in gg_settings).
+-- With no owner set, each group's host reads their own group's feedback.
 
 create table if not exists feedback (
   id bigint generated always as identity primary key,
@@ -508,6 +509,23 @@ begin
     values (p.id, p_group, case when p_kind in ('bug', 'idea') then p_kind else 'other' end, left(trim(p_body), 1000));
 end $$;
 
+-- The app owner reads everyone's feedback. Running this file makes the host of the oldest group the owner
+-- (if no owner is set yet). To change it: update gg_settings set v = 'their_username' where k = 'owner';
+insert into gg_settings (k, v)
+  select 'owner', pp.username from groups g join people pp on pp.id = g.host_id order by g.created_at limit 1
+on conflict (k) do nothing;
+
+create or replace function gg_fb_reader(p people) returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce((select v = p.username from gg_settings where k = 'owner'), exists (select 1 from groups where host_id = p.id));
+$$;
+
+create or replace function gg_fb_visible(p people, f_group uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select case when exists (select 1 from gg_settings where k = 'owner') then exists (select 1 from gg_settings where k = 'owner' and v = p.username)
+              else exists (select 1 from groups g where g.id = f_group and g.host_id = p.id) end;
+$$;
+
 create or replace function get_feedback(p_secret uuid) returns jsonb
 language plpgsql stable security definer set search_path = public as $$
 declare p people := gg_me(p_secret);
@@ -515,10 +533,11 @@ begin
   return jsonb_build_object(
     'inbox', (select coalesce(jsonb_agg(jsonb_build_object('id', f.id, 'name', pp.display_name, 'username', pp.username, 'group', g.name,
                 'kind', f.kind, 'body', f.body, 'at', f.created_at) order by f.created_at desc), '[]'::jsonb)
-              from feedback f join groups g on g.id = f.group_id join people pp on pp.id = f.person_id where g.host_id = p.id),
+              from feedback f join groups g on g.id = f.group_id join people pp on pp.id = f.person_id where gg_fb_visible(p, f.group_id)),
     'mine', (select coalesce(jsonb_agg(jsonb_build_object('id', f.id, 'kind', f.kind, 'body', f.body, 'at', f.created_at) order by f.created_at desc), '[]'::jsonb)
              from feedback f where f.person_id = p.id),
-    'host', exists (select 1 from groups where host_id = p.id)
+    'host', gg_fb_reader(p),
+    'owner', exists (select 1 from gg_settings where k = 'owner')
   );
 end $$;
 
@@ -526,8 +545,7 @@ create or replace function delete_feedback(p_secret uuid, p_id bigint) returns v
 language plpgsql security definer set search_path = public as $$
 declare p people := gg_me(p_secret);
 begin
-  delete from feedback f where f.id = p_id
-    and (f.person_id = p.id or exists (select 1 from groups g where g.id = f.group_id and g.host_id = p.id));
+  delete from feedback f where f.id = p_id and (f.person_id = p.id or gg_fb_visible(p, f.group_id));
 end $$;
 
 revoke all on function send_feedback(uuid, uuid, text, text), get_feedback(uuid), delete_feedback(uuid, bigint) from public, anon, authenticated;
@@ -616,10 +634,12 @@ grant execute on function push_due(text) to anon, authenticated;
 -- ---------- profile color ----------
 -- 1 to 8 picks one of the app's 8 chart colors; null means "pick one for me".
 alter table people add column if not exists color int check (color between 1 and 8);
+-- Or any color at all, picked on a color wheel or typed as a hex code like #2a78d6. Wins over the numbered color.
+alter table people add column if not exists color_hex text check (color_hex ~ '^#[0-9a-f]{6}$');
 
 create or replace function gg_session(p people) returns jsonb language sql stable as $$
   select jsonb_build_object('secret', p.secret, 'id', p.id, 'username', p.username,
-                            'display_name', p.display_name, 'personal_code', p.personal_code, 'color', p.color);
+                            'display_name', p.display_name, 'personal_code', p.personal_code, 'color', p.color, 'color_hex', p.color_hex);
 $$;
 
 create or replace function set_color(p_secret uuid, p_color int) returns jsonb
@@ -628,6 +648,16 @@ declare p people := gg_me(p_secret);
 begin
   if p_color is not null and (p_color < 1 or p_color > 8) then raise exception 'bad_color'; end if;
   update people set color = p_color where id = p.id returning * into p;
+  return gg_session(p);
+end $$;
+
+-- Any color as a hex code (null goes back to "pick one for me").
+create or replace function set_color_hex(p_secret uuid, p_hex text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare p people := gg_me(p_secret); h text := lower(trim(coalesce(p_hex, '')));
+begin
+  if h = '' then h := null; elsif h !~ '^#[0-9a-f]{6}$' then raise exception 'bad_color'; end if;
+  update people set color_hex = h, color = null where id = p.id returning * into p;
   return gg_session(p);
 end $$;
 
@@ -739,7 +769,7 @@ begin
       select jsonb_build_object(
         'id', gr.id, 'name', gr.name, 'created_at', gr.created_at,
         'host', (select username from people where id = gr.host_id),
-        'members', (select jsonb_agg(jsonb_build_object('username', pp.username, 'display_name', pp.display_name, 'color', pp.color) order by gm2.added_at)
+        'members', (select jsonb_agg(jsonb_build_object('username', pp.username, 'display_name', pp.display_name, 'color', pp.color, 'color_hex', pp.color_hex) order by gm2.added_at)
                     from group_members gm2 join people pp on pp.id = gm2.person_id where gm2.group_id = gr.id),
         'counts', (select coalesce(jsonb_object_agg(qid, n), '{}'::jsonb) from (
                     select a.qid, count(*) n from answers a join group_members gm3 on gm3.person_id = a.person_id
@@ -749,9 +779,9 @@ begin
   );
 end $$;
 
-revoke all on function set_color(uuid, int), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
+revoke all on function set_color(uuid, int), set_color_hex(uuid, text), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
   nudges_due(text), nudges_done(text, jsonb), group_activity(uuid, uuid, text[]) from public, anon, authenticated;
-grant execute on function set_color(uuid, int), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
+grant execute on function set_color(uuid, int), set_color_hex(uuid, text), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
   nudges_due(text), nudges_done(text, jsonb), group_activity(uuid, uuid, text[]) to anon, authenticated;
 
 -- Only the public functions are callable from the app.
@@ -764,6 +794,6 @@ grant execute on function sign_up(text, text), sign_in(text, text), rename_me(uu
   suggest_question(uuid, uuid, jsonb), vote_question(uuid, bigint, boolean), delete_question(uuid, bigint), get_ideas(uuid, uuid, date),
   send_feedback(uuid, uuid, text, text), get_feedback(uuid), delete_feedback(uuid, bigint),
   rename_group(uuid, uuid, text), transfer_host(uuid, uuid, text), delete_group(uuid, uuid),
-  set_color(uuid, int), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
+  set_color(uuid, int), set_color_hex(uuid, text), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
   nudges_due(text), nudges_done(text, jsonb), group_activity(uuid, uuid, text[])
   to anon, authenticated;
