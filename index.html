@@ -49,7 +49,8 @@ button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; }
 
-.themebtn { font-family: var(--f-body); font-size: 12px; font-weight: 700; letter-spacing: 0; border: 1px solid var(--line); background: var(--sheet); color: var(--ink-2); border-radius: 8px; padding: 5px 9px; align-self: center; transform: translateY(-2px); cursor: pointer; }
+.themebtn { font-family: var(--f-body); font-size: 12px; font-weight: 700; letter-spacing: 0; border: 1px solid var(--line); background: var(--sheet); color: var(--ink-2); border-radius: 8px; padding: 5px 9px; align-self: center; cursor: pointer; order: 3; }
+@media (max-width: 640px) { .themebtn { order: 1; margin-left: auto; } header.top .daynav { order: 2; } }
 .themebtn:hover { border-color: var(--pen); color: var(--ink); }
 .thgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .thopt { border: 1px solid var(--line); border-radius: 12px; padding: 0; overflow: hidden; background: none; color: var(--ink); text-align: left; font: inherit; cursor: pointer; }
@@ -348,13 +349,13 @@ svg text { font-family: var(--f-body); }
     <div class="brand">
       <svg class="mark" viewBox="0 0 26 22" aria-hidden="true"><path d="M2 2v18h22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4 18c5-1 7-10 11-12s5 1 8-3" fill="none" stroke="var(--pen)" stroke-width="2.4" stroke-linecap="round"/></svg>
       GroupGraphs
-      <button class="themebtn" id="themeBtn" type="button" aria-haspopup="dialog">Theme</button>
     </div>
     <nav class="daynav" aria-label="Choose day">
       <button id="prevDay" aria-label="Previous day's question">&#8249;</button>
       <div class="when" id="when" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Pick a day"><b>Today</b><span></span></div>
       <button id="nextDay" aria-label="Next day's question">&#8250;</button>
     </nav>
+    <button class="themebtn" id="themeBtn" type="button" aria-haspopup="dialog">Theme</button>
   </header>
   <div class="sumback" id="ideaBack" hidden role="dialog" aria-label="Question ideas"><div class="sumwrap">
     <div class="sumtop"><div><div class="k" id="ideaGroup"></div><h2>Question ideas</h2></div><button id="ideaClose" type="button">Close</button></div>
