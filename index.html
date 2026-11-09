@@ -57,6 +57,27 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 .daynav button:disabled { opacity: .35; cursor: default; }
 .daynav .when { min-width: 132px; text-align: center; font-variant-numeric: tabular-nums; }
 .daynav .when b { display: block; color: var(--ink); font-weight: 700; }
+.daynav .when { cursor: pointer; border-radius: 8px; padding: 2px 4px; }
+.daynav .when:hover { background: var(--sheet); }
+.daynav .when span::after { content: " ▾"; font-size: 11px; }
+.calback { position: fixed; inset: 0; background: rgba(15,20,30,.35); z-index: 60; display: flex; align-items: flex-start; justify-content: center; padding: 72px 16px 16px; }
+.calback[hidden] { display: none; }
+.cal { background: var(--sheet); color: var(--ink); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.2); width: 100%; max-width: 340px; padding: 14px; }
+.cal .calhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal .calhead b { font-size: 16px; }
+.cal .calhead button { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 8px; width: 34px; height: 34px; font-size: 18px; }
+.cal .calhead button:disabled { opacity: .3; }
+.cal .calgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal .dow { font-size: 11px; font-weight: 700; color: var(--ink-2); text-align: center; padding: 2px 0; }
+.cal .calgrid button { position: relative; aspect-ratio: 1; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font-size: 14px; font-variant-numeric: tabular-nums; }
+.cal .calgrid button:not(:disabled):hover { background: var(--line); }
+.cal .calgrid button:disabled { color: var(--ink-2); opacity: .35; }
+.cal .calgrid button.today { box-shadow: inset 0 0 0 2px var(--ink); font-weight: 700; }
+.cal .calgrid button.sel { background: var(--ink); color: var(--sheet); font-weight: 700; }
+.cal .calgrid button.done::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #1baf7a; }
+.cal .calfoot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 12px; color: var(--ink-2); }
+.cal .calfoot i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #1baf7a; margin-right: 5px; }
+.cal .calfoot button { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
 
 .q-head { display: flex; flex-direction: column; gap: 6px; }
 .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); display: flex; gap: 10px; flex-wrap: wrap; }
@@ -188,6 +209,34 @@ td.num { font-family: var(--f-mono); font-size: 13px; }
 .qactions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 99px; padding: 7px 14px; font-weight: 700; font-size: 14px; cursor: pointer; }
 .pill:hover { border-color: var(--pen); }
+.sumback { position: fixed; inset: 0; z-index: 70; background: var(--paper); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.sumback[hidden] { display: none; }
+.sumwrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; display: flex; flex-direction: column; gap: 14px; }
+.sumtop { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.sumtop .k { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.sumtop h2 { margin: 2px 0 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+.sumtop button { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 99px; padding: 7px 14px; font-weight: 700; font-size: 14px; flex: none; }
+.sumtiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sumtile { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sumtile .k { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.sumtile .v { font-size: 20px; font-weight: 800; overflow-wrap: anywhere; }
+.sumtile .d { font-size: 12px; color: var(--ink-2); line-height: 1.4; }
+.sumtile.link { cursor: pointer; }
+.sumtile.qt .v { font-size: 15px; line-height: 1.3; }
+.sumtile.link:hover { border-color: var(--pen); }
+.sumcard { background: var(--sheet); border: 1px solid var(--line); border-radius: 14px; padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+.sumcard h3 { margin: 0; font-size: 15px; font-weight: 800; }
+.sumcard .note { margin: 0; font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+.sumquips { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.5; }
+.summx { display: grid; gap: 3px; font-size: 12px; }
+.summx .h { font-weight: 700; color: var(--ink-2); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.summx .r { font-weight: 700; color: var(--ink-2); display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.summx .c { height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: var(--f-mono); font-size: 13px; font-weight: 600; }
+.sumrows { display: flex; flex-direction: column; }
+.sumrow { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.sumrow:last-child { border-bottom: 0; }
+.sumrow span:first-child { color: var(--ink-2); }
+.sumrow span:last-child { font-weight: 700; text-align: right; }
 .pill .count { font-family: var(--f-mono); font-size: 12px; font-weight: 600; background: var(--pen-soft); color: var(--pen); border-radius: 99px; padding: 1px 8px; }
 .rules { border: 1px dashed var(--pen); background: var(--pen-soft); border-radius: 12px; padding: 10px 14px; }
 .rules-h { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; color: var(--pen); margin-bottom: 4px; }
@@ -249,10 +298,19 @@ svg text { font-family: var(--f-body); }
     </div>
     <nav class="daynav" aria-label="Choose day">
       <button id="prevDay" aria-label="Previous day's question">&#8249;</button>
-      <div class="when" id="when"><b>Today</b><span></span></div>
+      <div class="when" id="when" role="button" tabindex="0" aria-haspopup="dialog" aria-label="Pick a day"><b>Today</b><span></span></div>
       <button id="nextDay" aria-label="Next day's question">&#8250;</button>
     </nav>
   </header>
+  <div class="sumback" id="sumBack" hidden role="dialog" aria-label="Group summary"><div class="sumwrap">
+    <div class="sumtop"><div><div class="k" id="sumGroup"></div><h2>The all-time group summary</h2></div><button id="sumClose" type="button">Close</button></div>
+    <div id="sumBody"><p class="note">Loading…</p></div>
+  </div></div>
+  <div class="calback" id="calBack" hidden><div class="cal" role="dialog" aria-label="Pick a day">
+    <div class="calhead"><button id="calPrev" aria-label="Previous month">&#8249;</button><b id="calTitle"></b><button id="calNext" aria-label="Next month">&#8250;</button></div>
+    <div class="calgrid" id="calGrid"></div>
+    <div class="calfoot"><span><i></i>you answered</span><button id="calToday">Today</button></div>
+  </div></div>
 
   <div class="groupbar" id="groupbar" hidden>
     <label for="groupSel">Group</label>
@@ -337,6 +395,7 @@ svg text { font-family: var(--f-body); }
     <div class="qactions" id="qActions" hidden>
       <button class="pill" id="chatJump" type="button">💬 Group chat <span class="count" id="chatCount" hidden>0</span></button>
       <button class="pill" id="notifJump" type="button">🔔 <span id="notifLabel">Get reminders</span></button>
+      <button class="pill" id="sumJump" type="button">📊 Group summary</button>
     </div>
   </section>
 
@@ -847,6 +906,135 @@ function renderInstall(){
 }
 $("installBtn").addEventListener("click", async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; renderInstall(); });
 $("installX").addEventListener("click", () => { ls.set("gg-install-x", true); renderInstall(); });
+
+/* ---------------- all-time group summary ---------------- */
+function openSummary(){ const g = group(); if (!g) return; $("sumGroup").textContent = g.name + " · " + g.members.length + " people"; $("sumBody").innerHTML = '<p class="note">Crunching every answer so far…</p>'; $("sumBack").hidden = false; document.body.style.overflow = "hidden"; loadSummary(g); }
+function closeSummary(){ $("sumBack").hidden = true; document.body.style.overflow = ""; }
+$("sumJump").addEventListener("click", openSummary);
+$("sumClose").addEventListener("click", closeSummary);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("sumBack").hidden) closeSummary(); });
+async function loadSummary(g){
+  let d;
+  try { d = await rpc("get_summary", { p_secret: S.secret, p_group: g.id }); }
+  catch (e) { if (e.message === "not_signed_in") return signOut(); $("sumBody").innerHTML = '<p class="note">Couldn\'t load the summary. If you\'re the host, run <b>supabase/summary.sql</b> in Supabase once, then try again.</p>'; return; }
+  if (S.gid !== g.id || $("sumBack").hidden) return;
+  renderSummary(g, buildSummary(g, d));
+}
+/* how alike two answers to one question are, 0 (opposites) to 1 (identical) */
+function sumSim(q, a, b){
+  if (q.kind === "map") { if (!Array.isArray(a.pt) || !Array.isArray(b.pt)) return null; return 1 - Math.hypot(a.pt[0] - b.pt[0], a.pt[1] - b.pt[1]) / Math.SQRT2; }
+  if (q.kind === "rank") {
+    if (!Array.isArray(a.order) || !Array.isArray(b.order)) return null;
+    const ka = a.keys || q.items.map((_, i) => i), kb = b.keys || q.items.map((_, i) => i);
+    const ra = {}, rb = {}; a.order.forEach((i, r) => { ra[ka[i]] = r; }); b.order.forEach((i, r) => { rb[kb[i]] = r; });
+    const common = Object.keys(ra).filter(k => k in rb); let same = 0, tot = 0;
+    for (let i = 0; i < common.length; i++) for (let j = i + 1; j < common.length; j++) { tot++; if ((ra[common[i]] - ra[common[j]]) * (rb[common[i]] - rb[common[j]]) > 0) same++; }
+    return tot ? same / tot : null;
+  }
+  if (!Array.isArray(a.ys) || !Array.isArray(b.ys)) return null;
+  const yi = yInfo(q), span = (yi.max - yi.min) || 1; let s = 0, n = 0;
+  for (let i = 0; i < Math.min(a.ys.length, b.ys.length); i++) if (a.ys[i] != null && b.ys[i] != null) { s += Math.abs(a.ys[i] - b.ys[i]) / span; n++; }
+  return n >= 5 ? 1 - s / n : null;
+}
+function buildSummary(g, d){
+  const members = (d.members || []).filter(m => g.members.some(x => x.username === m.username));
+  const names = {}; members.forEach(m => { names[m.username] = m.name; });
+  const suffix = "@" + g.id.slice(0, 8), byQ = {};
+  (d.answers || []).forEach(a => { if (!(a.username in names)) return; const [base, sfx] = a.qid.split("@"); if (sfx && "@" + sfx !== suffix) return; const q = Q.find(x => x.id === base); if (!q) return; (byQ[a.qid] = byQ[a.qid] || { q, list: [] }).list.push({ key: a.username, ...a.payload }); });
+  const qs = Object.values(byQ), played = qs.filter(x => x.list.length >= 2);
+  const answers = {}; members.forEach(m => { answers[m.username] = 0; }); qs.forEach(x => x.list.forEach(e => { answers[e.key]++; }));
+  const pair = {}, pk = (a, b) => a < b ? a + "|" + b : b + "|" + a, outl = {}; members.forEach(m => { outl[m.username] = 0; });
+  const qAgree = [], cats = {};
+  played.forEach(({ q, list }) => {
+    let qs2 = 0, qn = 0; const per = {};
+    for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+      const s = sumSim(q, list[i], list[j]); if (s == null) continue;
+      const p = pair[pk(list[i].key, list[j].key)] = pair[pk(list[i].key, list[j].key)] || { s: 0, n: 0 }; p.s += s; p.n++;
+      qs2 += s; qn++; [list[i].key, list[j].key].forEach(k => { per[k] = per[k] || { s: 0, n: 0 }; per[k].s += s; per[k].n++; });
+    }
+    if (qn) qAgree.push({ q, v: qs2 / qn, n: list.length });
+    if (list.length >= 3) { const lo = Object.entries(per).map(([k, v]) => [k, v.s / v.n]).sort((a, b) => a[1] - b[1]); if (lo.length >= 2 && lo[1][1] - lo[0][1] > 0.04) outl[lo[0][0]]++; }
+    cats[q.cat] = (cats[q.cat] || 0) + 1;
+  });
+  const pairs = Object.entries(pair).filter(([, v]) => v.n >= 1).map(([k, v]) => { const [a, b] = k.split("|"); return { a, b, v: v.s / v.n, n: v.n }; });
+  const solid = pairs.filter(p => p.n >= Math.min(3, Math.max(1, ...pairs.map(x => x.n))));
+  const sync = pairs.length ? pairs.reduce((t, p) => t + p.v * p.n, 0) / pairs.reduce((t, p) => t + p.n, 0) : null;
+  const avgWith = {}; members.forEach(m => { const ps = pairs.filter(p => p.a === m.username || p.b === m.username); if (ps.length) avgWith[m.username] = ps.reduce((t, p) => t + p.v * p.n, 0) / ps.reduce((t, p) => t + p.n, 0); });
+  const ranked = Object.entries(avgWith).sort((a, b) => b[1] - a[1]);
+  const byAns = members.map(m => [m.username, answers[m.username]]).sort((a, b) => b[1] - a[1]);
+  const titles = {}, supers = [];
+  played.filter(x => x.q.people).forEach(({ q, list }) => {
+    const sum = {}, cnt = {};
+    list.forEach(e => { if (!Array.isArray(e.order) || !Array.isArray(e.keys)) return; e.order.forEach((i, r) => { const k = e.keys[i]; if (!(k in names)) return; sum[k] = (sum[k] || 0) + r; cnt[k] = (cnt[k] || 0) + 1; }); });
+    const top = Object.keys(sum).map(k => [k, sum[k] / cnt[k]]).sort((a, b) => a[1] - b[1])[0];
+    if (top) { titles[top[0]] = (titles[top[0]] || 0) + 1; supers.push({ likely: q.likely, who: top[0] }); }
+  });
+  const sortedQ = qAgree.slice().sort((a, b) => b.v - a.v);
+  return { g, members, names, qs, played, answers, pairs, solid, sync, ranked, byAns, outl, titles, supers, cats,
+    soul: solid.slice().sort((a, b) => b.v - a.v)[0], rival: solid.slice().sort((a, b) => a.v - b.v)[0],
+    agreeQ: sortedQ[0], fightQ: sortedQ.length > 1 ? sortedQ[sortedQ.length - 1] : null };
+}
+function sumQuips(R){
+  const out = [], nm = (k) => R.names[k] || k, seed = hashStr(R.g.id + R.played.length + ":" + R.pairs.length), P = (arr, sh) => pick(arr, seed >>> (sh || 0));
+  const pct = (v) => Math.round(v * 100) + "%";
+  if (!R.played.length) return ["Nothing to report yet. Answer a few questions together and the gossip writes itself."];
+  if (R.sync != null) {
+    if (R.sync >= 0.72) out.push(P([`Overall the group is ${pct(R.sync)} in sync. That's not a friend group, that's a hive mind.`, `${pct(R.sync)} group sync. Somebody check whether you all share one group chat brain.`, `The group agrees ${pct(R.sync)} of the time. Peer review has never been this friendly.`]));
+    else if (R.sync >= 0.6) out.push(P([`Overall sync: ${pct(R.sync)}. Close enough to be friends, far enough apart to keep the group chat spicy.`, `The group is ${pct(R.sync)} in sync. Healthy disagreement, mostly.`, `${pct(R.sync)} in sync. You'd pass a vibe check, but not a reproducibility check.`]));
+    else out.push(P([`The group is only ${pct(R.sync)} in sync. Honestly impressive that this friendship still compiles.`, `${pct(R.sync)} overall agreement. It's less a friend group, more a panel of competing reviewers.`, `Group sync is ${pct(R.sync)}. Every hangout must be a negotiation.`]));
+  }
+  if (R.soul && R.members.length >= 3) out.push(P([`${nm(R.soul.a)} and ${nm(R.soul.b)} are the group's soulmates at ${pct(R.soul.v)}. Has anyone seen them in the same room?`, `${nm(R.soul.a)} and ${nm(R.soul.b)} agree on almost everything (${pct(R.soul.v)}). Suspiciously in phase.`, `If ${nm(R.soul.a)} answers first, you basically know what ${nm(R.soul.b)} will say. ${pct(R.soul.v)} in sync.`], 2));
+  if (R.rival && R.soul && R.rival !== R.soul) out.push(P([`${nm(R.rival.a)} and ${nm(R.rival.b)} are the group's rivals, at just ${pct(R.rival.v)}. Seat them at opposite ends of the table.`, `${nm(R.rival.a)} and ${nm(R.rival.b)} have agreed on approximately nothing since Day 1 (${pct(R.rival.v)}).`, `${nm(R.rival.a)} and ${nm(R.rival.b)}: immiscible. ${pct(R.rival.v)} in sync. Do not shake.`], 4));
+  if (R.ranked.length >= 3) { const mid = R.ranked[0][0], wild = R.ranked[R.ranked.length - 1][0];
+    out.push(P([`${nm(mid)} is the group's center of gravity: the closest to everyone else's answers.`, `Want to know what the group thinks? Just ask ${nm(mid)}. They're the most mainstream of you all.`], 6));
+    out.push(P([`${nm(wild)} is the group's wildcard, furthest from everyone on average. Someone has to keep it interesting.`, `${nm(wild)} answers like they read a different question. Every time. We respect it.`], 8)); }
+  const contr = Object.entries(R.outl).sort((a, b) => b[1] - a[1])[0];
+  if (contr && contr[1] >= 2) out.push(`${nm(contr[0])} was the odd one out on ${contr[1]} questions. Chief contrarian, effective immediately.`);
+  if (R.byAns.length >= 2) { const [top, n] = R.byAns[0], [low, m] = R.byAns[R.byAns.length - 1], tied = R.byAns.filter(x => x[1] === n).length;
+    if (tied > 1 && n > m && R.byAns.filter(x => x[1] === m).length === 1) out.push(`Everyone's keeping up except ${nm(low)}, who is ${n - m} behind. ${nm(low)}, the group chat misses you.`);
+    else if (tied === 1 && n > m) out.push(P([`${nm(top)} has answered ${n} questions. ${nm(low)} has answered ${m}. ${nm(low)}, we've filed a missing persons report.`, `Most dedicated: ${nm(top)} with ${n} answers. ${nm(low)} is at ${m} and claims they were "busy".`], 10)); }
+  if (R.fightQ && R.agreeQ && R.fightQ.q !== R.agreeQ.q) { out.push(`Nothing split the group like "${R.fightQ.q.title}". Some friendships may not survive it.`); out.push(`The one thing you all agree on: "${R.agreeQ.q.title}".`); }
+  const champ = Object.entries(R.titles).sort((a, b) => b[1] - a[1])[0];
+  if (champ && champ[1] >= 2) out.push(`The group has decided ${nm(champ[0])} is most likely to do basically everything (${champ[1]} titles and counting).`);
+  if ((R.cats.Lab || 0) >= 3) out.push(P([`${R.cats.Lab} lab questions answered as a group. Still more reproducible than your actual data.`, `${R.cats.Lab} lab questions in, and the group's error bars are still enormous.`], 12));
+  return out;
+}
+function renderSummary(g, R){
+  const body = $("sumBody"); body.innerHTML = ""; const nm = (k) => R.names[k] || k, pct = (v) => Math.round(v * 100) + "%";
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const tile = (k, v, dsc, onClick) => { const t = el("div", "sumtile" + (onClick ? " link qt" : "")); t.append(el("span", "k", k), el("span", "v", v), el("span", "d", dsc)); if (onClick) { t.setAttribute("role", "button"); t.tabIndex = 0; t.addEventListener("click", onClick); } return t; };
+  const jumpTo = (q) => () => { const i = Q.indexOf(q), ti = todayIndex(); closeSummary(); if (i >= 0 && i <= ti) { S.qid = null; S.dayOffset = i - ti; } else { S.qid = q.id; } go(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:14px";
+  const tiles = el("div", "sumtiles");
+  tiles.append(tile("Questions together", String(R.played.length), "answered by at least two of you"));
+  tiles.append(tile("Answers in total", String(R.qs.reduce((t, x) => t + x.list.length, 0)), "on questions you've answered too"));
+  tiles.append(tile("Group sync", R.sync == null ? "–" : pct(R.sync), "how alike everyone's answers are, on average"));
+  if (R.byAns.length) { const top = R.byAns.filter(x => x[1] === R.byAns[0][1]).map(x => nm(x[0])); tiles.append(tile("Most dedicated", top.length === 1 ? top[0] : top.length === 2 ? top.join(" & ") : top.length + "-way tie", R.byAns[0][1] + " answers each so far".replace(" each", top.length > 1 ? " each" : ""))); }
+  if (R.soul && R.members.length >= 3) tiles.append(tile("Soulmates", nm(R.soul.a) + " & " + nm(R.soul.b), pct(R.soul.v) + " in sync"));
+  if (R.rival && R.soul && R.rival !== R.soul) tiles.append(tile("Do not seat together", nm(R.rival.a) + " & " + nm(R.rival.b), pct(R.rival.v) + " in sync"));
+  if (R.agreeQ && R.fightQ && R.agreeQ.q !== R.fightQ.q) { tiles.append(tile("Most agreed", R.agreeQ.q.title, pct(R.agreeQ.v) + " in sync · tap to open", jumpTo(R.agreeQ.q))); tiles.append(tile("Biggest fight", R.fightQ.q.title, pct(R.fightQ.v) + " in sync · tap to open", jumpTo(R.fightQ.q))); }
+  wrap.appendChild(tiles);
+  const qc = el("div", "sumcard"); qc.appendChild(el("h3", null, "The commentary")); const ol = el("ol", "sumquips"); sumQuips(R).forEach(t => ol.appendChild(el("li", null, t))); qc.appendChild(ol); wrap.appendChild(qc);
+  const ms = R.members.filter(m => R.answers[m.username] > 0);
+  if (ms.length >= 2 && R.pairs.length) {
+    const mc = el("div", "sumcard"); mc.appendChild(el("h3", null, "Who agrees with who"));
+    const mx = el("div", "summx"); const cols = `64px repeat(${ms.length}, minmax(0, 1fr))`; mx.style.gridTemplateColumns = cols;
+    mx.appendChild(el("span")); ms.forEach(m => mx.appendChild(el("span", "h", m.username === S.me.username ? "You" : m.name)));
+    const val = (a, b) => { const p = R.pairs.find(x => (x.a === a && x.b === b) || (x.a === b && x.b === a)); return p ? p.v : null; };
+    const vals = R.pairs.map(p => p.v), lo = Math.min(...vals), hi = Math.max(...vals);
+    ms.forEach(r => { mx.appendChild(el("span", "r", r.username === S.me.username ? "You" : r.name)); ms.forEach(c => {
+      const cell = el("span", "c"); if (r.username === c.username) { cell.style.background = "var(--line)"; } else { const v = val(r.username, c.username);
+        if (v == null) { cell.textContent = "–"; cell.style.color = "var(--ink-2)"; } else { const t = hi > lo ? (v - lo) / (hi - lo) : 0.5, a = Math.round(15 + t * 75); cell.textContent = Math.round(v * 100); cell.style.background = `color-mix(in srgb, var(--pen) ${a}%, var(--sheet))`; cell.style.color = a > 55 ? "#fff" : "var(--ink)"; cell.title = `${nm(r.username)} & ${nm(c.username)}: ${pct(v)} in sync`; } }
+      mx.appendChild(cell); }); });
+    mc.appendChild(mx); mc.appendChild(el("p", "note", "Each number is how alike two people's answers are across every question you've both done (100 means identical). Darker means more alike.")); wrap.appendChild(mc);
+  }
+  if (R.supers.length) { const sc = el("div", "sumcard"); sc.appendChild(el("h3", null, "Superlatives so far")); const rows = el("div", "sumrows");
+    R.supers.forEach(s => { const r = el("div", "sumrow"); r.append(el("span", null, "Most likely to " + s.likely), el("span", null, nm(s.who))); rows.appendChild(r); }); sc.appendChild(rows); wrap.appendChild(sc); }
+  if (R.byAns.length) { const ac = el("div", "sumcard"); ac.appendChild(el("h3", null, "Who shows up")); const rows = el("div", "sumrows");
+    R.byAns.forEach(([k, n]) => { const r = el("div", "sumrow"); const c = R.outl[k] ? ` · odd one out ${R.outl[k]}×` : ""; r.append(el("span", null, nm(k)), el("span", null, n + " answered" + c)); rows.appendChild(r); }); ac.appendChild(rows); wrap.appendChild(ac); }
+  wrap.appendChild(el("p", "note", "Only questions you've answered yourself count here, so the summary never spoils one you haven't done yet."));
+  body.appendChild(wrap);
+}
 
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
@@ -1605,7 +1793,38 @@ function go(){ S.drawnFor = null; S.peeked = false; S.hidden.clear(); setStatus(
 /* ---------------- events ---------------- */
 $("prevDay").addEventListener("click", ()=>{ if (S.qid) { S.qid = null; history.replaceState(null, "", location.pathname + location.search); } S.dayOffset--; go(); });
 $("nextDay").addEventListener("click", ()=>{ if (S.qid) { S.qid = null; history.replaceState(null, "", location.pathname + location.search); S.dayOffset = 0; } else S.dayOffset++; go(); });
-$("when").addEventListener("click", ()=>{ if (S.qid) { S.qid = null; S.dayOffset = 0; history.replaceState(null, "", location.pathname + location.search); go(); } });
+$("when").addEventListener("click", ()=>{ if (S.qid) { S.qid = null; S.dayOffset = 0; history.replaceState(null, "", location.pathname + location.search); go(); } else openCal(); });
+$("when").addEventListener("keydown", (e)=>{ if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("when").click(); } });
+/* calendar: tap the date to jump to any day from Day 1 up to today */
+let calMonth = null;
+const dayDate = (d) => { const t = new Date(ROT_START + d * 864e5); return new Date(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()); };
+const dayOf = (dt) => Math.round((Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) - ROT_START) / 864e5);
+const dayDone = (d) => { const id = qForDay(d).id; const m = (typeof S.mine === "object" && S.mine) || null; return m ? Object.keys(m).some(k => k === id || k.startsWith(id + "@")) : false; };
+function openCal(){ const sel = dayDate(todayIndex() + S.dayOffset); calMonth = new Date(sel.getFullYear(), sel.getMonth(), 1); renderDayCal(); $("calBack").hidden = false; }
+function closeCal(){ $("calBack").hidden = true; }
+function renderDayCal(){
+  const ti = todayIndex(), selD = ti + S.dayOffset, first = dayDate(0), today = dayDate(ti);
+  $("calTitle").textContent = calMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  $("calPrev").disabled = calMonth <= new Date(first.getFullYear(), first.getMonth(), 1);
+  $("calNext").disabled = calMonth >= new Date(today.getFullYear(), today.getMonth(), 1);
+  const g = $("calGrid"); g.innerHTML = "";
+  const wk = new Date(2024, 0, 7); for (let i = 0; i < 7; i++) { const s = document.createElement("span"); s.className = "dow"; s.textContent = new Date(wk.getFullYear(), 0, 7 + i).toLocaleDateString(undefined, { weekday: "narrow" }); g.appendChild(s); }
+  for (let i = 0; i < calMonth.getDay(); i++) g.appendChild(document.createElement("span"));
+  const days = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 0).getDate();
+  for (let n = 1; n <= days; n++) {
+    const dt = new Date(calMonth.getFullYear(), calMonth.getMonth(), n), d = dayOf(dt), b = document.createElement("button");
+    b.textContent = n; b.disabled = d < 0 || d > ti;
+    if (!b.disabled) { b.title = qForDay(d).title; if (dayDone(d)) b.classList.add("done"); b.addEventListener("click", ()=>{ S.dayOffset = d - ti; closeCal(); go(); }); }
+    if (d === ti) b.classList.add("today"); if (d === selD) b.classList.add("sel");
+    b.setAttribute("aria-label", dt.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }) + (b.disabled ? "" : ": " + qForDay(d).title));
+    g.appendChild(b);
+  }
+}
+$("calPrev").addEventListener("click", ()=>{ calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderDayCal(); });
+$("calNext").addEventListener("click", ()=>{ calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderDayCal(); });
+$("calToday").addEventListener("click", ()=>{ S.dayOffset = 0; closeCal(); go(); });
+$("calBack").addEventListener("click", (e)=>{ if (e.target === $("calBack")) closeCal(); });
+document.addEventListener("keydown", (e)=>{ if (e.key === "Escape" && !$("calBack").hidden) closeCal(); });
 $("tabDraw").addEventListener("click", ()=>setTab("draw"));
 $("tabRes").addEventListener("click", ()=>setTab("res"));
 $("goDraw").addEventListener("click", ()=>setTab("draw"));
