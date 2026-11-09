@@ -1,6 +1,6 @@
 # Great Graphs
 
-A daily question for a friend group. Each day everyone either draws a curve (energy through the day, how drunk after each drink…) or ranks a list (numbers 1–10 by vibes, pizza toppings…). Once you've answered, you see your group's answers combined: everyone's curves, the group average, stats like most agreed and most divisive, and some jokes.
+A daily question for a friend group. Each day everyone draws a curve (energy through the day, how drunk after each drink…), ranks a list (numbers 1–10 by vibes, pizza toppings…), or drops themselves on a 2D map (chaos vs order, night owl vs early bird…). Once you've answered, you see your group's answers combined: everyone's curves, the group average, stats like most agreed and most divisive, and some jokes.
 
 ## How it works
 
@@ -22,4 +22,4 @@ A daily question for a friend group. Each day everyone either draws a curve (ene
 
 ## Adding questions
 
-Questions live in the `CURVES` and `RANKS` arrays near the top of the script in `index.html`. The daily question rotates through them in order.
+Questions live in the `CURVES`, `RANKS` and `MAPS` arrays near the top of the script in `index.html`. The daily question rotates through them in order.
