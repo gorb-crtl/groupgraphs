@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>GroupGraphs notification keys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root { --paper:#f8f9f6; --sheet:#fff; --ink:#1b2430; --ink-2:#4a5360; --line:rgba(27,36,48,.12); --pen:#2348b8; --hl:#ffe36e; }
+@media (prefers-color-scheme: dark) { :root { --paper:#11151b; --sheet:#171c23; --ink:#eef1f4; --ink-2:#b9c0c8; --line:rgba(255,255,255,.12); --pen:#8fa9ff; --hl:#6b5a12; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 "Plus Jakarta Sans", system-ui, sans-serif; }
+main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; display: flex; flex-direction: column; gap: 18px; }
+h1 { font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+p { margin: 0; color: var(--ink-2); }
+.step { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.step h2 { font-size: 17px; margin: 0; }
+textarea { width: 100%; font: 13px/1.45 "JetBrains Mono", ui-monospace, monospace; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 10px; resize: vertical; }
+button, a.btn { align-self: flex-start; font: inherit; font-weight: 700; border: 1px solid var(--pen); background: var(--pen); color: var(--sheet); border-radius: 8px; padding: 8px 14px; cursor: pointer; text-decoration: none; }
+.warn { background: var(--hl); color: var(--ink); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Notification keys</h1>
+  <p>One-time setup for the host. This page makes a fresh key pair in your browser. Nothing is sent anywhere.</p>
+  <div class="step">
+    <h2>1. Save the private key as a GitHub secret</h2>
+    <p>Repo → Settings → Secrets and variables → Actions → New repository secret. Name it <b>VAPID_PRIVATE_KEY</b> and paste this value.</p>
+    <textarea id="priv" rows="2" readonly></textarea>
+    <button data-copy="priv">Copy private key</button>
+    <div class="warn">Keep this one private. Don't paste it in chats or commit it.</div>
+  </div>
+  <div class="step">
+    <h2>2. Run this in Supabase's SQL Editor</h2>
+    <p>It stores the public key and a fingerprint of the private key (not the key itself).</p>
+    <textarea id="sql" rows="6" readonly></textarea>
+    <button data-copy="sql">Copy SQL</button>
+  </div>
+  <p>That's it. Reminders start going out within the hour. If you reload this page you'll get a different pair, so do both steps with the same one.</p>
+</main>
+<script>
+(async () => {
+  const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - s.length % 4) % 4)), c => c.charCodeAt(0));
+  const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey);
+  const pub = new Uint8Array(65); pub[0] = 4; pub.set(unb64u(jwk.x), 1); pub.set(unb64u(jwk.y), 33);
+  const priv = jwk.d, pubS = b64u(pub);
+  const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(priv)))).map(x => x.toString(16).padStart(2, "0")).join("");
+  document.getElementById("priv").value = priv;
+  document.getElementById("sql").value =
+    "insert into gg_settings (k, v) values\n  ('vapid_public', '" + pubS + "'),\n  ('sender_hash', '" + hash + "')\non conflict (k) do update set v = excluded.v;";
+  document.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", async () => {
+    const t = document.getElementById(b.dataset.copy); t.select();
+    try { await navigator.clipboard.writeText(t.value); } catch (e) { document.execCommand("copy"); }
+    const old = b.textContent; b.textContent = "Copied"; setTimeout(() => b.textContent = old, 1500);
+  }));
+})();
+</script>
+</body>
+</html>

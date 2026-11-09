@@ -1,4 +1,4 @@
--- Great Graphs: Supabase database setup
+-- GroupGraphs: Supabase database setup
 -- Paste this whole file into Supabase > SQL Editor > New query, then press Run.
 --
 -- How it works
@@ -228,9 +228,142 @@ begin
   on conflict (group_id, qid) do update set lines = excluded.lines, n = excluded.n, created_at = now();
 end $$;
 
+-- ---------- comments and house rules ----------
+create table if not exists comments (
+  id bigint generated always as identity primary key,
+  group_id uuid not null references groups(id) on delete cascade,
+  qid text not null check (char_length(qid) <= 64),
+  person_id uuid not null references people(id) on delete cascade,
+  kind text not null default 'comment' check (kind in ('comment', 'rule')),
+  body text not null check (char_length(body) between 1 and 500),
+  created_at timestamptz not null default now()
+);
+create index if not exists comments_group_q on comments (group_id, qid, created_at);
+alter table comments enable row level security;
+
+-- Comments are visible to every member of the group, answered or not, so rules can be set before people answer.
+create or replace function get_comments(p_secret uuid, p_group uuid, p_qid text) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare p people := gg_me(p_secret); host uuid;
+begin
+  if not gg_member_of(p.id, p_group) then raise exception 'not_in_group'; end if;
+  select host_id into host from groups where id = p_group;
+  return (select coalesce(jsonb_agg(jsonb_build_object('id', c.id, 'username', pp.username, 'name', pp.display_name,
+            'kind', c.kind, 'body', c.body, 'at', c.created_at, 'can_delete', (c.person_id = p.id or host = p.id)) order by c.created_at), '[]'::jsonb)
+          from comments c join people pp on pp.id = c.person_id where c.group_id = p_group and c.qid = p_qid);
+end $$;
+
+create or replace function post_comment(p_secret uuid, p_group uuid, p_qid text, p_body text, p_kind text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare p people := gg_me(p_secret); b text := trim(coalesce(p_body, ''));
+begin
+  if not gg_member_of(p.id, p_group) then raise exception 'not_in_group'; end if;
+  if b = '' then raise exception 'comment_empty'; end if;
+  if char_length(b) > 500 then raise exception 'comment_too_long'; end if;
+  if (select count(*) from comments where group_id = p_group and qid = p_qid) >= 300 then raise exception 'too_many_comments'; end if;
+  insert into comments (group_id, qid, person_id, kind, body)
+    values (p_group, p_qid, p.id, case when p_kind = 'rule' then 'rule' else 'comment' end, b);
+  return get_comments(p_secret, p_group, p_qid);
+end $$;
+
+-- The author or the group's host can delete a comment.
+create or replace function delete_comment(p_secret uuid, p_id bigint) returns void
+language plpgsql security definer set search_path = public as $$
+declare p people := gg_me(p_secret);
+begin
+  delete from comments c using groups g
+    where c.id = p_id and g.id = c.group_id and (c.person_id = p.id or g.host_id = p.id);
+end $$;
+
+revoke all on function get_comments(uuid, uuid, text), post_comment(uuid, uuid, text, text, text), delete_comment(uuid, bigint) from public, anon, authenticated;
+grant execute on function get_comments(uuid, uuid, text), post_comment(uuid, uuid, text, text, text), delete_comment(uuid, bigint) to anon, authenticated;
+
+-- ---------- daily reminders ----------
+--
+-- Each device that turns on notifications stores its push subscription, time zone and the hour it wants
+-- the reminder. A GitHub Action (.github/workflows/reminders.yml) runs every hour, asks push_due() who is
+-- due, sends the pushes, then reports back with push_done(). Only the sender knows the key that unlocks
+-- push_due(); its SHA-256 hash is stored in gg_settings.
+
+create table if not exists push_subs (
+  id bigint generated always as identity primary key,
+  person_id uuid not null references people(id) on delete cascade,
+  endpoint text not null unique check (char_length(endpoint) <= 1000),
+  sub jsonb not null,
+  tz text not null,
+  hour int not null check (hour between 0 and 23),
+  last_sent date,
+  created_at timestamptz not null default now()
+);
+create index if not exists push_subs_person on push_subs (person_id);
+alter table push_subs enable row level security;
+
+create or replace function save_push(p_secret uuid, p_sub jsonb, p_tz text, p_hour int) returns void
+language plpgsql security definer set search_path = public as $$
+declare p people := gg_me(p_secret); ep text := p_sub->>'endpoint';
+begin
+  if ep is null or ep !~ '^https://' or char_length(ep) > 1000 or pg_column_size(p_sub) > 4000 then raise exception 'bad_subscription'; end if;
+  perform now() at time zone p_tz; -- raises on an unknown time zone
+  if (select count(*) from push_subs where person_id = p.id and endpoint <> ep) >= 10 then raise exception 'too_many_devices'; end if;
+  insert into push_subs (person_id, endpoint, sub, tz, hour) values (p.id, ep, p_sub, p_tz, p_hour)
+  on conflict (endpoint) do update set person_id = excluded.person_id, sub = excluded.sub, tz = excluded.tz, hour = excluded.hour;
+end $$;
+
+create or replace function delete_push(p_secret uuid, p_endpoint text) returns void
+language plpgsql security definer set search_path = public as $$
+declare p people := gg_me(p_secret);
+begin
+  delete from push_subs where person_id = p.id and endpoint = p_endpoint;
+end $$;
+
+-- The notification keys. Fill these in by opening keys.html on the site and running the SQL it gives you.
+create table if not exists gg_settings (k text primary key, v text not null);
+alter table gg_settings enable row level security;
+
+create or replace function gg_sender_ok(p_key text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from gg_settings where k = 'sender_hash'
+                 and v = encode(sha256(convert_to(coalesce(p_key, ''), 'UTF8')), 'hex'));
+$$;
+
+-- The public half of the notification key pair (safe to share; browsers need it to subscribe).
+create or replace function push_public_key() returns text
+language sql stable security definer set search_path = public as $$
+  select v from gg_settings where k = 'vapid_public';
+$$;
+
+-- Devices whose reminder hour is now (in their own time zone), not reminded yet today,
+-- and whose owner hasn't already answered something today.
+create or replace function push_due(p_key text) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not gg_sender_ok(p_key) then raise exception 'forbidden'; end if;
+  return (select coalesce(jsonb_agg(jsonb_build_object('id', s.id, 'sub', s.sub, 'name', pp.display_name)), '[]'::jsonb)
+    from push_subs s join people pp on pp.id = s.person_id
+    where extract(hour from now() at time zone s.tz) >= s.hour
+      and (s.last_sent is null or s.last_sent < (now() at time zone s.tz)::date)
+      and not exists (select 1 from answers a where a.person_id = s.person_id
+                      and (a.updated_at at time zone s.tz)::date = (now() at time zone s.tz)::date));
+end $$;
+
+create or replace function push_done(p_key text, p_sent jsonb, p_gone jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not gg_sender_ok(p_key) then raise exception 'forbidden'; end if;
+  update push_subs set last_sent = (now() at time zone tz)::date where id in (select x::bigint from jsonb_array_elements_text(coalesce(p_sent, '[]'::jsonb)) x);
+  delete from push_subs where id in (select x::bigint from jsonb_array_elements_text(coalesce(p_gone, '[]'::jsonb)) x);
+end $$;
+
+revoke all on function save_push(uuid, jsonb, text, int), delete_push(uuid, text), gg_sender_ok(text),
+  push_due(text), push_done(text, jsonb, jsonb), push_public_key() from public, anon, authenticated;
+grant execute on function save_push(uuid, jsonb, text, int), delete_push(uuid, text),
+  push_due(text), push_done(text, jsonb, jsonb), push_public_key() to anon, authenticated;
+
 -- Only the public functions are callable from the app.
 revoke all on all functions in schema public from public, anon, authenticated;
 grant execute on function sign_up(text, text), sign_in(text, text), rename_me(uuid, text),
   create_group(uuid, text), find_people(uuid, text), add_member(uuid, uuid, text), remove_member(uuid, uuid, text),
-  my_groups(uuid), submit_answer(uuid, text, jsonb), get_results(uuid, uuid, text), save_roast(uuid, uuid, text, jsonb, int)
+  my_groups(uuid), submit_answer(uuid, text, jsonb), get_results(uuid, uuid, text), save_roast(uuid, uuid, text, jsonb, int),
+  get_comments(uuid, uuid, text), post_comment(uuid, uuid, text, text, text), delete_comment(uuid, bigint),
+  save_push(uuid, jsonb, text, int), delete_push(uuid, text), push_due(text), push_done(text, jsonb, jsonb), push_public_key()
   to anon, authenticated;
