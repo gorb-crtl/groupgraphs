@@ -7,19 +7,25 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - **Profiles:** pick a username once. You get a personal code to sign in on another device.
 - **Groups:** permanent rooms. Whoever creates a group is its host and adds friends by username. You can be in several groups.
 - **No peeking:** the database only returns a group's answers to people who've answered that question themselves.
+- **Group chat:** each question has a chat that only your group sees. Post a comment, or add a "rule" (a further constraint like "assume you slept 8 hours") that's pinned above the question.
+- **Daily reminder:** under 🔔 Reminder, pick an hour and turn on phone notifications (iPhone: add the site to your Home Screen first), or add a repeating event to Apple/Outlook/Google Calendar. Notifications skip days you've already answered.
 
 ## Files
 
 - `index.html`: the whole app (no build step).
 - `config.js`: your Supabase project URL and anon key.
 - `supabase/setup.sql`: run once in Supabase's SQL Editor to create the tables and functions.
+- `supabase/comments.sql`, `supabase/reminders.sql`: the same additions on their own, for a database set up before they existed.
+- `sw.js`, `manifest.webmanifest`, icons: let the site install to a home screen and receive notifications.
+- `scripts/send-reminders.mjs` + `.github/workflows/reminders.yml`: an hourly GitHub Action that sends the reminders.
 
 ## Setup
 
 1. Create a Supabase project, open **SQL Editor**, paste in `supabase/setup.sql` and press **Run**.
 2. Put the project URL and anon (publishable) key into `config.js`. The anon key is meant to be public; the tables are locked and only the functions in `setup.sql` can be called.
 3. In GitHub: **Settings → Pages → Deploy from a branch → `main` / root**. The site appears at `https://<user>.github.io/groupgraphs/`.
+4. For notifications: generate a VAPID key pair (`npx web-push generate-vapid-keys`), put the public key in `config.js` as `vapidPublicKey`, the SHA-256 hex of the private key in `gg_sender_ok()` in the SQL, and the private key in GitHub under **Settings → Secrets and variables → Actions** as `VAPID_PRIVATE_KEY`.
 
 ## Adding questions
 
-Questions live in the `CURVES`, `RANKS` and `MAPS` arrays near the top of the script in `index.html`. Players only ever see one question a day (today's, plus earlier days via the back arrow); the rotation goes through the bank in order starting Nov 9, 2026.
+Questions live in the `CURVES`, `RANKS`, `MAPS` and `SCI` (lab) arrays near the top of the script in `index.html`. Lab questions come up every third day. Players only ever see one question a day (today's, plus earlier days via the back arrow); the rotation goes through the bank in order starting Nov 9, 2026.

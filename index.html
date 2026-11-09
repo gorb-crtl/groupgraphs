@@ -179,6 +179,29 @@ td.num { font-family: var(--f-mono); font-size: 13px; }
 .found span small { color: var(--ink-3); margin-left: 6px; }
 .err { color: var(--danger); font-size: 14px; min-height: 20px; }
 .divider { border-top: 1px solid var(--line); }
+.rules { border: 1px dashed var(--pen); background: var(--pen-soft); border-radius: 12px; padding: 10px 14px; }
+.rules-h { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; color: var(--pen); margin-bottom: 4px; }
+.rules ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.rules li { display: flex; gap: 8px; align-items: baseline; font-weight: 600; overflow-wrap: anywhere; }
+.rules li .by, .chat-msg .by { font-weight: 400; font-size: 13px; color: var(--ink-3); white-space: nowrap; }
+.chat { border: 1px solid var(--line); background: var(--sheet); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.chat-h { font-family: var(--f-hand); font-weight: 800; font-size: 18px; letter-spacing: -.01em; }
+.chat-h small { font-family: var(--f-body); font-weight: 400; font-size: 13px; color: var(--ink-3); margin-left: 6px; }
+.chat-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow-y: auto; }
+.chat-msg { display: grid; grid-template-columns: 10px 1fr auto; gap: 4px 8px; align-items: baseline; }
+.chat-msg .dot { width: 10px; height: 10px; border-radius: 50%; align-self: center; }
+.chat-msg .who { font-weight: 800; font-size: 14px; margin-right: 6px; }
+.remind select { font: inherit; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 8px; padding: 8px 10px; }
+.remind .hint2 { font-size: 14px; color: var(--ink-2); }
+a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items: center; }
+.chat-msg .body { grid-column: 2 / 4; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
+.chat-msg.rule .body::before { content: "Rule: "; font-weight: 800; color: var(--pen); }
+.chat-empty { color: var(--ink-3); font-size: 14px; margin: 0; }
+.xdel { border: 0; background: none; color: var(--ink-3); font-size: 16px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+.xdel:hover { color: var(--danger); background: var(--pen-soft); }
+.chat-row { display: flex; gap: 8px; align-items: flex-end; }
+.chat-row textarea { flex: 1; min-width: 0; font: inherit; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 8px; padding: 9px 11px; resize: vertical; }
+.chat-row textarea:focus { outline: 2px solid var(--pen); outline-offset: 0; }
 footer { font-size: 12px; color: var(--ink-3); text-align: center; }
 
 svg text { font-family: var(--f-body); }
@@ -199,6 +222,11 @@ svg text { font-family: var(--f-body); }
 }
 </style>
 <style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#2348b8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GroupGraphs">
 <script src="config.js"></script>
 </head>
 <body>
@@ -220,6 +248,7 @@ svg text { font-family: var(--f-body); }
     <label for="groupSel">Group</label>
     <select id="groupSel"></select>
     <button class="btn" id="manageBtn">Groups &amp; profile</button>
+    <button class="btn ghost" id="bellBtn" title="Daily reminder">🔔 Reminder</button>
     <span class="spacer"></span>
     <span class="me" id="meLabel"></span>
   </div>
@@ -256,6 +285,14 @@ svg text { font-family: var(--f-body); }
       <p>Send <b id="myUser"></b> to a group's host so they can add you.</p>
     </div>
     <div class="divider"></div>
+    <div class="remind" id="remindBox" style="display:flex;flex-direction:column;gap:10px">
+      <h3>Daily reminder</h3>
+      <div class="row" style="align-items:center"><label for="remindHour" style="font-weight:700;font-size:14px;color:var(--ink-2)">Remind me at</label><select id="remindHour"></select><span class="hint2">Notifications skip days you've already answered.</span></div>
+      <div class="row" style="align-items:center"><button class="btn primary" id="pushBtn" type="button">Turn on notifications</button><span class="hint2" id="pushState"></span></div>
+      <p class="hint2" id="pushHelp" hidden></p>
+      <div class="row" style="align-items:center"><span class="hint2">Or use your calendar:</span><a class="btn" id="icsBtn" href="#">Apple / Outlook</a><a class="btn" id="gcalBtn" target="_blank" rel="noopener" href="#">Google Calendar</a></div>
+    </div>
+    <div class="divider"></div>
     <div id="groupDetail"></div>
     <div class="divider"></div>
     <form id="newGroupForm" class="row">
@@ -278,6 +315,8 @@ svg text { font-family: var(--f-body); }
     <h1 class="prompt" id="prompt">Loading question…</h1>
     <p class="sub" id="sub"></p>
   </section>
+
+  <div class="rules" id="rulesBox" hidden><div class="rules-h">Group rules for this one</div><ul id="rulesList"></ul></div>
 
   <div class="note" id="localNote" hidden>This copy isn't connected to a database yet, so answers can't be saved.</div>
 
@@ -336,6 +375,15 @@ svg text { font-family: var(--f-body); }
     <details class="box" style="margin-top:14px"><summary>Data table</summary><div class="tablewrap"><table id="table"></table></div></details>
   </section>
 
+  <section class="chat" id="chatBox" hidden aria-label="Group chat">
+    <div class="chat-h">Group chat<small>only your group sees this</small></div>
+    <ul class="chat-list" id="chatList"></ul>
+    <form id="chatForm" style="display:flex;flex-direction:column;gap:8px">
+      <div class="seg" id="chatKind"><button type="button" data-k="comment" aria-pressed="true">Comment</button><button type="button" data-k="rule" aria-pressed="false">Add a rule</button></div>
+      <div class="chat-row"><textarea id="chatInput" rows="2" maxlength="500" placeholder="Talk about today's question…"></textarea><button class="btn primary" id="chatSend" type="submit">Send</button></div>
+    </form>
+  </section>
+
   </div>
   <details class="box" id="bankBox" hidden>
     <summary>Question bank (<span id="bankN"></span>)</summary>
@@ -353,83 +401,124 @@ const B = (arr) => arr.map(([a,b,l]) => ({from:a,to:b,label:l}));
 const ENERGY = B([[0,2,"dead"],[2,4,"sluggish"],[4,6,"fine"],[6,8,"good"],[8,10,"wired"]]);
 const MOOD = B([[0,2,"awful"],[2,4,"meh"],[4,6,"okay"],[6,8,"good"],[8,10,"great"]]);
 const CURVES = [
- {id:"energy-day", cat:"Body", title:"Energy through the day", sub:"From the moment you wake up to the moment you crash.", x:{label:"time of day", min:6, max:26, step:2, fmt:"hour"}, y:{label:"energy", bands:ENERGY}},
- {id:"drunk-drinks", cat:"Nightlife", title:"How drunk are you after each drink?", sub:"Drink count on a normal night out, any drink type.", x:{label:"# drinks", min:0, max:20, step:2}, y:{label:"drunk level", bands:B([[0,1.5,"nothing"],[1.5,2.5,"warm"],[2.5,5.5,"tipsy"],[5.5,7.5,"drunk"],[7.5,9.5,"wasted"],[9.5,10,"blackout"]])}},
- {id:"hunger-day", cat:"Food", title:"How hungry are you through the day?", sub:"A regular weekday, meals and all.", x:{label:"time of day", min:6, max:26, step:2, fmt:"hour"}, y:{label:"hunger", bands:B([[0,2,"stuffed"],[2,4,"satisfied"],[4,6,"peckish"],[6,8,"hungry"],[8,10,"hangry"]])}},
- {id:"mood-week", cat:"Life", title:"Your mood across the week", sub:"A typical week, Monday morning to Sunday night.", x:{label:"day of week", min:0, max:7, step:1, fmt:"weekday"}, y:{label:"mood", bands:MOOD}},
- {id:"coffee-prod", cat:"Work", title:"Productivity vs cups of coffee", sub:"How much do you actually get done after each cup?", x:{label:"cups of coffee", min:0, max:8, step:1}, y:{label:"productivity", bands:B([[0,2,"useless"],[2,4,"slow"],[4,6,"steady"],[6,8,"locked in"],[8,10,"jittery genius"]])}},
- {id:"sleep-happy", cat:"Body", title:"Happiness vs hours of sleep", sub:"How you feel the next day, by how long you slept.", x:{label:"hours of sleep", min:0, max:14, step:2}, y:{label:"happiness", bands:MOOD}},
- {id:"party-battery", cat:"Social", title:"Social battery over a party", sub:"Hours since you arrived at a party with mostly people you know.", x:{label:"hours at the party", min:0, max:8, step:1}, y:{label:"social battery", bands:B([[0,2,"empty"],[2,4,"low"],[4,6,"half"],[6,8,"charged"],[8,10,"full"]])}},
- {id:"movie-length", cat:"Media", title:"How much you enjoy a movie by its length", sub:"Same movie quality, different runtimes.", x:{label:"runtime (minutes)", min:60, max:240, step:30}, y:{label:"enjoyment", lo:"hate it", hi:"love it"}},
- {id:"vacation-days", cat:"Life", title:"Happiness on each day of a vacation", sub:"A two-week trip, from the day you leave to the day you're back.", x:{label:"day of the trip", min:0, max:14, step:2}, y:{label:"happiness", bands:MOOD}},
- {id:"temp-outside", cat:"Life", title:"Will to leave the house vs the temperature", sub:"Outside temperature on a day off.", x:{label:"temperature (°F)", min:0, max:110, step:10, fmt:"deg"}, y:{label:"will to go out", lo:"staying in", hi:"already outside"}},
- {id:"study-confidence", cat:"Work", title:"Exam confidence vs hours studied", sub:"For an exam in a class you find medium-hard.", x:{label:"hours studied", min:0, max:20, step:2}, y:{label:"confidence", bands:B([[0,2,"doomed"],[2,4,"nervous"],[4,6,"hopeful"],[6,8,"ready"],[8,10,"teach the class"]])}},
- {id:"food-wait", cat:"Food", title:"Patience while waiting for food", sub:"Minutes since you ordered at a sit-down restaurant.", x:{label:"minutes waiting", min:0, max:90, step:15}, y:{label:"patience", bands:B([[0,2,"leaving"],[2,4,"glaring"],[4,6,"checking phone"],[6,8,"chill"],[8,10,"zen"]])}},
- {id:"song-listens", cat:"Media", title:"How much you love a song vs times played", sub:"A new song you liked the first time.", x:{label:"times listened", min:0, max:100, step:10}, y:{label:"love for the song", lo:"skip", hi:"on repeat"}},
- {id:"deadline-stress", cat:"Work", title:"Stress as a deadline gets closer", sub:"A big project due in two weeks.", x:{label:"days until deadline", min:14, max:0, step:2}, y:{label:"stress", bands:B([[0,2,"what deadline"],[2,4,"aware"],[4,6,"uneasy"],[6,8,"stressed"],[8,10,"panic"]])}},
- {id:"hangover", cat:"Nightlife", title:"Hangover vs drinks the night before", sub:"How bad the next morning is.", x:{label:"# drinks last night", min:0, max:15, step:3}, y:{label:"hangover", bands:B([[0,2,"fresh"],[2,4,"foggy"],[4,6,"headache"],[6,8,"rough"],[8,10,"never again"]])}},
- {id:"pizza-slices", cat:"Food", title:"Enjoyment of each slice of pizza", sub:"How good is the next slice, given how many you've had?", x:{label:"slices eaten", min:0, max:8, step:1}, y:{label:"enjoyment", lo:"regret", hi:"heaven"}},
- {id:"year-motivation", cat:"Life", title:"Motivation across the year", sub:"January to December.", x:{label:"month", min:0, max:12, step:1, fmt:"month"}, y:{label:"motivation", lo:"hibernating", hi:"unstoppable"}},
- {id:"meeting-attention", cat:"Work", title:"Attention during a meeting", sub:"Minutes into a meeting that could've been an email.", x:{label:"minutes into the meeting", min:0, max:90, step:15}, y:{label:"attention", bands:B([[0,2,"gone"],[2,4,"drifting"],[4,6,"half there"],[6,8,"listening"],[8,10,"taking notes"]])}},
- {id:"spice", cat:"Food", title:"How much you enjoy food by spice level", sub:"1 is ketchup, 10 is a ghost pepper.", x:{label:"spice level", min:0, max:10, step:1}, y:{label:"enjoyment", lo:"in pain", hi:"perfect"}},
- {id:"room-temp", cat:"Body", title:"Comfort vs thermostat setting", sub:"Indoor temperature while you're lounging at home.", x:{label:"thermostat (°F)", min:55, max:85, step:5, fmt:"deg"}, y:{label:"comfort", lo:"miserable", hi:"perfect"}},
- {id:"battery-anxiety", cat:"Life", title:"Anxiety vs phone battery", sub:"Out for the evening with no charger.", x:{label:"battery left", min:100, max:0, step:10, fmt:"pct"}, y:{label:"anxiety", bands:B([[0,2,"fine"],[2,4,"noticing"],[4,6,"low power mode"],[6,8,"asking for a charger"],[8,10,"panic"]])}},
- {id:"forecast-trust", cat:"Life", title:"How much you trust the weather forecast", sub:"Days ahead the forecast is for.", x:{label:"days ahead", min:0, max:14, step:2}, y:{label:"trust", lo:"lies", hi:"gospel"}},
- {id:"party-size", cat:"Social", title:"Fun at a party vs number of people", sub:"Assume you know about half of them.", x:{label:"people there", min:0, max:60, step:10}, y:{label:"fun", lo:"boring", hi:"legendary"}},
- {id:"after-lunch", cat:"Body", title:"Sleepiness after lunch", sub:"Minutes after finishing a big lunch.", x:{label:"minutes after lunch", min:0, max:180, step:30}, y:{label:"sleepiness", bands:B([[0,2,"alert"],[2,4,"fine"],[4,6,"heavy eyelids"],[6,8,"head bobbing"],[8,10,"asleep"]])}},
- {id:"impulse-regret", cat:"Life", title:"Regret vs money spent on an impulse buy", sub:"Something you didn't need, bought on a whim.", x:{label:"amount spent", min:0, max:500, step:100, fmt:"money"}, y:{label:"regret", lo:"worth it", hi:"returning it"}},
- {id:"binge-tv", cat:"Media", title:"Satisfaction vs hours of TV binged", sub:"A good show, a free day.", x:{label:"hours binged", min:0, max:12, step:2}, y:{label:"satisfaction", lo:"wasted my day", hi:"best day ever"}},
- {id:"karaoke", cat:"Nightlife", title:"Likelihood you'll sing karaoke vs drinks", sub:"At a bar that has karaoke going.", x:{label:"# drinks", min:0, max:10, step:1}, y:{label:"chance you sing", min:0, max:100, fmt:"pct", lo:"never", hi:"grabbing the mic"}},
- {id:"gym-january", cat:"Body", title:"Gym motivation after New Year's", sub:"Days since January 1st.", x:{label:"days into the year", min:0, max:90, step:15}, y:{label:"gym motivation", lo:"couch", hi:"new me"}},
- {id:"hike-miles", cat:"Life", title:"Enjoyment of a hike vs miles walked", sub:"A pretty trail with some hills.", x:{label:"miles hiked", min:0, max:15, step:3}, y:{label:"enjoyment", lo:"carry me", hi:"one with nature"}},
- {id:"song-age", cat:"Media", title:"Nostalgia vs how old a song is", sub:"Years since the song came out.", x:{label:"years since release", min:0, max:40, step:5}, y:{label:"nostalgia", lo:"never heard of it", hi:"core memory"}},
- {id:"inbox", cat:"Work", title:"Stress vs unread emails", sub:"Counting only your main inbox.", x:{label:"unread emails", min:0, max:200, step:25}, y:{label:"stress", lo:"inbox zero calm", hi:"declaring bankruptcy"}},
- {id:"room-mess", cat:"Life", title:"How messy your room gets", sub:"Days since you last cleaned it properly.", x:{label:"days since cleaning", min:0, max:30, step:5}, y:{label:"mess", bands:B([[0,2,"spotless"],[2,4,"lived in"],[4,6,"chair of clothes"],[6,8,"floor of clothes"],[8,10,"biohazard"]])}},
- {id:"xmas-music", cat:"Media", title:"Tolerance for holiday music", sub:"Weeks before Christmas, through New Year's.", x:{label:"weeks before Christmas", min:10, max:-1, step:1}, y:{label:"tolerance", lo:"make it stop", hi:"fa la la"}},
- {id:"home-alone", cat:"Life", title:"How spooked you get home alone at night", sub:"By time of night, lights off, strange noises.", x:{label:"time of night", min:20, max:28, step:1, fmt:"hour"}, y:{label:"spooked", lo:"calm", hi:"calling someone"}},
- {id:"game-stakes", cat:"Social", title:"Competitiveness vs what's at stake", sub:"A board game with friends, betting real money.", x:{label:"money on the line", min:0, max:100, step:20, fmt:"money"}, y:{label:"competitiveness", lo:"just here for fun", hi:"flipping the table"}},
- {id:"road-trip", cat:"Life", title:"Road trip happiness by hours in the car", sub:"Five friends, one car, decent snacks.", x:{label:"hours driving", min:0, max:12, step:2}, y:{label:"happiness", bands:MOOD}},
- {id:"brain-awake", cat:"Body", title:"Brain power vs hours since you woke up", sub:"On a day with no caffeine.", x:{label:"hours awake", min:0, max:20, step:2}, y:{label:"brain power", lo:"potato", hi:"genius"}},
- {id:"snack-craving", cat:"Food", title:"Snack cravings through the day", sub:"Not meals, just the urge to snack.", x:{label:"time of day", min:6, max:26, step:2, fmt:"hour"}, y:{label:"craving", lo:"none", hi:"raiding the pantry"}},
- {id:"miss-friends", cat:"Social", title:"How much you miss the group", sub:"Days since you last all hung out.", x:{label:"days apart", min:0, max:30, step:5}, y:{label:"missing everyone", lo:"need a break", hi:"group chat spam"}},
- {id:"browser-tabs", cat:"Work", title:"Productivity vs open browser tabs", sub:"Tabs open right now, all relevant to work, supposedly.", x:{label:"open tabs", min:0, max:100, step:10}, y:{label:"productivity", lo:"lost", hi:"in the zone"}},
- {id:"rain-cozy", cat:"Life", title:"Coziness vs how hard it's raining", sub:"While you're inside with nowhere to be.", x:{label:"rain (inches per hour)", min:0, max:2, step:0.25}, y:{label:"coziness", lo:"gloomy", hi:"peak cozy"}},
- {id:"text-reply", cat:"Social", title:"Overthinking vs time since they texted back", sub:"You sent something a little vulnerable.", x:{label:"hours since you texted", min:0, max:24, step:3}, y:{label:"overthinking", bands:B([[0,2,"chill"],[2,4,"checking"],[4,6,"rereading it"],[6,8,"drafting a follow-up"],[8,10,"spiral"]])}},
+ {id:"energy-day", cat:"Body", title:"Your energy through the day", sub:"From the alarm you snoozed four times to the 2am second wind.", x:{label:"time of day", min:6, max:26, step:2, fmt:"hour"}, y:{label:"energy", bands:ENERGY}},
+ {id:"drunk-drinks", cat:"Nightlife", title:"How drunk are you after each drink?", sub:"A normal night out. Be honest, the group remembers.", x:{label:"# drinks", min:0, max:20, step:2}, y:{label:"drunk level", bands:B([[0,1.5,"nothing"],[1.5,2.5,"warm"],[2.5,5.5,"tipsy"],[5.5,7.5,"drunk"],[7.5,9.5,"wasted"],[9.5,10,"blackout"]])}},
+ {id:"hunger-day", cat:"Food", title:"How hungry are you through the day?", sub:"A regular weekday. Second breakfast counts.", x:{label:"time of day", min:6, max:26, step:2, fmt:"hour"}, y:{label:"hunger", bands:B([[0,2,"stuffed"],[2,4,"satisfied"],[4,6,"peckish"],[6,8,"hungry"],[8,10,"hangry"]])}},
+ {id:"mood-week", cat:"Life", title:"Your mood across the week", sub:"Monday morning to the Sunday scaries.", x:{label:"day of week", min:0, max:7, step:1, fmt:"weekday"}, y:{label:"mood", bands:MOOD}},
+ {id:"coffee-prod", cat:"Work", title:"Productivity vs cups of coffee", sub:"At which cup do you start vibrating through walls?", x:{label:"cups of coffee", min:0, max:8, step:1}, y:{label:"productivity", bands:B([[0,2,"useless"],[2,4,"slow"],[4,6,"steady"],[6,8,"locked in"],[8,10,"jittery genius"]])}},
+ {id:"sleep-happy", cat:"Body", title:"Happiness vs hours of sleep", sub:"How human you feel the next day.", x:{label:"hours of sleep", min:0, max:14, step:2}, y:{label:"happiness", bands:MOOD}},
+ {id:"party-battery", cat:"Social", title:"Social battery over a party", sub:"Hours since you arrived. Mark the moment you start hiding with the host's dog.", x:{label:"hours at the party", min:0, max:8, step:1}, y:{label:"social battery", bands:B([[0,2,"empty"],[2,4,"low"],[4,6,"half"],[6,8,"charged"],[8,10,"full"]])}},
+ {id:"movie-length", cat:"Media", title:"Movie enjoyment vs runtime", sub:"Same movie, different runtimes. Is three hours a gift or a hostage situation?", x:{label:"runtime (minutes)", min:60, max:240, step:30}, y:{label:"enjoyment", lo:"hate it", hi:"love it"}},
+ {id:"vacation-days", cat:"Life", title:"Happiness on each day of a vacation", sub:"Two weeks away, from the airport bar to secretly checking work email.", x:{label:"day of the trip", min:0, max:14, step:2}, y:{label:"happiness", bands:MOOD}},
+ {id:"temp-outside", cat:"Life", title:"Will to leave the house vs the temperature", sub:"A day off. Your couch is very comfortable.", x:{label:"temperature (°F)", min:0, max:110, step:10, fmt:"deg"}, y:{label:"will to go out", lo:"staying in", hi:"already outside"}},
+ {id:"study-confidence", cat:"Work", title:"Exam confidence vs hours studied", sub:"A medium-hard class. Making a color-coded study schedule does not count as studying.", x:{label:"hours studied", min:0, max:20, step:2}, y:{label:"confidence", bands:B([[0,2,"doomed"],[2,4,"nervous"],[4,6,"hopeful"],[6,8,"ready"],[8,10,"teach the class"]])}},
+ {id:"food-wait", cat:"Food", title:"Patience while waiting for food", sub:"Minutes since you ordered. The table that sat down after you already has their food.", x:{label:"minutes waiting", min:0, max:90, step:15}, y:{label:"patience", bands:B([[0,2,"leaving"],[2,4,"glaring"],[4,6,"checking phone"],[6,8,"chill"],[8,10,"zen"]])}},
+ {id:"song-listens", cat:"Media", title:"How much you love a song vs times played", sub:"A new song you liked. How many plays until you ruin it for yourself?", x:{label:"times listened", min:0, max:100, step:10}, y:{label:"love for the song", lo:"skip", hi:"on repeat"}},
+ {id:"deadline-stress", cat:"Work", title:"Stress as a deadline gets closer", sub:"Due in two weeks. Two-weeks-out you is a liar.", x:{label:"days until deadline", min:14, max:0, step:2}, y:{label:"stress", bands:B([[0,2,"what deadline"],[2,4,"aware"],[4,6,"uneasy"],[6,8,"stressed"],[8,10,"panic"]])}},
+ {id:"hangover", cat:"Nightlife", title:"Hangover vs drinks the night before", sub:"How bad the next morning is. 'Never drinking again' is a valid answer.", x:{label:"# drinks last night", min:0, max:15, step:3}, y:{label:"hangover", bands:B([[0,2,"fresh"],[2,4,"foggy"],[4,6,"headache"],[6,8,"rough"],[8,10,"never again"]])}},
+ {id:"pizza-slices", cat:"Food", title:"How good is each slice of pizza?", sub:"Slice one is a religious experience. Slice seven is a choice.", x:{label:"slices eaten", min:0, max:8, step:1}, y:{label:"enjoyment", lo:"regret", hi:"heaven"}},
+ {id:"year-motivation", cat:"Life", title:"Motivation across the year", sub:"From January's 'new me' to December's 'next year, for sure'.", x:{label:"month", min:0, max:12, step:1, fmt:"month"}, y:{label:"motivation", lo:"hibernating", hi:"unstoppable"}},
+ {id:"meeting-attention", cat:"Work", title:"Attention during a meeting", sub:"A meeting that could've been an email. It was rescheduled twice.", x:{label:"minutes into the meeting", min:0, max:90, step:15}, y:{label:"attention", bands:B([[0,2,"gone"],[2,4,"drifting"],[4,6,"half there"],[6,8,"listening"],[8,10,"taking notes"]])}},
+ {id:"spice", cat:"Food", title:"How much you enjoy food by spice level", sub:"0 is mayo. 10 is a ghost pepper and a glass of milk.", x:{label:"spice level", min:0, max:10, step:1}, y:{label:"enjoyment", lo:"in pain", hi:"perfect"}},
+ {id:"room-temp", cat:"Body", title:"Comfort vs thermostat setting", sub:"The eternal thermostat war. Where would you set it if you won?", x:{label:"thermostat (°F)", min:55, max:85, step:5, fmt:"deg"}, y:{label:"comfort", lo:"miserable", hi:"perfect"}},
+ {id:"battery-anxiety", cat:"Life", title:"Anxiety vs phone battery", sub:"Out for the night, no charger, and you need an Uber home.", x:{label:"battery left", min:100, max:0, step:10, fmt:"pct"}, y:{label:"anxiety", bands:B([[0,2,"fine"],[2,4,"noticing"],[4,6,"low power mode"],[6,8,"asking for a charger"],[8,10,"panic"]])}},
+ {id:"forecast-trust", cat:"Life", title:"How much you trust the weather forecast", sub:"The app says 10% rain. You're holding an umbrella anyway.", x:{label:"days ahead", min:0, max:14, step:2}, y:{label:"trust", lo:"lies", hi:"gospel"}},
+ {id:"party-size", cat:"Social", title:"Fun at a party vs number of people", sub:"You know about half of them. The rest are someone's roommate's coworkers.", x:{label:"people there", min:0, max:60, step:10}, y:{label:"fun", lo:"boring", hi:"legendary"}},
+ {id:"after-lunch", cat:"Body", title:"Sleepiness after lunch", sub:"Minutes after a big lunch. Your 2pm meeting is about to see things.", x:{label:"minutes after lunch", min:0, max:180, step:30}, y:{label:"sleepiness", bands:B([[0,2,"alert"],[2,4,"fine"],[4,6,"heavy eyelids"],[6,8,"head bobbing"],[8,10,"asleep"]])}},
+ {id:"impulse-regret", cat:"Life", title:"Regret vs money spent on an impulse buy", sub:"Something you didn't need, bought at 1am.", x:{label:"amount spent", min:0, max:500, step:100, fmt:"money"}, y:{label:"regret", lo:"worth it", hi:"returning it"}},
+ {id:"binge-tv", cat:"Media", title:"Satisfaction vs hours of TV binged", sub:"Good show, free day. At some point Netflix asks if you're still alive.", x:{label:"hours binged", min:0, max:12, step:2}, y:{label:"satisfaction", lo:"wasted my day", hi:"best day ever"}},
+ {id:"karaoke", cat:"Nightlife", title:"Likelihood you'll sing karaoke vs drinks", sub:"There's karaoke at the bar. Someone is already doing Mr. Brightside.", x:{label:"# drinks", min:0, max:10, step:1}, y:{label:"chance you sing", min:0, max:100, fmt:"pct", lo:"never", hi:"grabbing the mic"}},
+ {id:"gym-january", cat:"Body", title:"Gym motivation after New Year's", sub:"Days since January 1st. 'New year, new me' has a half-life.", x:{label:"days into the year", min:0, max:90, step:15}, y:{label:"gym motivation", lo:"couch", hi:"new me"}},
+ {id:"hike-miles", cat:"Life", title:"Enjoyment of a hike vs miles walked", sub:"Pretty trail, some hills. When does it become a survival documentary?", x:{label:"miles hiked", min:0, max:15, step:3}, y:{label:"enjoyment", lo:"carry me", hi:"one with nature"}},
+ {id:"song-age", cat:"Media", title:"Nostalgia vs how old a song is", sub:"Years since it came out. When does a banger become a throwback?", x:{label:"years since release", min:0, max:40, step:5}, y:{label:"nostalgia", lo:"never heard of it", hi:"core memory"}},
+ {id:"inbox", cat:"Work", title:"Stress vs unread emails", sub:"Main inbox only. The 3,000 promotions don't count, emotionally.", x:{label:"unread emails", min:0, max:200, step:25}, y:{label:"stress", lo:"inbox zero calm", hi:"declaring bankruptcy"}},
+ {id:"room-mess", cat:"Life", title:"How messy your room gets", sub:"Days since you properly cleaned. The chair of clothes is load-bearing.", x:{label:"days since cleaning", min:0, max:30, step:5}, y:{label:"mess", bands:B([[0,2,"spotless"],[2,4,"lived in"],[4,6,"chair of clothes"],[6,8,"floor of clothes"],[8,10,"biohazard"]])}},
+ {id:"xmas-music", cat:"Media", title:"Tolerance for holiday music", sub:"Weeks before Christmas, through New Year's. Mariah is defrosting.", x:{label:"weeks before Christmas", min:10, max:-1, step:1}, y:{label:"tolerance", lo:"make it stop", hi:"fa la la"}},
+ {id:"home-alone", cat:"Life", title:"How spooked you get home alone at night", sub:"Lights off, the house creaks, and you definitely heard something.", x:{label:"time of night", min:20, max:28, step:1, fmt:"hour"}, y:{label:"spooked", lo:"calm", hi:"calling someone"}},
+ {id:"game-stakes", cat:"Social", title:"Competitiveness vs what's at stake", sub:"A board game with friends and real money on the line. Friendships may not survive.", x:{label:"money on the line", min:0, max:100, step:20, fmt:"money"}, y:{label:"competitiveness", lo:"just here for fun", hi:"flipping the table"}},
+ {id:"road-trip", cat:"Life", title:"Road trip happiness by hours in the car", sub:"Five friends, one car, one aux cord, and one person who needs to pee.", x:{label:"hours driving", min:0, max:12, step:2}, y:{label:"happiness", bands:MOOD}},
+ {id:"brain-awake", cat:"Body", title:"Brain power vs hours since you woke up", sub:"No caffeine. How big is the brain at each hour?", x:{label:"hours awake", min:0, max:20, step:2}, y:{label:"brain power", lo:"potato", hi:"genius"}},
+ {id:"snack-craving", cat:"Food", title:"Snack cravings through the day", sub:"Not meals. Just the urge to stand in front of the open fridge.", x:{label:"time of day", min:6, max:26, step:2, fmt:"hour"}, y:{label:"craving", lo:"none", hi:"raiding the pantry"}},
+ {id:"miss-friends", cat:"Social", title:"How much you miss the group", sub:"Days since everyone hung out. At some point the group chat starts getting weird.", x:{label:"days apart", min:0, max:30, step:5}, y:{label:"missing everyone", lo:"need a break", hi:"group chat spam"}},
+ {id:"browser-tabs", cat:"Work", title:"Productivity vs open browser tabs", sub:"Tabs open right now. All important. One of them is playing music somewhere.", x:{label:"open tabs", min:0, max:100, step:10}, y:{label:"productivity", lo:"lost", hi:"in the zone"}},
+ {id:"rain-cozy", cat:"Life", title:"Coziness vs how hard it's raining", sub:"You're inside under a blanket with nowhere to be.", x:{label:"rain (inches per hour)", min:0, max:2, step:0.25}, y:{label:"coziness", lo:"gloomy", hi:"peak cozy"}},
+ {id:"text-reply", cat:"Social", title:"Overthinking vs time since they texted back", sub:"You sent something a little vulnerable. They've been online since.", x:{label:"hours since you texted", min:0, max:24, step:3}, y:{label:"overthinking", bands:B([[0,2,"chill"],[2,4,"checking"],[4,6,"rereading it"],[6,8,"drafting a follow-up"],[8,10,"spiral"]])}},
 ];
 const R = (id, cat, title, sub, items, best, worst) => ({ id, cat, kind:"rank", title, sub, items, best: best || "best", worst: worst || "worst" });
 const RANKS = [
- R("days-week", "Life", "Rank the days of the week", "Best day to worst day, on vibes alone.", ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]),
- R("pizza-toppings", "Food", "Rank the pizza toppings", "One topping at a time. What goes on your pizza first?", ["Pepperoni","Mushroom","Pineapple","Olives","Sausage","Onion","Jalapeño","Extra cheese","Anchovies","Bell pepper"]),
- R("months-vibes", "Life", "Rank the months by vibes", "Not the weather, the energy of the month.", ["January","February","March","April","May","June","July","August","September","October","November","December"]),
- R("colors-vibes", "Life", "Rank the colors", "Favorite to least favorite.", ["Red","Orange","Yellow","Green","Blue","Purple","Pink","Brown","Black","White"]),
- R("breakfast", "Food", "Rank the breakfast foods", "If you could only have one for the rest of your life.", ["Pancakes","Waffles","French toast","Eggs","Bacon","Cereal","Oatmeal","Bagel","Yogurt parfait","Breakfast burrito"]),
- R("animals-vibes", "Life", "Rank the animals by vibes", "Who would you trust at your party?", ["Dog","Cat","Otter","Frog","Goose","Horse","Penguin","Raccoon","Capybara","Owl"]),
- R("holidays", "Social", "Rank the holidays", "Best day of the year to worst.", ["Halloween","Thanksgiving","Christmas","New Year's Eve","Valentine's Day","St. Patrick's Day","Easter","4th of July","Your birthday","Labor Day"]),
- R("candy", "Food", "Rank the candy", "Trick-or-treat haul, best to worst.", ["Reese's","Snickers","KitKat","M&M's","Skittles","Sour Patch Kids","Twix","Starburst","Gummy bears","Twizzlers"]),
- R("shapes-vibes", "Life", "Rank the shapes by vibes", "Purely aesthetic.", ["Circle","Square","Triangle","Star","Heart","Hexagon","Oval","Diamond","Pentagon","Spiral"]),
- R("chores", "Life", "Rank the chores", "From least awful to most awful.", ["Dishes","Laundry","Folding clothes","Vacuuming","Cleaning the bathroom","Taking out the trash","Making the bed","Grocery shopping","Cooking","Dusting"], "least awful", "most awful"),
- R("travel", "Life", "Rank the ways to get around", "For a two-hour trip.", ["Car","Train","Plane","Bike","Walking","Bus","Boat","Scooter","Horse","Rollerblades"]),
- R("weather", "Life", "Rank the weather", "Best day outside to worst.", ["Sunny and warm","Crisp fall day","Light snow","Thunderstorm","Drizzle","Fog","Heat wave","Overcast","Windy","Blizzard"]),
- R("vowels", "Life", "Rank the vowels", "Yes, Y counts today.", ["A","E","I","O","U","Y"]),
+ R("days-week", "Life", "Rank the days of the week", "Best day to worst. Tuesday, this is your moment.", ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]),
+ R("pizza-toppings", "Food", "Rank the pizza toppings", "Best topping to worst. Pineapple people, reveal yourselves.", ["Pepperoni","Mushroom","Pineapple","Olives","Sausage","Onion","Jalapeño","Extra cheese","Anchovies","Bell pepper"]),
+ R("months-vibes", "Life", "Rank the months by vibes", "Not the weather, the energy. February knows what it did.", ["January","February","March","April","May","June","July","August","September","October","November","December"]),
+ R("colors-vibes", "Life", "Rank the colors", "Favorite to least favorite. Beige isn't here because beige isn't a personality.", ["Red","Orange","Yellow","Green","Blue","Purple","Pink","Brown","Black","White"]),
+ R("breakfast", "Food", "Rank the breakfast foods", "If you could only eat one for the rest of your life. Choose carefully.", ["Pancakes","Waffles","French toast","Eggs","Bacon","Cereal","Oatmeal","Bagel","Yogurt parfait","Breakfast burrito"]),
+ R("animals-vibes", "Life", "Rank the animals by vibes", "Who would you trust at your party? The goose will not behave.", ["Dog","Cat","Otter","Frog","Goose","Horse","Penguin","Raccoon","Capybara","Owl"]),
+ R("holidays", "Social", "Rank the holidays", "Best day of the year to worst. Labor Day is nervous.", ["Halloween","Thanksgiving","Christmas","New Year's Eve","Valentine's Day","St. Patrick's Day","Easter","4th of July","Your birthday","Labor Day"]),
+ R("candy", "Food", "Rank the candy", "Trick-or-treat haul, best to worst. Twizzlers fans, we need to talk.", ["Reese's","Snickers","KitKat","M&M's","Skittles","Sour Patch Kids","Twix","Starburst","Gummy bears","Twizzlers"]),
+ R("shapes-vibes", "Life", "Rank the shapes by vibes", "Purely aesthetic. The pentagon has no friends.", ["Circle","Square","Triangle","Star","Heart","Hexagon","Oval","Diamond","Pentagon","Spiral"]),
+ R("chores", "Life", "Rank the chores", "Least awful to most awful. Folding laundry is its own circle of hell.", ["Dishes","Laundry","Folding clothes","Vacuuming","Cleaning the bathroom","Taking out the trash","Making the bed","Grocery shopping","Cooking","Dusting"], "least awful", "most awful"),
+ R("travel", "Life", "Rank the ways to get around", "For a two-hour trip. Yes, horse is a real option.", ["Car","Train","Plane","Bike","Walking","Bus","Boat","Scooter","Horse","Rollerblades"]),
+ R("weather", "Life", "Rank the weather", "Best day outside to worst. Drizzle is just the sky being passive-aggressive.", ["Sunny and warm","Crisp fall day","Light snow","Thunderstorm","Drizzle","Fog","Heat wave","Overcast","Windy","Blizzard"]),
+ R("vowels", "Life", "Rank the vowels", "Yes, Y counts today. Don't make it weird.", ["A","E","I","O","U","Y"]),
  R("numbers-vibes", "Life", "Rank the numbers 1 to 10 by vibes", "Best number to worst number. No math allowed.", ["1","2","3","4","5","6","7","8","9","10"]),
 ];
 const M = (id, cat, title, sub, x, y) => ({ id, cat, kind: "map", title, sub, x, y });
 const MAPS = [
- M("owl-chaos", "Life", "Where are you on the chaos map?", "Drop yourself where you honestly live.", { lo: "Chaos", hi: "Order" }, { lo: "Early bird", hi: "Night owl" }),
- M("party-role", "Social", "What kind of party person are you?", "Think about the last few parties you went to.", { lo: "Leaves first", hi: "Closes the place" }, { lo: "Wallflower", hi: "Center of attention" }),
- M("texting", "Social", "What's your texting style?", "Be honest. Your friends will check.", { lo: "Replies in 3 days", hi: "Replies instantly" }, { lo: "Dry texter", hi: "Paragraphs and emojis" }),
- M("trip-role", "Social", "What are you like on a group trip?", "Same trip, same budget, same friends.", { lo: "Along for the ride", hi: "Made the itinerary" }, { lo: "Budget", hi: "Bougie" }),
- M("food-map", "Food", "Map your taste buds", "What you actually reach for.", { lo: "Sweet", hi: "Savory" }, { lo: "Healthy", hi: "Junk food" }),
- M("pets-places", "Life", "Pick your corner", "Pets and getaways.", { lo: "Cat person", hi: "Dog person" }, { lo: "Beach", hi: "Mountains" }),
- M("movie-taste", "Media", "Map your movie taste", "What you'd pick for a Friday night.", { lo: "Blockbuster", hi: "Indie" }, { lo: "Comedy", hi: "Horror" }),
- M("driver", "Life", "What kind of driver are you?", "Or what kind of passenger, if you don't drive.", { lo: "Grandma pace", hi: "Fast & Furious" }, { lo: "Silent car", hi: "Karaoke car" }),
- M("phone-life", "Life", "How do you run your phone?", "Check your notification badge before answering.", { lo: "Zero unread", hi: "9,999 unread" }, { lo: "Never on it", hi: "Screen time shame" }),
- M("on-time", "Life", "How do you show up?", "To plans with friends.", { lo: "10 minutes early", hi: "20 minutes late" }, { lo: "Room is a mess", hi: "Room is spotless" }),
- M("social-energy", "Social", "Introvert or extrovert?", "And how much do you plan your weekends?", { lo: "Introvert", hi: "Extrovert" }, { lo: "Go with the flow", hi: "Every hour planned" }),
- M("money", "Life", "How do you handle money?", "Your real habits, not your goals.", { lo: "Saver", hi: "Spender" }, { lo: "Never checks the account", hi: "Spreadsheet person" }),
+ M("owl-chaos", "Life", "Where are you on the chaos map?", "Where you actually live, not where your planner thinks you live.", { lo: "Chaos", hi: "Order" }, { lo: "Early bird", hi: "Night owl" }),
+ M("party-role", "Social", "What kind of party person are you?", "Think about the last few parties. Your friends will correct you.", { lo: "Leaves first", hi: "Closes the place" }, { lo: "Wallflower", hi: "Center of attention" }),
+ M("texting", "Social", "What's your texting style?", "Be honest. Your friends have the receipts.", { lo: "Replies in 3 days", hi: "Replies instantly" }, { lo: "Dry texter", hi: "Paragraphs and emojis" }),
+ M("trip-role", "Social", "What are you like on a group trip?", "Same trip, same friends. Who's in charge of the shared spreadsheet?", { lo: "Along for the ride", hi: "Made the itinerary" }, { lo: "Budget", hi: "Bougie" }),
+ M("food-map", "Food", "Map your taste buds", "What you actually reach for at 11pm.", { lo: "Sweet", hi: "Savory" }, { lo: "Healthy", hi: "Junk food" }),
+ M("pets-places", "Life", "Pick your corner", "Choose wisely. There will be a group chat debate.", { lo: "Cat person", hi: "Dog person" }, { lo: "Beach", hi: "Mountains" }),
+ M("movie-taste", "Media", "Map your movie taste", "Your Friday night pick. Nobody will judge you. Probably.", { lo: "Blockbuster", hi: "Indie" }, { lo: "Comedy", hi: "Horror" }),
+ M("driver", "Life", "What kind of driver are you?", "Or passenger, if you don't drive. Aux cord privileges are at stake.", { lo: "Grandma pace", hi: "Fast & Furious" }, { lo: "Silent car", hi: "Karaoke car" }),
+ M("phone-life", "Life", "How do you run your phone?", "Check your notification badge before answering. We'll wait.", { lo: "Zero unread", hi: "9,999 unread" }, { lo: "Never on it", hi: "Screen time shame" }),
+ M("on-time", "Life", "How do you show up?", "To plans with friends. Texting 'omw' from the shower counts as late.", { lo: "10 minutes early", hi: "20 minutes late" }, { lo: "Room is a mess", hi: "Room is spotless" }),
+ M("social-energy", "Social", "Introvert or extrovert?", "And how scheduled is your weekend? A calendar invite for brunch counts.", { lo: "Introvert", hi: "Extrovert" }, { lo: "Go with the flow", hi: "Every hour planned" }),
+ M("money", "Life", "How do you handle money?", "Your real habits, not your New Year's resolution.", { lo: "Saver", hi: "Spender" }, { lo: "Never checks the account", hi: "Spreadsheet person" }),
+];
+/* ---------------- Lab questions (we're all chemists) ---------------- */
+const SCI = [
+ {id:"lab-morale", cat:"Lab", title:"Lab morale through a synthesis day", sub:"From walking in optimistic to leaving after dark, smelling faintly of pyridine.", x:{label:"time of day", min:8, max:22, step:2, fmt:"hour"}, y:{label:"morale", bands:B([[0,2,"quitting science"],[2,4,"questioning choices"],[4,6,"it's fine"],[6,8,"vibing"],[8,10,"Nobel incoming"]])}},
+ R("noble-gases", "Lab", "Rank the noble gases by vibes", "They don't react to anything, so they won't mind this.", ["Helium","Neon","Argon","Krypton","Xenon","Radon","Oganesson"]),
+ {id:"column-sanity", cat:"Lab", title:"Sanity vs hours spent running a column", sub:"Two spots, an Rf difference of 0.02. Good luck.", x:{label:"hours on the column", min:0, max:8, step:1}, y:{label:"sanity", bands:B([[0,2,"gone"],[2,4,"why is it streaking"],[4,6,"fraction 47"],[6,8,"fine"],[8,10,"zen"]])}},
+ M("chemist-type", "Lab", "What kind of chemist are you?", "Where you actually spend your time. Your hood is watching.", { lo: "Pure theory", hi: "Lives at the bench" }, { lo: "Disaster hood", hi: "Spotless hood" }),
+ {id:"ph-vibes", cat:"Lab", title:"How much you like a solution by its pH", sub:"Vibes only. Nobody is tasting anything. Put it down.", x:{label:"pH", min:0, max:14, step:2}, y:{label:"vibes", lo:"absolutely not", hi:"love that for it"}},
+ R("solvent-smell", "Lab", "Rank the solvents by smell", "Best smell to worst smell. We all know who's last.", ["Acetone","Ethanol","Ethyl acetate","DCM","Hexanes","Toluene","Diethyl ether","DMSO","Pyridine","THF"], "smells great", "smells awful"),
+ {id:"multistep-hope", cat:"Lab", title:"Hope for your yield across a multistep synthesis", sub:"Ten steps to the target. Step nine will betray you.", x:{label:"step", min:1, max:10, step:1}, y:{label:"hope", lo:"it's all gone", hi:"quantitative"}},
+ R("instruments", "Lab", "Rank the instruments", "Most loved to most dreaded. The glovebox has hurt us all.", ["NMR","Mass spec","IR","UV-Vis","HPLC","GC","X-ray diffractometer","Rotovap","Glovebox","Fume hood"], "most loved", "most dreaded"),
+ {id:"nmr-wait", cat:"Lab", title:"Excitement while waiting for your NMR", sub:"You dropped the sample off. Now you wait.", x:{label:"hours since submitting", min:0, max:48, step:6}, y:{label:"excitement", bands:B([[0,2,"forgot about it"],[2,4,"mild interest"],[4,6,"checking the queue"],[6,8,"refreshing"],[8,10,"camping at the magnet"]])}},
+ M("notebook", "Lab", "How do you keep your lab notebook?", "Your real notebook, not the one you show your PI.", { lo: "Written weeks later", hi: "Written in real time" }, { lo: "Hieroglyphics", hi: "Publication-ready" }),
+ {id:"kelvin-vibes", cat:"Lab", title:"Vibes of temperatures in Kelvin", sub:"How good does each temperature feel as a number? 273.15 is trying its best.", x:{label:"temperature (K)", min:0, max:1000, step:100}, y:{label:"vibes", lo:"cursed", hi:"immaculate"}},
+ R("glassware", "Lab", "Rank the glassware", "Favorite to least favorite. The sep funnel has seen things.", ["Erlenmeyer flask","Round-bottom flask","Beaker","Graduated cylinder","Volumetric flask","Separatory funnel","Büchner funnel","Test tube","Schlenk flask","Pasteur pipette"]),
+ {id:"rotovap-patience", cat:"Lab", title:"Patience at the rotovap", sub:"Minutes spent watching your solvent (slowly) go away.", x:{label:"minutes", min:0, max:60, step:10}, y:{label:"patience", bands:B([[0,2,"it bumped"],[2,4,"cranking the vacuum"],[4,6,"fearing a bump"],[6,8,"fine"],[8,10,"meditative"]])}},
+ {id:"overnight-rxn", cat:"Lab", title:"Anxiety about a reaction left running overnight", sub:"Hours since you walked out of the lab.", x:{label:"hours away", min:0, max:16, step:2}, y:{label:"anxiety", bands:B([[0,2,"sleeping fine"],[2,4,"thinking about it"],[4,6,"checking the temp log"],[6,8,"dreaming of fire"],[8,10,"driving back in"]])}},
+ R("branches", "Lab", "Rank the branches of chemistry", "Best to worst. Be ready to defend your field in the group chat.", ["Organic","Inorganic","Physical","Analytical","Biochemistry","Computational","Materials","Polymer","Environmental","Nuclear"]),
+ M("safety", "Lab", "How do you handle lab safety?", "Be honest, nobody from EHS is reading.", { lo: "Goggles on forehead", hi: "Reads the SDS twice" }, { lo: "Panics at a spill", hi: "Calm during a fire" }),
+ {id:"sig-figs", cat:"Lab", title:"Annoyance vs significant figures reported", sub:"Someone reports a yield of 87.346219%. Plot your rage.", x:{label:"sig figs", min:1, max:10, step:1}, y:{label:"annoyance", lo:"perfect", hi:"furious"}},
+ R("flame-tests", "Lab", "Rank the flame test colors", "Prettiest to ugliest.", ["Lithium (red)","Sodium (yellow)","Potassium (lilac)","Copper (blue-green)","Strontium (crimson)","Barium (pale green)","Calcium (orange-red)","Cesium (blue-violet)"], "prettiest", "ugliest"),
+ {id:"phd-motivation", cat:"Lab", title:"Motivation through a PhD", sub:"From orientation week to the defense, with a special dip for quals.", x:{label:"year of the PhD", min:0, max:6, step:1}, y:{label:"motivation", lo:"why am I here", hi:"changing the world"}},
+ R("scientists", "Lab", "Rank the scientists you'd grab a drink with", "Best drinking buddy to worst. Nobel will definitely bring something explosive.", ["Marie Curie","Linus Pauling","Rosalind Franklin","Dmitri Mendeleev","Antoine Lavoisier","Alfred Nobel","Dorothy Hodgkin","Michael Faraday","Robert Boyle","Gilbert Lewis"]),
+ {id:"glassware-sink", cat:"Lab", title:"Willingness to wash your glassware", sub:"Days it has been sitting in the sink.", x:{label:"days in the sink", min:0, max:30, step:5}, y:{label:"willingness", lo:"buying new", hi:"scrubbing now"}},
+ M("data-style", "Lab", "What's your data style?", "How your results get from instrument to slide.", { lo: "One run is enough", hi: "Triplicate minimum" }, { lo: "Excel forever", hi: "Python scripts" }),
+ {id:"msds-caution", cat:"Lab", title:"How careful you are vs how scary the SDS is", sub:"Count the hazard pictograms on the bottle.", x:{label:"hazard pictograms", min:0, max:9, step:1}, y:{label:"caution", bands:B([[0,2,"bare hands"],[2,4,"one glove"],[4,6,"gloves and goggles"],[6,8,"in the hood"],[8,10,"full hazmat"]])}},
+ R("states", "Lab", "Rank the states of matter", "Coolest to most boring. Glass is technically just procrastinating.", ["Solid","Liquid","Gas","Plasma","Bose-Einstein condensate","Supercritical fluid","Liquid crystal","Glass"], "coolest", "most boring"),
+ {id:"tlc-spots", cat:"Lab", title:"Confidence in your product vs spots on the TLC", sub:"You were hoping for one clean spot.", x:{label:"spots on the plate", min:1, max:8, step:1}, y:{label:"confidence", lo:"start over", hi:"it's pure"}},
+ R("lab-chores", "Lab", "Rank the lab chores", "Least awful to most awful.", ["Washing glassware","Refilling solvents","Taking out waste","Ordering chemicals","Cleaning the hood","Updating inventory","Group meeting slides","Training undergrads","Fixing the vacuum pump","Defrosting the freezer"], "least awful", "most awful"),
+ {id:"half-life-fear", cat:"Lab", title:"Fear of a radioactive sample vs half-lives elapsed", sub:"Same sample, waiting it out.", x:{label:"half-lives elapsed", min:0, max:10, step:1}, y:{label:"fear", lo:"pocket rock", hi:"lead box"}},
+ M("failed-rxn", "Lab", "What do you do when a reaction fails?", "The TLC shows nothing but starting material.", { lo: "Moves on instantly", hi: "Mourns for days" }, { lo: "Blames the reagents", hi: "Blames themselves" }),
+ {id:"calibration-trust", cat:"Lab", title:"Trust in an instrument vs days since calibration", sub:"The balance, the pH meter, whatever you use most.", x:{label:"days since calibrated", min:0, max:90, step:15}, y:{label:"trust", lo:"random numbers", hi:"NIST-certified"}},
+ R("bonds-vibes", "Lab", "Rank the bonds by vibes", "Strongest vibes to weakest.", ["Covalent","Ionic","Metallic","Hydrogen bond","Van der Waals","Pi bond","Sigma bond","Coordinate bond","Disulfide bridge","James Bond"], "strongest vibes", "weakest vibes"),
+ {id:"reviewer-rounds", cat:"Lab", title:"Confidence in your paper vs rounds of review", sub:"Every round, Reviewer 2 has notes.", x:{label:"rounds of revision", min:0, max:5, step:1}, y:{label:"confidence", lo:"ChemRxiv and cry", hi:"Nature, obviously"}},
+ R("units", "Lab", "Rank the units", "Best unit to worst. Torr fans, explain yourselves.", ["Mole","Kelvin","Joule","Pascal","Ångström","Electronvolt","Dalton","Liter","Calorie","Torr"]),
+ M("seminar", "Lab", "What's your seminar style?", "Your last group meeting talk counts.", { lo: "Reads off the slides", hi: "No notes at all" }, { lo: "Ten slides", hi: "Ninety slides" }),
+ {id:"elements-z", cat:"Lab", title:"How much you like each element by atomic number", sub:"Hydrogen on the left, oganesson on the right.", x:{label:"atomic number", min:1, max:118, step:13}, y:{label:"love", lo:"never touching it", hi:"favorite element"}},
+ R("halogens", "Lab", "Rank the halogens", "Best to worst. Fluorine is unhinged and we respect it.", ["Fluorine","Chlorine","Bromine","Iodine","Astatine","Tennessine"]),
+ {id:"coffee-lab", cat:"Lab", title:"Hand steadiness vs cups of coffee", sub:"Measuring out 2.00 mL with a glass pipette.", x:{label:"cups of coffee", min:0, max:6, step:1}, y:{label:"steadiness", lo:"spilling it", hi:"surgeon"}},
 ];
 /* daily order: the first three curve questions, then one ranking after every three curves */
 const Q = (() => { const out = CURVES.slice(0, 3); let ri = 0, mi = 0; for (let i = 3; i < CURVES.length; i++) { out.push(CURVES[i]); if ((i - 2) % 3 === 0 && ri < RANKS.length) out.push(RANKS[ri++]); if ((i - 3) % 4 === 0 && mi < MAPS.length) out.push(MAPS[mi++]); } while (ri < RANKS.length) out.push(RANKS[ri++]); while (mi < MAPS.length) out.push(MAPS[mi++]); return out; })();
+/* mix the lab questions in: every third day from tomorrow on is a lab question */
+{ const base = Q.splice(3); let si = 0; base.forEach((q, i) => { if (i % 2 === 0 && si < SCI.length) Q.push(SCI[si++]); Q.push(q); }); while (si < SCI.length) Q.push(SCI[si++]); }
 const CATS = ["All", ...Array.from(new Set(Q.map(q=>q.cat)))];
 const ROT_START = Date.UTC(2026,10,9); // day 0 of the rotation (Nov 9 2026)
 const ROT_OFFSET = 2; // the group has already done energy + drinks
@@ -564,12 +653,109 @@ S.store = { save: async (entry) => {
   await loadResults(true);
 } };
 
+/* ---------------- group chat + house rules ---------------- */
+S.comments = {}; S.chatKind = "comment";
+Object.assign(ERRS, { comment_empty: "Type something first.", comment_too_long: "Keep it under 500 characters.", too_many_comments: "This question's chat is full." });
+let commentsReq = 0;
+async function loadComments(force){
+  const q = currentQ(); if (!S.secret || !S.gid) { renderComments(); return; }
+  const k = rkey(q.id), my = ++commentsReq;
+  if (!force && S.comments[k] && Date.now() - S.comments[k].at < 15000) { renderComments(); return; }
+  try { const list = await rpc("get_comments", { p_secret: S.secret, p_group: S.gid, p_qid: q.id }); S.comments[k] = { list: list || [], at: Date.now() }; }
+  catch (e) { if (e.message === "not_signed_in") return signOut(); }
+  if (my === commentsReq && rkey(currentQ().id) === k) renderComments();
+}
+function agoText(t){ const s = (Date.now() - Date.parse(t)) / 1000; if (!(s >= 0)) return ""; if (s < 60) return "just now"; if (s < 3600) return Math.floor(s/60) + "m ago"; if (s < 86400) return Math.floor(s/3600) + "h ago"; return Math.floor(s/86400) + "d ago"; }
+function delBtn(c){ const b = document.createElement("button"); b.type = "button"; b.className = "xdel"; b.textContent = "×"; b.title = "Delete"; b.setAttribute("aria-label", "Delete");
+  b.addEventListener("click", async () => { if (!confirm("Delete this " + (c.kind === "rule" ? "rule" : "comment") + "?")) return; try { await rpc("delete_comment", { p_secret: S.secret, p_id: c.id }); } catch (e) {} loadComments(true); }); return b; }
+function renderComments(){
+  const on = !!(S.secret && S.gid && S.me);
+  $("chatBox").hidden = !on; if (!on) { $("rulesBox").hidden = true; return; }
+  const c = S.comments[rkey(currentQ().id)], list = c ? c.list : [];
+  const rules = list.filter(x => x.kind === "rule"), rl = $("rulesList"); rl.innerHTML = "";
+  rules.forEach(r => { const li = document.createElement("li"); const t = document.createElement("span"); t.textContent = r.body; const by = document.createElement("span"); by.className = "by"; by.textContent = "from " + r.name; li.append(t, by); if (r.can_delete) li.appendChild(delBtn(r)); rl.appendChild(li); });
+  $("rulesBox").hidden = !rules.length;
+  const ul = $("chatList"), atBottom = ul.scrollHeight - ul.scrollTop - ul.clientHeight < 40; ul.innerHTML = "";
+  if (!list.length) { const p = document.createElement("li"); p.className = "chat-empty"; p.textContent = c ? "Nothing yet. Add a rule (\"assume it's a Friday\") or start the trash talk." : "Loading…"; ul.appendChild(p); }
+  list.forEach(m => {
+    const li = document.createElement("li"); li.className = "chat-msg" + (m.kind === "rule" ? " rule" : "");
+    const dot = document.createElement("span"); dot.className = "dot"; dot.style.background = colorOf(m.username).c;
+    const head = document.createElement("div"); const who = document.createElement("span"); who.className = "who"; who.textContent = m.name; const by = document.createElement("span"); by.className = "by"; by.textContent = "  " + agoText(m.at); head.append(who, by);
+    const right = document.createElement("div"); if (m.can_delete) right.appendChild(delBtn(m));
+    const body = document.createElement("div"); body.className = "body"; body.textContent = m.body;
+    li.append(dot, head, right, body); ul.appendChild(li);
+  });
+  if (atBottom || !c) ul.scrollTop = ul.scrollHeight;
+}
+function setChatKind(k){ S.chatKind = k; document.querySelectorAll("#chatKind button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k))); $("chatInput").placeholder = k === "rule" ? "Add a constraint everyone should follow, like \"assume you slept 8 hours\"" : "Talk about today's question…"; }
+document.querySelectorAll("#chatKind button").forEach(b => b.addEventListener("click", () => setChatKind(b.dataset.k)));
+$("chatForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault(); const inp = $("chatInput"), body = inp.value.trim(); if (!body || !S.gid) return;
+  const q = currentQ(), k = rkey(q.id); $("chatSend").disabled = true;
+  try { const list = await rpc("post_comment", { p_secret: S.secret, p_group: S.gid, p_qid: q.id, p_body: body, p_kind: S.chatKind }); S.comments[k] = { list: list || [], at: Date.now() }; inp.value = ""; setChatKind("comment"); $("chatList").scrollTop = 1e9; renderComments(); $("chatList").scrollTop = 1e9; }
+  catch (e) { setStatus(errText(e), true); if (e.message === "not_signed_in") signOut(); }
+  $("chatSend").disabled = false;
+});
+$("chatInput").addEventListener("keydown", (ev) => { if (ev.key === "Enter" && !ev.shiftKey && !ev.isComposing) { ev.preventDefault(); $("chatForm").requestSubmit(); } });
+setInterval(() => { if (!document.hidden && S.secret && S.gid) loadComments(true); }, 20000);
+
+/* ---------------- daily reminders ---------------- */
+const PUBKEY = CFG.vapidPublicKey || "";
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+const pushOK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+let swReg = null;
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").then(r => { swReg = r; renderRemind(); }).catch(() => {});
+const hourLabel = (h) => (h % 12 || 12) + (h < 12 ? " am" : " pm");
+(() => { const sel = $("remindHour"); for (let h = 0; h < 24; h++) { const o = document.createElement("option"); o.value = h; o.textContent = hourLabel(h); sel.appendChild(o); } sel.value = String(ls.get("gg-remind-hour", 12)); })();
+const remindHour = () => +$("remindHour").value;
+const siteUrl = () => location.origin + location.pathname;
+async function currentSub(){ if (!swReg) return null; try { return await swReg.pushManager.getSubscription(); } catch (e) { return null; } }
+function b64u(s){ const pad = "=".repeat((4 - s.length % 4) % 4); const raw = atob((s + pad).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(raw, c => c.charCodeAt(0)); }
+const tzName = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch (e) { return "UTC"; } };
+async function savePush(sub){ await rpc("save_push", { p_secret: S.secret, p_sub: sub.toJSON(), p_tz: tzName(), p_hour: remindHour() }); }
+function calStart(h){ const n = new Date(); const d = new Date(n.getFullYear(), n.getMonth(), n.getDate() + (n.getHours() >= h ? 1 : 0), h, 0); const p = (x) => String(x).padStart(2, "0"); const day = d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()); return { s: day + "T" + p(h) + "0000", e: day + "T" + p(h) + "1500" }; }
+function renderCal(){
+  const h = remindHour(), t = calStart(h), url = siteUrl(), title = "Answer today's GroupGraphs question", desc = "Draw your curve before the group chat calls you out: " + url;
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//GroupGraphs//Daily reminder//EN","BEGIN:VEVENT","UID:groupgraphs-daily-" + Date.now() + "@groupgraphs","DTSTAMP:" + stamp,"DTSTART:" + t.s,"DTEND:" + t.e,"RRULE:FREQ=DAILY","SUMMARY:" + title,"DESCRIPTION:" + desc.replace(/[,;]/g, "\\$&"),"URL:" + url,"BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:" + title,"TRIGGER:PT0M","END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+  const a = $("icsBtn"); if (a.dataset.blob) URL.revokeObjectURL(a.dataset.blob);
+  const blob = URL.createObjectURL(new Blob([ics], { type: "text/calendar" })); a.dataset.blob = blob; a.href = blob; a.download = "groupgraphs-reminder.ics";
+  $("gcalBtn").href = "https://calendar.google.com/calendar/render?" + new URLSearchParams({ action: "TEMPLATE", text: title, details: desc, dates: t.s + "/" + t.e, recur: "RRULE:FREQ=DAILY", ctz: tzName() }).toString();
+}
+async function renderRemind(){
+  renderCal();
+  const st = $("pushState"), btn = $("pushBtn"), help = $("pushHelp"); help.hidden = true; btn.hidden = true; st.textContent = "";
+  if (!PUBKEY) { st.textContent = "Phone notifications aren't set up on this site yet."; return; }
+  if (isIOS && !isStandalone()) { help.hidden = false; help.textContent = "On iPhone, notifications only work from the home screen app: tap Share, then Add to Home Screen, open GroupGraphs from there, and turn them on here."; return; }
+  if (!pushOK) { st.textContent = "This browser can't do notifications. Use a calendar reminder instead."; return; }
+  if (Notification.permission === "denied") { st.textContent = "Notifications are blocked for this site in your browser settings."; return; }
+  const sub = await currentSub(); btn.hidden = false;
+  btn.textContent = sub ? "Turn off notifications" : "Turn on notifications"; btn.className = "btn" + (sub ? " ghost" : " primary");
+  st.textContent = sub ? "On for this device, daily at " + hourLabel(remindHour()) : "";
+}
+$("pushBtn").addEventListener("click", async () => {
+  const btn = $("pushBtn"); btn.disabled = true;
+  try {
+    if (!swReg) swReg = await navigator.serviceWorker.ready;
+    const sub = await currentSub();
+    if (sub) { try { await rpc("delete_push", { p_secret: S.secret, p_endpoint: sub.endpoint }); } catch (e) {} await sub.unsubscribe(); }
+    else {
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") { const s2 = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(PUBKEY) }); await savePush(s2); }
+    }
+  } catch (e) { $("pushState").textContent = e && e.message && ERRS[e.message] ? ERRS[e.message] : "Couldn't turn on notifications here. Try the calendar reminder."; btn.disabled = false; return; }
+  btn.disabled = false; renderRemind();
+});
+$("remindHour").addEventListener("change", async () => { ls.set("gg-remind-hour", remindHour()); const sub = await currentSub(); if (sub) { try { await savePush(sub); } catch (e) {} } renderRemind(); });
+$("bellBtn").addEventListener("click", () => { showScreen("groups"); setTimeout(() => $("remindBox").scrollIntoView({ behavior: "smooth", block: "start" }), 50); });
+
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
   $("authPanel").hidden = name !== "auth"; $("codePanel").hidden = name !== "code"; $("groupsPanel").hidden = name !== "groups";
   $("appMain").hidden = name === "auth" || name === "code"; $("bankBox").hidden = true;
   $("groupbar").hidden = name === "auth" || name === "code" || !S.me;
-  if (name === "groups") renderGroupsPanel();
+  if (name === "groups") { renderGroupsPanel(); renderRemind(); }
 }
 function renderGroupbar(){
   const sel = $("groupSel"); sel.innerHTML = "";
@@ -1244,7 +1430,7 @@ function renderAll(full){
   syncControls();
 }
 function setStatus(msg, err){ S.status = msg; const s = $("status"); s.textContent = msg; s.className = "status" + (err ? " err" : ""); }
-function go(){ S.drawnFor = null; S.peeked = false; S.hidden.clear(); setStatus(""); renderAll(true); loadResults(false); }
+function go(){ S.drawnFor = null; S.peeked = false; S.hidden.clear(); setStatus(""); renderAll(true); loadResults(false); loadComments(false); }
 
 /* ---------------- events ---------------- */
 $("prevDay").addEventListener("click", ()=>{ if (S.qid) { S.qid = null; history.replaceState(null, "", location.pathname + location.search); } S.dayOffset--; go(); });
