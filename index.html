@@ -566,10 +566,16 @@ const WHO = [
 /* the group already did energy and drinks on paper, so Nov 7 and 8 get fresh questions instead */
 Q.splice(Q.findIndex(q => q.id === "energy-day"), 1,
   {id:"dog-size", cat:"Life", title:"How much you want to pet a dog, by its size", sub:"A stranger's dog on the sidewalk. The owner says it's friendly. The owner always says that.", x:{label:"dog weight (lbs)", min:0, max:150, step:25}, y:{label:"pet urge", bands:B([[0,2,"crossing the street"],[2,4,"polite nod"],[4,6,"asking first"],[6,8,"already crouching"],[8,10,"let me hold him"]])}});
+const DRINKS = Q[Q.findIndex(q => q.id === "drunk-drinks")];
 Q.splice(Q.findIndex(q => q.id === "drunk-drinks"), 1,
   R("wake-ups", "Life", "Rank the ways to wake up", "Least awful to most awful. The cat knows what it did.", ["Your alarm","Sunlight","Smell of coffee","Cat sitting on your face","Phone call from your mom","Fire alarm test","Roommate vacuuming","Your own snoring","A hangover","Construction at 7am"], "least awful", "most awful"));
+/* three warm-up days before the numbers: Nov 3, Nov 4, and the drinks classic on Nov 5 */
+Q.unshift(
+  M("grocery-style", "Life", "What kind of grocery shopper are you?", "Be honest about the list you left on the counter.", { lo: "Strict list", hi: "Pure vibes" }, { lo: "In and out in 5 min", hi: "Lives in the store" }),
+  R("late-excuses", "Social", "Rank the excuses for being late", "Most believable to least believable. We've heard all of them.", ["Traffic","Couldn't find parking","My alarm didn't go off","The bus was late","I was already on my way","Couldn't find my keys","My cat was sick","Lost track of time","My experiment ran over","I thought it was tomorrow"], "most believable", "least believable"),
+  DRINKS);
 const CATS = ["All", ...Array.from(new Set(Q.map(q=>q.cat)))];
-const ROT_START = Date.UTC(2026,10,6); // day 0 of the rotation (Nov 6 2026): numbers, energy, drinks, then hunger on Nov 9
+const ROT_START = Date.UTC(2026,10,3); // day 0 of the rotation (Nov 3 2026): grocery map, late excuses, drinks, numbers on Nov 6, hunger on Nov 9
 const ROT_OFFSET = 0;
 const N = 80; // grid intervals -> 81 samples per answer
 
