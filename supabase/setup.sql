@@ -483,6 +483,56 @@ revoke all on function gg_idea_ok(jsonb), suggest_question(uuid, uuid, jsonb), v
 grant execute on function suggest_question(uuid, uuid, jsonb), vote_question(uuid, bigint, boolean),
   delete_question(uuid, bigint), get_ideas(uuid, uuid, date) to anon, authenticated;
 
+-- ---------- feedback about the app ----------
+--
+-- Members send feedback from inside a group; that group's host reads it.
+
+create table if not exists feedback (
+  id bigint generated always as identity primary key,
+  person_id uuid not null references people(id) on delete cascade,
+  group_id uuid not null references groups(id) on delete cascade,
+  kind text not null default 'other' check (kind in ('bug', 'idea', 'other')),
+  body text not null check (char_length(body) between 1 and 1000),
+  created_at timestamptz not null default now()
+);
+create index if not exists feedback_group on feedback (group_id, created_at);
+alter table feedback enable row level security;
+
+create or replace function send_feedback(p_secret uuid, p_group uuid, p_kind text, p_body text) returns void
+language plpgsql security definer set search_path = public as $$
+declare p people := gg_me(p_secret);
+begin
+  if not gg_member_of(p.id, p_group) then raise exception 'not_in_group'; end if;
+  if (select count(*) from feedback where person_id = p.id and created_at > now() - interval '1 day') >= 20 then raise exception 'slow_down'; end if;
+  insert into feedback (person_id, group_id, kind, body)
+    values (p.id, p_group, case when p_kind in ('bug', 'idea') then p_kind else 'other' end, left(trim(p_body), 1000));
+end $$;
+
+create or replace function get_feedback(p_secret uuid) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare p people := gg_me(p_secret);
+begin
+  return jsonb_build_object(
+    'inbox', (select coalesce(jsonb_agg(jsonb_build_object('id', f.id, 'name', pp.display_name, 'username', pp.username, 'group', g.name,
+                'kind', f.kind, 'body', f.body, 'at', f.created_at) order by f.created_at desc), '[]'::jsonb)
+              from feedback f join groups g on g.id = f.group_id join people pp on pp.id = f.person_id where g.host_id = p.id),
+    'mine', (select coalesce(jsonb_agg(jsonb_build_object('id', f.id, 'kind', f.kind, 'body', f.body, 'at', f.created_at) order by f.created_at desc), '[]'::jsonb)
+             from feedback f where f.person_id = p.id),
+    'host', exists (select 1 from groups where host_id = p.id)
+  );
+end $$;
+
+create or replace function delete_feedback(p_secret uuid, p_id bigint) returns void
+language plpgsql security definer set search_path = public as $$
+declare p people := gg_me(p_secret);
+begin
+  delete from feedback f where f.id = p_id
+    and (f.person_id = p.id or exists (select 1 from groups g where g.id = f.group_id and g.host_id = p.id));
+end $$;
+
+revoke all on function send_feedback(uuid, uuid, text, text), get_feedback(uuid), delete_feedback(uuid, bigint) from public, anon, authenticated;
+grant execute on function send_feedback(uuid, uuid, text, text), get_feedback(uuid), delete_feedback(uuid, bigint) to anon, authenticated;
+
 -- Only the public functions are callable from the app.
 revoke all on all functions in schema public from public, anon, authenticated;
 grant execute on function sign_up(text, text), sign_in(text, text), rename_me(uuid, text),
@@ -490,5 +540,6 @@ grant execute on function sign_up(text, text), sign_in(text, text), rename_me(uu
   my_groups(uuid), submit_answer(uuid, text, jsonb), get_results(uuid, uuid, text), save_roast(uuid, uuid, text, jsonb, int),
   get_comments(uuid, uuid, text), post_comment(uuid, uuid, text, text, text), delete_comment(uuid, bigint),
   save_push(uuid, jsonb, text, int), delete_push(uuid, text), push_due(text), push_done(text, jsonb, jsonb), push_public_key(), get_summary(uuid, uuid),
-  suggest_question(uuid, uuid, jsonb), vote_question(uuid, bigint, boolean), delete_question(uuid, bigint), get_ideas(uuid, uuid, date)
+  suggest_question(uuid, uuid, jsonb), vote_question(uuid, bigint, boolean), delete_question(uuid, bigint), get_ideas(uuid, uuid, date),
+  send_feedback(uuid, uuid, text, text), get_feedback(uuid), delete_feedback(uuid, bigint)
   to anon, authenticated;
