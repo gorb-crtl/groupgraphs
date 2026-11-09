@@ -29,7 +29,7 @@
   --f-body: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) {
   --paper:#11151b; --sheet:#171c23; --grid:#202832; --grid-major:#2b3541; --ink:#eef1f4; --ink-2:#b9c0c8; --ink-3:#7d8690;
   --pen:#8fa9ff; --pen-soft:rgba(143,169,255,.14); --hl:#6b5a12; --line:rgba(255,255,255,.12); --band:rgba(143,169,255,.06); --danger:#ff8a8f;
   --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
@@ -51,6 +51,18 @@ button { cursor: pointer; }
 
 .themebtn { font-family: var(--f-body); font-size: 12px; font-weight: 700; letter-spacing: 0; border: 1px solid var(--line); background: var(--sheet); color: var(--ink-2); border-radius: 8px; padding: 5px 9px; align-self: center; transform: translateY(-2px); cursor: pointer; }
 .themebtn:hover { border-color: var(--pen); color: var(--ink); }
+.thgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.thopt { border: 1px solid var(--line); border-radius: 12px; padding: 0; overflow: hidden; background: none; color: var(--ink); text-align: left; font: inherit; cursor: pointer; }
+.thopt[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--pen); border-color: var(--pen); }
+.thopt .sw { display: flex; height: 40px; }
+.thopt .sw i { flex: 1; }
+.thopt .nm { display: block; padding: 7px 10px; font-size: 14px; font-weight: 700; background: var(--sheet); }
+.thopt .nm small { display: block; font-size: 11px; font-weight: 400; color: var(--ink-2); }
+:root[data-theme="notebook"] { --paper:#f6f1e4; --sheet:#fffaf0; --grid:#e8dfc9; --grid-major:#d8ccb0; --ink:#2b2a26; --ink-2:#5c574b; --ink-3:#948d7c; --pen:#1f4fa8; --pen-soft:rgba(31,79,168,.10); --hl:#ffe36e; --line:rgba(43,42,38,.14); --band:rgba(31,79,168,.05); --danger:#b4232a; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948; }
+:root[data-theme="lab"] { --paper:#eef6f4; --sheet:#ffffff; --grid:#dcebe7; --grid-major:#c3dbd4; --ink:#12302b; --ink-2:#3f5f58; --ink-3:#7f9a94; --pen:#0f7a6c; --pen-soft:rgba(15,122,108,.10); --hl:#c9f2e6; --line:rgba(18,48,43,.12); --band:rgba(15,122,108,.05); --danger:#b4232a; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948; }
+:root[data-theme="sunset"] { --paper:#fbf3ee; --sheet:#ffffff; --grid:#f1e1d8; --grid-major:#e5cbbd; --ink:#2e1d17; --ink-2:#6a4c40; --ink-3:#a68a7e; --pen:#c4462a; --pen-soft:rgba(196,70,42,.10); --hl:#ffd9a0; --line:rgba(46,29,23,.12); --band:rgba(196,70,42,.05); --danger:#a51d24; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948; }
+:root[data-theme="grape"] { --paper:#15121f; --sheet:#1d1930; --grid:#29233f; --grid-major:#352e52; --ink:#f1eefb; --ink-2:#c3bcd9; --ink-3:#8a82a6; --pen:#b49cff; --pen-soft:rgba(180,156,255,.15); --hl:#5a3f8c; --line:rgba(255,255,255,.12); --band:rgba(180,156,255,.06); --danger:#ff8a8f; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; color-scheme: dark; }
+:root[data-theme="terminal"] { --paper:#0c1410; --sheet:#111c17; --grid:#1a2a22; --grid-major:#24382e; --ink:#e3f5ea; --ink-2:#a9c9b6; --ink-3:#6f8f7c; --pen:#5be39a; --pen-soft:rgba(91,227,154,.14); --hl:#2c5a3f; --line:rgba(255,255,255,.12); --band:rgba(91,227,154,.06); --danger:#ff8a8f; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; color-scheme: dark; }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .brand { font-family: var(--f-hand); font-weight: 800; font-size: 24px; line-height: 1; letter-spacing: -.03em; display: flex; align-items: baseline; gap: 8px; }
 .brand .mark { display: inline-block; width: 26px; height: 22px; flex: none; transform: translateY(3px); }
@@ -115,6 +127,16 @@ h1.prompt { font-family: var(--f-hand); font-weight: 800; font-size: clamp(26px,
 .name input { border: 0; border-bottom: 2px solid var(--line); background: transparent; padding: 6px 2px; width: 150px; font-family: var(--f-hand); font-size: 20px; font-weight: 700; }
 .name input:focus { outline: none; border-color: var(--pen); }
 .status { font-size: 13px; color: var(--ink-2); min-height: 20px; }
+.gtools { border-top: 1px solid var(--line); padding-top: 8px; }
+.gtools summary { cursor: pointer; font-weight: 700; font-size: 14px; color: var(--ink-2); padding: 4px 0; }
+.gtools[open] { display: flex; flex-direction: column; gap: 8px; }
+.gtrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.gtrow input, .gtrow select { flex: 1; min-width: 0; font: inherit; font-size: 15px; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.gthint { margin: 0; font-size: 12px; color: var(--ink-2); }
+.netbar { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 90; width: min(440px, calc(100% - 32px)); box-sizing: border-box; display: flex; align-items: center; gap: 10px; background: var(--ink); color: var(--sheet); border-radius: 12px; padding: 10px 12px; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.netbar[hidden] { display: none; }
+.netbar span { flex: 1; }
+.netbar button { border: 0; background: var(--sheet); color: var(--ink); border-radius: 8px; padding: 7px 12px; font: inherit; font-weight: 700; font-size: 13px; }
 .status.err { color: var(--danger); }
 .howto { font-size: 13px; color: var(--ink-3); margin: 0; }
 
@@ -310,7 +332,7 @@ svg text { font-family: var(--f-body); }
   @keyframes draw { to { stroke-dashoffset: 0; } }
 }
 </style>
-<script>try{var t=localStorage.getItem("gg-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{var t=localStorage.getItem("gg-theme");if(/^(light|dark|notebook|lab|sunset|grape|terminal)$/.test(t||""))document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -326,7 +348,7 @@ svg text { font-family: var(--f-body); }
     <div class="brand">
       <svg class="mark" viewBox="0 0 26 22" aria-hidden="true"><path d="M2 2v18h22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4 18c5-1 7-10 11-12s5 1 8-3" fill="none" stroke="var(--pen)" stroke-width="2.4" stroke-linecap="round"/></svg>
       GroupGraphs
-      <button class="themebtn" id="themeBtn" type="button" aria-label="Switch light or dark mode">Dark mode</button>
+      <button class="themebtn" id="themeBtn" type="button" aria-haspopup="dialog">Theme</button>
     </div>
     <nav class="daynav" aria-label="Choose day">
       <button id="prevDay" aria-label="Previous day's question">&#8249;</button>
@@ -336,7 +358,7 @@ svg text { font-family: var(--f-body); }
   </header>
   <div class="sumback" id="ideaBack" hidden role="dialog" aria-label="Question ideas"><div class="sumwrap">
     <div class="sumtop"><div><div class="k" id="ideaGroup"></div><h2>Question ideas</h2></div><button id="ideaClose" type="button">Close</button></div>
-    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight, the idea with the most votes becomes the next day's question, just for this group.</p>
+    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight Central time, the idea with the most votes becomes the next day's question, just for this group.</p>
     <div class="sumcard" id="ideaNext" hidden></div>
     <div class="sumcard"><h3>Vote</h3><div class="idlist" id="ideaList"></div></div>
     <form class="sumcard idform" id="ideaForm" autocomplete="off">
@@ -374,6 +396,7 @@ svg text { font-family: var(--f-body); }
     </form>
     <div class="sumcard" id="ideaPast" hidden></div>
   </div></div>
+  <div class="netbar" id="netBar" hidden role="alert"><span id="netText">Can't reach GroupGraphs right now. Check your connection.</span><button id="netRetry" type="button">Retry</button></div>
   <div class="sumback" id="fbBack" hidden role="dialog" aria-label="Feedback"><div class="sumwrap">
     <div class="sumtop"><div><div class="k">GroupGraphs</div><h2>Feedback</h2></div><button id="fbClose" type="button">Close</button></div>
     <form class="sumcard idform" id="fbForm" autocomplete="off">
@@ -391,6 +414,10 @@ svg text { font-family: var(--f-body); }
     <div class="sumtop"><div><div class="k" id="sumGroup"></div><h2 id="sumTitle">The all-time group summary</h2></div><button id="sumClose" type="button">Close</button></div>
     <div class="sumseg" id="sumSeg"><button type="button" data-m="all" aria-pressed="true">All time</button><button type="button" data-m="week" aria-pressed="false">This week</button></div>
     <div id="sumBody"><p class="note">Loading…</p></div>
+  </div></div>
+  <div class="calback" id="themeBack" hidden><div class="cal" role="dialog" aria-label="Pick a theme">
+    <div class="calhead"><b>Pick a theme</b><button id="themeClose" type="button" aria-label="Close">&times;</button></div>
+    <div class="thgrid" id="themeGrid"></div>
   </div></div>
   <div class="calback" id="calBack" hidden><div class="cal" role="dialog" aria-label="Pick a day">
     <div class="calhead"><button id="calPrev" aria-label="Previous month">&#8249;</button><b id="calTitle"></b><button id="calNext" aria-label="Next month">&#8250;</button></div>
@@ -790,7 +817,10 @@ const S = {
   drawnFor: null, loaded: false,
   secret: null, me: null, groups: [], gid: null, mine: {}, results: {}, store: null,
 };
-const todayIndex = () => { const now = new Date(); const d = Math.floor((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - ROT_START) / 864e5); return d; };
+/* everyone gets the new question at midnight Central time, wherever they are */
+const ctParts = () => { const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "numeric", day: "numeric", weekday: "short" }).formatToParts(new Date()); const g = (t) => (p.find(x => x.type === t) || {}).value; return { y: +g("year"), m: +g("month"), d: +g("day"), wd: g("weekday") }; };
+const todayIndex = () => { const c = ctParts(); return Math.round((Date.UTC(c.y, c.m - 1, c.d) - ROT_START) / 864e5); };
+const ctISO = () => { const c = ctParts(); return c.y + "-" + String(c.m).padStart(2, "0") + "-" + String(c.d).padStart(2, "0"); };
 const qForDay = (d) => (S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
 const qById = (id) => Q.find(q => q.id === id) || (S.ideas && S.ideas.gid === S.gid ? Object.values(S.ideas.byDay).find(q => q.id === id) : null) || null;
 function baseQ(){ if (S.qid) return qById(S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
@@ -825,6 +855,9 @@ function colorOf(key){
 /* ---------------- database (Supabase functions) ---------------- */
 const CFG = window.GG_CONFIG || {};
 const ERRS = {
+  host_only: "Only the group's host can do that.",
+  bad_group_name: "Group names are 1 to 40 characters.",
+  host_cannot_leave: "Make someone else host first, then you can leave.",
   bad_username: "Usernames are 3 to 20 characters: lowercase letters, numbers, dots or underscores.",
   username_taken: "That username is taken. Try another one.",
   name_required: "Add a name first.",
@@ -837,11 +870,22 @@ const ERRS = {
   not_in_group: "You're not in that group anymore.",
   answer_too_big: "That answer is too big to save.",
 };
-async function rpc(fn, args){
+const READ_FNS = /^(get_|my_groups|find_people|push_public_key)/;
+function netState(ok, msg){ const b = document.getElementById("netBar"); if (!b) return; if (ok) { b.hidden = true; return; } document.getElementById("netText").textContent = msg || "Can't reach GroupGraphs right now. Check your connection."; b.hidden = false; }
+async function rpc(fn, args, tries){
   if (!CFG.url || !CFG.key) throw new Error("not_configured");
-  let res;
-  try { res = await fetch(CFG.url.replace(/\/$/, "") + "/rest/v1/rpc/" + fn, { method: "POST", headers: { "Content-Type": "application/json", apikey: CFG.key, ...(CFG.key.startsWith("eyJ") ? { Authorization: "Bearer " + CFG.key } : {}) }, body: JSON.stringify(args || {}) }); }
+  try { const r = await rpcOnce(fn, args); netState(true); return r; }
+  catch (e) {
+    if (e.message !== "offline") { if (e.message === "server_error") netState(false, "GroupGraphs is having a moment. Try again in a bit."); throw e; }
+    if (READ_FNS.test(fn) && (tries || 0) < 1) { await new Promise(r => setTimeout(r, 1500)); return rpc(fn, args, (tries || 0) + 1); }
+    netState(false, navigator.onLine === false ? "You're offline. Answers and chat will load when you're back." : null); throw e;
+  }
+}
+async function rpcOnce(fn, args){
+  let res; const ac = typeof AbortController === "function" ? new AbortController() : null; const tm = ac ? setTimeout(() => ac.abort(), 15000) : null;
+  try { res = await fetch(CFG.url.replace(/\/$/, "") + "/rest/v1/rpc/" + fn, { method: "POST", headers: { "Content-Type": "application/json", apikey: CFG.key, ...(CFG.key.startsWith("eyJ") ? { Authorization: "Bearer " + CFG.key } : {}) }, body: JSON.stringify(args || {}), signal: ac ? ac.signal : undefined }); }
   catch (e) { throw new Error("offline"); }
+  finally { if (tm) clearTimeout(tm); }
   const txt = await res.text(); let body = null; try { body = txt ? JSON.parse(txt) : null; } catch (e) {}
   if (!res.ok) { const m = (body && (body.message || body.hint)) || "server_error"; throw new Error(m); }
   return body;
@@ -998,7 +1042,7 @@ $("installX").addEventListener("click", () => { ls.set("gg-install-x", true); re
 
 /* ---------------- all-time group summary ---------------- */
 let sumMode = "all", sumData = null;
-const isWrapDay = () => new Date().getDay() === 0;
+const isWrapDay = () => ctParts().wd === "Sun";
 function openSummary(mode){ const g = group(); if (!g) return; sumMode = typeof mode === "string" ? mode : isWrapDay() ? "week" : "all"; sumData = null; $("sumGroup").textContent = g.name + " · " + g.members.length + " people"; setSumMode(sumMode); $("sumBody").innerHTML = '<p class="note">Crunching every answer so far…</p>'; $("sumBack").hidden = false; document.body.style.overflow = "hidden"; loadSummary(g); }
 function weekRange(){ const ti = todayIndex(); return [Math.max(0, ti - 6), ti]; }
 function setSumMode(m){ sumMode = m; document.querySelectorAll("#sumSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === m)));
@@ -1015,7 +1059,7 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("sumB
 async function loadSummary(g){
   let d;
   try { d = await rpc("get_summary", { p_secret: S.secret, p_group: g.id }); }
-  catch (e) { if (e.message === "not_signed_in") return signOut(); $("sumBody").innerHTML = '<p class="note">Couldn\'t load the summary. If you\'re the host, run <b>supabase/summary.sql</b> in Supabase once, then try again.</p>'; return; }
+  catch (e) { if (e.message === "not_signed_in") return signOut(); $("sumBody").innerHTML = e.message === "offline" ? '<p class="note">Couldn\'t connect. Check your connection, then close this and open it again.</p>' : '<p class="note">Couldn\'t load the summary. If you\'re the host, run <b>supabase/summary.sql</b> in Supabase once, then try again.</p>'; return; }
   if (S.gid !== g.id || $("sumBack").hidden) return;
   sumData = d; renderSummary(g, buildSummary(g, d, sumMode));
 }
@@ -1170,8 +1214,8 @@ let ideasBusy = false;
 function ensureIdeas(){ if (!S.secret || !S.gid || ideasBusy) return; if (S.ideas && S.ideas.gid === S.gid && Date.now() - S.ideas.at < 60000) return; loadIdeas(); }
 async function loadIdeas(){
   const gid = S.gid; ideasBusy = true; let d;
-  try { d = await rpc("get_ideas", { p_secret: S.secret, p_group: gid, p_today: localISO(new Date()) }); }
-  catch (e) { ideasBusy = false; if (e.message === "not_signed_in") return signOut(); S.ideas = { gid, at: Date.now(), byDay: {}, pending: [], past: [], err: true }; $("ideaJump").hidden = !S.gid; return; }
+  try { d = await rpc("get_ideas", { p_secret: S.secret, p_group: gid, p_today: ctISO() }); }
+  catch (e) { ideasBusy = false; if (e.message === "not_signed_in") return signOut(); S.ideas = { gid, at: e.message === "offline" ? 0 : Date.now(), byDay: {}, pending: [], past: [], err: e.message === "offline" ? "offline" : true }; $("ideaJump").hidden = !S.gid; return; }
   ideasBusy = false;
   const before = S.ideas && S.ideas.gid === gid ? Object.keys(S.ideas.byDay).join() : null, byDay = {};
   (d.scheduled || []).forEach(r => { byDay[isoDay(r.day)] = ideaQ(r); });
@@ -1202,7 +1246,8 @@ function renderIdeas(){
   const mk = (tag, cls, t) => { const e = document.createElement(tag); if (cls) e.className = cls; if (t != null) e.textContent = t; return e; };
   const list = $("ideaList"); list.innerHTML = "";
   const sorted = I.pending.slice().sort((a, b) => b.votes - a.votes || Date.parse(a.created_at) - Date.parse(b.created_at));
-  if (I.err) list.appendChild(mk("p", "note", "Couldn't load ideas. If you're the host, run supabase/ideas.sql in Supabase once, then refresh."));
+  if (I.err === "offline") list.appendChild(mk("p", "note", "Couldn't connect. Check your connection and try again."));
+  else if (I.err) list.appendChild(mk("p", "note", "Couldn't load ideas. If you're the host, run supabase/ideas.sql in Supabase once, then refresh."));
   else if (!sorted.length) list.appendChild(mk("p", "note", "No ideas yet. Be the first, the group is counting on you."));
   sorted.forEach((it, i) => {
     const row = mk("div", "idea"), v = mk("button", "vote"); v.type = "button"; v.setAttribute("aria-pressed", String(!!it.voted)); v.setAttribute("aria-label", (it.voted ? "Remove your vote for " : "Vote for ") + ideaTitle(it.spec));
@@ -1216,7 +1261,7 @@ function renderIdeas(){
     list.appendChild(row);
   });
   const nx = $("ideaNext"); nx.innerHTML = ""; const top = sorted[0];
-  if (top && top.votes > 0) { nx.hidden = false; nx.append(mk("h3", null, "Tomorrow's question, if nothing overtakes it"), mk("div", "t", ideaTitle(top.spec)), mk("p", "note", "From " + top.author + " with " + top.votes + (top.votes === 1 ? " vote" : " votes") + ". Voting closes at midnight.")); nx.querySelector(".t").style.cssText = "font-weight:800;font-size:17px"; }
+  if (top && top.votes > 0) { nx.hidden = false; nx.append(mk("h3", null, "Tomorrow's question, if nothing overtakes it"), mk("div", "t", ideaTitle(top.spec)), mk("p", "note", "From " + top.author + " with " + top.votes + (top.votes === 1 ? " vote" : " votes") + ". Voting closes at midnight Central time.")); nx.querySelector(".t").style.cssText = "font-weight:800;font-size:17px"; }
   else nx.hidden = true;
   const past = $("ideaPast"); past.innerHTML = ""; past.hidden = !I.past.length;
   if (I.past.length) { past.appendChild(mk("h3", null, "Already played")); const rows = mk("div", "sumrows"); I.past.slice(0, 20).forEach(r => { const d = isoDay(r.day), rr = mk("div", "sumrow"); const dt = new Date(ROT_START + d * 864e5); rr.append(mk("span", null, dt.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }) + " · " + r.author), mk("span", null, ideaTitle(r.spec))); rows.appendChild(rr); }); past.appendChild(rows); }
@@ -1246,7 +1291,7 @@ $("fbClose").addEventListener("click", closeFeedback);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("fbBack").hidden) closeFeedback(); });
 async function loadFeedback(){
   try { fbData = await rpc("get_feedback", { p_secret: S.secret }); }
-  catch (e) { if (e.message === "not_signed_in") return signOut(); fbData = { err: true, inbox: [], mine: [] }; }
+  catch (e) { if (e.message === "not_signed_in") return signOut(); fbData = { err: e.message === "offline" ? "offline" : true, inbox: [], mine: [] }; }
   renderFeedback();
 }
 function fbSeen(){ try { return Number(localStorage.getItem("gg-fb-seen") || 0); } catch (e) { return 0; } }
@@ -1257,7 +1302,8 @@ function renderFeedback(){
   const D = fbData || { inbox: [], mine: [] };
   if (!$("fbBack").hidden && D.host) { try { localStorage.setItem("gg-fb-seen", String(Date.now())); } catch (e) {} }
   const box = $("fbInbox"); box.innerHTML = ""; box.hidden = !D.host && !D.err;
-  if (D.err) box.appendChild(mk("p", "note", "Couldn't load feedback. If you're the host, run supabase/feedback.sql in Supabase once, then refresh."));
+  if (D.err === "offline") box.appendChild(mk("p", "note", "Couldn't connect. Check your connection and try again."));
+  else if (D.err) box.appendChild(mk("p", "note", "Couldn't load feedback. If you're the host, run supabase/feedback.sql in Supabase once, then refresh."));
   else if (D.host) {
     box.appendChild(mk("h3", null, "Inbox (you're a host)"));
     if (!D.inbox.length) box.appendChild(mk("p", "note", "Nothing yet. Either the app is perfect or nobody's talking."));
@@ -1281,14 +1327,42 @@ $("fbForm").addEventListener("submit", async (ev) => {
   $("fbSend").disabled = false;
 });
 
-/* ---------------- light / dark toggle ---------------- */
-function isDark(){ const t = document.documentElement.dataset.theme; return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; }
-function applyTheme(t){ if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
-  $("themeBtn").textContent = isDark() ? "Light mode" : "Dark mode";
-  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = isDark() ? "#11151b" : "#2348b8"; }
-$("themeBtn").addEventListener("click", () => { const t = isDark() ? "light" : "dark"; try { localStorage.setItem("gg-theme", t); } catch (e) {} applyTheme(t); renderAll(true); });
-try { applyTheme(localStorage.getItem("gg-theme")); } catch (e) { applyTheme(null); }
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { let t = null; try { t = localStorage.getItem("gg-theme"); } catch (e) {} if (!t) applyTheme(null); });
+/* roll over to the new question if the app is left open past midnight Central */
+let lastDay = null;
+setInterval(() => { const t = todayIndex(); if (lastDay === null) { lastDay = t; return; } if (t !== lastDay) { lastDay = t; S.dayOffset = 0; S.qid = null; if (S.ideas) S.ideas.at = 0; syncSumLabel(); go(); } }, 30000);
+
+/* ---------------- connection banner ---------------- */
+$("netRetry").addEventListener("click", () => { netState(true); if (!S.me) location.reload(); else { S.results = {}; if (S.ideas) S.ideas.at = 0; go(); } });
+window.addEventListener("offline", () => netState(false, "You're offline. Answers and chat will load when you're back."));
+window.addEventListener("online", () => { netState(true); if (S.me) { S.results = {}; go(); } else if (S.secret) location.reload(); });
+
+/* ---------------- themes ---------------- */
+const THEMES = [
+  { id: "", name: "Auto", note: "Follows your phone", sw: ["#f8f9f6", "#2348b8", "#11151b", "#8fa9ff"] },
+  { id: "light", name: "Light", note: "Clean and bright", sw: ["#f8f9f6", "#ffffff", "#2348b8", "#eb6834"] },
+  { id: "dark", name: "Dark", note: "Easy on the eyes", sw: ["#11151b", "#171c23", "#8fa9ff", "#d95926"] },
+  { id: "notebook", name: "Notebook", note: "Lab notebook paper", sw: ["#f6f1e4", "#fffaf0", "#1f4fa8", "#2b2a26"] },
+  { id: "lab", name: "Lab", note: "Fume hood green", sw: ["#eef6f4", "#ffffff", "#0f7a6c", "#12302b"] },
+  { id: "sunset", name: "Sunset", note: "Warm and cozy", sw: ["#fbf3ee", "#ffffff", "#c4462a", "#ffd9a0"] },
+  { id: "grape", name: "Grape", note: "Dark and purple", sw: ["#15121f", "#1d1930", "#b49cff", "#5a3f8c"] },
+  { id: "terminal", name: "Terminal", note: "Hacker green", sw: ["#0c1410", "#111c17", "#5be39a", "#24382e"] },
+];
+const THEME_BAR = { light: "#2348b8", dark: "#11151b", notebook: "#f6f1e4", lab: "#0f7a6c", sunset: "#c4462a", grape: "#15121f", terminal: "#0c1410" };
+function curTheme(){ try { return localStorage.getItem("gg-theme") || ""; } catch (e) { return ""; } }
+function applyTheme(t){ if (t && THEMES.some(x => x.id === t)) document.documentElement.dataset.theme = t; else { t = ""; delete document.documentElement.dataset.theme; }
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t ? THEME_BAR[t] : (matchMedia("(prefers-color-scheme: dark)").matches ? "#11151b" : "#2348b8"); }
+function renderThemes(){ const g = $("themeGrid"); g.innerHTML = ""; const cur = curTheme();
+  THEMES.forEach(t => { const b = document.createElement("button"); b.type = "button"; b.className = "thopt"; b.dataset.t = t.id || "auto"; b.setAttribute("aria-pressed", String(t.id === cur));
+    const sw = document.createElement("span"); sw.className = "sw"; t.sw.forEach(c => { const i = document.createElement("i"); i.style.background = c; sw.appendChild(i); });
+    const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = t.name; const sm = document.createElement("small"); sm.textContent = t.note; nm.appendChild(sm);
+    b.append(sw, nm); b.addEventListener("click", () => { try { if (t.id) localStorage.setItem("gg-theme", t.id); else localStorage.removeItem("gg-theme"); } catch (e) {} applyTheme(t.id); renderThemes(); renderAll(true); });
+    g.appendChild(b); }); }
+$("themeBtn").addEventListener("click", () => { renderThemes(); $("themeBack").hidden = false; });
+$("themeClose").addEventListener("click", () => { $("themeBack").hidden = true; });
+$("themeBack").addEventListener("click", (e) => { if (e.target === $("themeBack")) $("themeBack").hidden = true; });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("themeBack").hidden) $("themeBack").hidden = true; });
+applyTheme(curTheme());
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme(curTheme()));
 
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
@@ -1347,6 +1421,26 @@ function renderGroupsPanel(){
         } catch (e) { found.textContent = errText(e); }
       }, 250); });
       f.append(lab, inp); wrap.append(f, found);
+      const tools = document.createElement("details"); tools.className = "gtools";
+      const sm = document.createElement("summary"); sm.textContent = "Manage this group"; tools.appendChild(sm);
+      const rn = document.createElement("div"); rn.className = "gtrow";
+      const ri = document.createElement("input"); ri.value = g.name; ri.maxLength = 40; ri.setAttribute("aria-label", "Group name");
+      const rb = document.createElement("button"); rb.className = "btn"; rb.textContent = "Rename"; rb.addEventListener("click", () => { const n = ri.value.trim(); if (n && n !== g.name) groupAction("rename_group", { p_group: g.id, p_name: n }); });
+      rn.append(ri, rb); tools.appendChild(rn);
+      const others = g.members.filter(m => m.username !== g.host);
+      if (others.length) {
+        const th = document.createElement("div"); th.className = "gtrow";
+        const sel = document.createElement("select"); sel.setAttribute("aria-label", "New host");
+        others.forEach(m => { const o = document.createElement("option"); o.value = m.username; o.textContent = m.display_name + " (@" + m.username + ")"; sel.appendChild(o); });
+        const tb = document.createElement("button"); tb.className = "btn"; tb.textContent = "Make host"; let armedT = false;
+        tb.addEventListener("click", () => { if (!armedT) { armedT = true; tb.textContent = "Tap again: you stop being host"; return; } groupAction("transfer_host", { p_group: g.id, p_username: sel.value }); });
+        th.append(sel, tb); tools.appendChild(th);
+        const hint = document.createElement("p"); hint.className = "gthint"; hint.textContent = "Want to leave? Make someone else host first, then you can leave like everyone else."; tools.appendChild(hint);
+      }
+      const db = document.createElement("button"); db.className = "btn ghost"; db.style.cssText = "align-self:flex-start;color:var(--danger)"; db.textContent = "Delete this group"; let armedD = false;
+      db.addEventListener("click", () => { if (!armedD) { armedD = true; db.textContent = "Tap again to delete " + g.name + " for everyone"; return; } groupAction("delete_group", { p_group: g.id }); });
+      tools.appendChild(db);
+      wrap.appendChild(tools);
     } else {
       const lv = document.createElement("button"); lv.className = "btn ghost"; lv.style.alignSelf = "flex-start"; lv.textContent = "Leave this group";
       let armed = false;
@@ -2005,7 +2099,7 @@ async function doRoast(){
 let bankFilter = "All";
 function renderHeader(){
   const q = currentQ(), ti = todayIndex();
-  const isDaily = !S.qid; const d = new Date(); d.setDate(d.getDate() + S.dayOffset);
+  const isDaily = !S.qid; const d = dayDate(ti + S.dayOffset);
   const when = $("when");
   when.innerHTML = ""; const b = document.createElement("b"); const s = document.createElement("span");
   if (isDaily) { b.textContent = S.dayOffset === 0 ? "Today" : S.dayOffset === -1 ? "Yesterday" : d.toLocaleDateString(undefined, { weekday:"short" }); s.textContent = d.toLocaleDateString(undefined, { month:"short", day:"numeric" }); }
