@@ -543,9 +543,11 @@ const SCI = [
 const Q = (() => { const out = CURVES.slice(0, 3); let ri = 0, mi = 0; for (let i = 3; i < CURVES.length; i++) { out.push(CURVES[i]); if ((i - 2) % 3 === 0 && ri < RANKS.length) out.push(RANKS[ri++]); if ((i - 3) % 4 === 0 && mi < MAPS.length) out.push(MAPS[mi++]); } while (ri < RANKS.length) out.push(RANKS[ri++]); while (mi < MAPS.length) out.push(MAPS[mi++]); return out; })();
 /* mix the lab questions in: every third day from tomorrow on is a lab question */
 { const base = Q.splice(3); let si = 0; base.forEach((q, i) => { if (i % 2 === 0 && si < SCI.length) Q.push(SCI[si++]); Q.push(q); }); while (si < SCI.length) Q.push(SCI[si++]); }
+/* Nov 6 opens with the whiteboard classic: numbers by vibes */
+{ const i = Q.findIndex(q => q.id === "numbers-vibes"); Q.unshift(Q.splice(i, 1)[0]); }
 const CATS = ["All", ...Array.from(new Set(Q.map(q=>q.cat)))];
-const ROT_START = Date.UTC(2026,10,9); // day 0 of the rotation (Nov 9 2026)
-const ROT_OFFSET = 2; // the group has already done energy + drinks
+const ROT_START = Date.UTC(2026,10,6); // day 0 of the rotation (Nov 6 2026): numbers, energy, drinks, then hunger on Nov 9
+const ROT_OFFSET = 0;
 const N = 80; // grid intervals -> 81 samples per answer
 
 /* ---------------- helpers ---------------- */
