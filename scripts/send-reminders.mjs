@@ -51,5 +51,18 @@ for (const n of nudges) {
   pushedNudges.push(n.id);
 }
 if (pushedNudges.length) await rpc("nudges_done", { p_key: PRIV, p_ids: pushedNudges });
+// "Results are in": the last person in a group answered today's question. Skipped on databases without results-alert.sql.
+let alerts = [];
+try { alerts = await rpc("alerts_due", { p_key: PRIV }); } catch (e) { console.log("no alerts:", e.message.slice(0, 80)); }
+const pushedAlerts = [];
+for (const a of alerts) {
+  const body = `Everyone in ${a.group} answered${a.by ? " (" + a.by + " was last)" : ""}. Come see how you compare.`;
+  for (const s of a.subs || []) {
+    try { await webpush.sendNotification(s.sub, JSON.stringify({ title: "The results are in", body, url: "./", tag: "gg-results-" + a.id }), { TTL: 6 * 3600 }); }
+    catch (e) { if (e.statusCode === 404 || e.statusCode === 410) gone.push(s.id); else console.error("alert push failed", a.id, e.statusCode || e.message); }
+  }
+  pushedAlerts.push(a.id);
+}
+if (pushedAlerts.length) await rpc("alerts_done", { p_key: PRIV, p_ids: pushedAlerts });
 if (sent.length || gone.length) await rpc("push_done", { p_key: PRIV, p_sent: sent, p_gone: [...new Set(gone)] });
-console.log(`due ${due.length}, sent ${sent.length}, nudges ${pushedNudges.length}, removed ${gone.length}`);
+console.log(`due ${due.length}, sent ${sent.length}, nudges ${pushedNudges.length}, alerts ${pushedAlerts.length}, removed ${gone.length}`);

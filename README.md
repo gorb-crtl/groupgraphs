@@ -10,6 +10,8 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - **Group chat:** each question has a chat that only your group sees. Post a comment, or add a "rule" (a further constraint like "assume you slept 8 hours") that's pinned above the question.
 - **Your color:** under Groups & profile, pick any color on the color wheel or type a hex code, and you're that color on every chart.
 - **Group streak and nudges:** today's question shows how many days in a row everyone in the group has answered, who's answered today, and a Nudge button next to anyone who hasn't. A nudge can carry a short message; it shows up in the app and as a notification if they turned those on.
+- **Results are in:** when the last person in a group answers today's question, everyone else gets a notification.
+- **Your stats:** a personal page with your streak, best match, how often you're the odd one out, and your hottest takes.
 - **Feedback:** members send bugs and ideas from the Feedback box. It all goes to the app owner's inbox (the host of the oldest group when `feedback.sql` is run; change it with `update gg_settings set v = 'username' where k = 'owner';`).
 - **Daily reminder:** under 🔔 Reminder, pick an hour and turn on phone notifications (iPhone: add the site to your Home Screen first), or add a repeating event to Apple/Outlook/Google Calendar. Notifications skip days you've already answered.
 
@@ -18,7 +20,7 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - `index.html`: the whole app (no build step).
 - `config.js`: your Supabase project URL and anon key.
 - `supabase/setup.sql`: run once in Supabase's SQL Editor to create the tables and functions.
-- `supabase/comments.sql`, `supabase/reminders.sql`, `supabase/summary.sql`, `supabase/ideas.sql`, `supabase/feedback.sql`, `supabase/groups-extra.sql`, `supabase/social.sql`: the same additions on their own, for a database set up before they existed.
+- `supabase/comments.sql`, `supabase/reminders.sql`, `supabase/summary.sql`, `supabase/ideas.sql`, `supabase/feedback.sql`, `supabase/groups-extra.sql`, `supabase/social.sql`, `supabase/results-alert.sql`: the same additions on their own, for a database set up before they existed.
 - `keys.html`: one-time page that makes the notification key pair in your browser.
 - `sw.js`, `manifest.webmanifest`, icons: let the site install to a home screen and receive notifications.
 - `scripts/send-reminders.mjs` + `.github/workflows/reminders.yml`: a GitHub Action that runs every 10 minutes and sends the reminders and nudges.

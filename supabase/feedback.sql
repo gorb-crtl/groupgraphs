@@ -65,5 +65,6 @@ begin
   delete from feedback f where f.id = p_id and (f.person_id = p.id or gg_fb_visible(p, f.group_id));
 end $$;
 
+revoke all on function gg_fb_reader(people), gg_fb_visible(people, uuid) from public, anon, authenticated;
 revoke all on function send_feedback(uuid, uuid, text, text), get_feedback(uuid), delete_feedback(uuid, bigint) from public, anon, authenticated;
 grant execute on function send_feedback(uuid, uuid, text, text), get_feedback(uuid), delete_feedback(uuid, bigint) to anon, authenticated;
