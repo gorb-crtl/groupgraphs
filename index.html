@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 22'%3E%3Cpath d='M2 2v18h22' fill='none' stroke='%231b2430' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M4 18c5-1 7-10 11-12s5 1 8-3' fill='none' stroke='%232348b8' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
 <title>Great Graphs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 /* Layout: one centered notebook column; the graph-paper plot is the hero, controls sit under it like margin notes. */
 :root {
@@ -25,8 +25,8 @@
   --band: rgba(35,72,184,.045);
   --danger: #b4232a;
   --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
-  --f-hand: "Kalam", "Comic Sans MS", "Segoe Print", cursive;
-  --f-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-hand: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
@@ -50,7 +50,7 @@ button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; }
 
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.brand { font-family: var(--f-hand); font-weight: 700; font-size: 28px; line-height: 1; letter-spacing: -.01em; display: flex; align-items: baseline; gap: 8px; }
+.brand { font-family: var(--f-hand); font-weight: 800; font-size: 24px; line-height: 1; letter-spacing: -.03em; display: flex; align-items: baseline; gap: 8px; }
 .brand .mark { display: inline-block; width: 26px; height: 22px; flex: none; transform: translateY(3px); }
 .daynav { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink-2); }
 .daynav button { border: 1px solid var(--line); background: var(--sheet); border-radius: 8px; width: 34px; height: 34px; display: grid; place-items: center; }
@@ -61,7 +61,7 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 .q-head { display: flex; flex-direction: column; gap: 6px; }
 .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); display: flex; gap: 10px; flex-wrap: wrap; }
 .eyebrow .today { background: var(--hl); color: var(--ink); padding: 0 6px; border-radius: 3px; font-weight: 700; }
-h1.prompt { font-family: var(--f-hand); font-weight: 700; font-size: clamp(28px, 5vw, 40px); line-height: 1.12; margin: 0; text-wrap: balance; }
+h1.prompt { font-family: var(--f-hand); font-weight: 800; font-size: clamp(26px, 4.6vw, 38px); line-height: 1.12; letter-spacing: -.025em; margin: 0; text-wrap: balance; }
 .sub { color: var(--ink-2); margin: 0; max-width: 62ch; }
 
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
@@ -73,7 +73,7 @@ h1.prompt { font-family: var(--f-hand); font-weight: 700; font-size: clamp(28px,
 .plot { position: relative; width: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
 .plot svg { display: block; width: 100%; height: auto; overflow: visible; }
 .plot.drawable svg { cursor: crosshair; }
-.hint { position: absolute; left: 50%; top: 42%; transform: translate(-50%,-50%); pointer-events: none; font-family: var(--f-hand); font-size: 22px; color: var(--pen); background: var(--sheet); padding: 4px 14px; border-radius: 8px; border: 1px dashed var(--pen); text-align: center; line-height: 1.25; max-width: 80%; }
+.hint { position: absolute; left: 50%; top: 42%; transform: translate(-50%,-50%); pointer-events: none; font-family: var(--f-hand); font-size: 16px; font-weight: 600; color: var(--pen); background: var(--sheet); padding: 8px 14px; border-radius: 8px; border: 1px dashed var(--pen); text-align: center; line-height: 1.25; max-width: 80%; }
 .tip { position: absolute; pointer-events: none; background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; box-shadow: 0 8px 24px -10px rgba(0,0,0,.35); min-width: 160px; z-index: 3; }
 .tip .tx { font-weight: 700; margin-bottom: 4px; }
 .tip .row { display: flex; align-items: center; gap: 8px; justify-content: space-between; font-variant-numeric: tabular-nums; }
@@ -97,7 +97,7 @@ h1.prompt { font-family: var(--f-hand); font-weight: 700; font-size: clamp(28px,
 
 .gate { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 36px 16px; }
 .gate p { margin: 0; color: var(--ink-2); max-width: 46ch; }
-.gate .big { font-family: var(--f-hand); font-size: 26px; color: var(--ink); }
+.gate .big { font-family: var(--f-hand); font-size: 22px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); }
 
 .legend { display: flex; flex-wrap: wrap; gap: 6px 8px; padding: 10px 2px 2px; }
 .chip { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--sheet); border-radius: 99px; padding: 3px 11px 3px 8px; font-size: 14px; }
@@ -109,7 +109,7 @@ h1.prompt { font-family: var(--f-hand); font-weight: 700; font-size: clamp(28px,
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 .stat { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--sheet); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .stat .k { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
-.stat .v { font-family: var(--f-hand); font-size: 24px; font-weight: 700; line-height: 1.2; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.stat .v { font-family: var(--f-hand); font-size: 19px; font-weight: 800; letter-spacing: -.015em; line-height: 1.2; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .stat .v .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .stat .d { font-size: 13px; color: var(--ink-2); }
 
@@ -134,20 +134,20 @@ td.num { font-family: var(--f-mono); font-size: 13px; }
 
 .note { font-size: 13px; color: var(--ink-2); background: var(--pen-soft); border-radius: 8px; padding: 8px 12px; }
 .note[hidden] { display: none !important; }
-.rank-end { font-family: var(--f-hand); font-size: 18px; color: var(--ink-3); padding: 2px 4px; }
+.rank-end { font-family: var(--f-hand); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); padding: 2px 4px; }
 .rank-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .rank-item { display: flex; align-items: center; gap: 10px; background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; padding: 6px 6px 6px 8px; cursor: grab; position: relative; transition: transform .15s ease; touch-action: pan-y; }
 .rank-item.dragging { transition: none; z-index: 2; box-shadow: 0 12px 24px -12px rgba(0,0,0,.45); border-color: var(--pen); cursor: grabbing; }
 .rank-item .grip { color: var(--ink-3); font-size: 18px; line-height: 1; padding: 4px 2px; touch-action: none; letter-spacing: -3px; }
-.rank-item .rn { font-family: var(--f-hand); font-weight: 700; font-size: 22px; color: var(--pen); width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
+.rank-item .rn { font-family: var(--f-mono); font-weight: 600; font-size: 16px; color: var(--pen); width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
 .rank-item .rl { flex: 1; min-width: 0; font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
 .rank-item .mv { display: flex; gap: 2px; }
 .rank-item .mv .btn { padding: 4px 10px; }
 .rank-wrap { display: flex; flex-direction: column; gap: 6px; max-width: 520px; margin: 0 auto; padding: 4px 0 6px; }
 .fun { margin-top: 14px; border: 1.5px dashed var(--ink-3); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-.fun-h { font-family: var(--f-hand); font-weight: 700; font-size: 22px; line-height: 1.1; }
-.fun-h.small { font-size: 18px; color: var(--pen); margin-top: 6px; }
-.quips { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-family: var(--f-hand); font-size: 19px; line-height: 1.3; max-width: 70ch; }
+.fun-h { font-family: var(--f-hand); font-weight: 800; font-size: 19px; letter-spacing: -.015em; line-height: 1.1; }
+.fun-h.small { font-size: 15px; color: var(--pen); margin-top: 6px; }
+.quips { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-family: var(--f-body); font-size: 16px; line-height: 1.45; max-width: 70ch; }
 .quips li::marker { color: var(--ink-3); }
 .groupbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border: 1px solid var(--line); background: var(--sheet); border-radius: 12px; padding: 8px 10px; }
 .groupbar label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
@@ -155,7 +155,7 @@ td.num { font-family: var(--f-mono); font-size: 13px; }
 .groupbar .spacer { flex: 1; }
 .groupbar .me { font-size: 14px; color: var(--ink-2); }
 .panel { border: 1px solid var(--line); background: var(--sheet); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-.panel h2 { font-family: var(--f-hand); font-size: 26px; margin: 0; line-height: 1.1; }
+.panel h2 { font-family: var(--f-hand); font-size: 22px; font-weight: 800; letter-spacing: -.02em; margin: 0; line-height: 1.1; }
 .panel h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); margin: 0; }
 .panel p { margin: 0; color: var(--ink-2); max-width: 60ch; }
 .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -182,9 +182,12 @@ td.num { font-family: var(--f-mono); font-size: 13px; }
 footer { font-size: 12px; color: var(--ink-3); text-align: center; }
 
 svg text { font-family: var(--f-body); }
-.ax-t { font-family: var(--f-hand); font-size: 17px; fill: var(--ink-2); }
+.ax-cap { font-family: var(--f-body); font-size: 11px; font-weight: 700; letter-spacing: .08em; fill: var(--ink-3); }
+.map-pole { font-family: var(--f-body); font-size: 12px; font-weight: 700; fill: var(--ink-2); }
+.map-name { font-family: var(--f-body); font-size: 12px; font-weight: 700; fill: var(--ink); paint-order: stroke; stroke: var(--sheet); stroke-width: 4px; stroke-linejoin: round; }
+.ax-t { font-family: var(--f-hand); font-size: 13px; font-weight: 600; fill: var(--ink-2); }
 .tick { font-size: 12px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
-.band-l { font-family: var(--f-hand); font-size: 15px; fill: var(--ink-2); }
+.band-l { font-family: var(--f-hand); font-size: 12.5px; font-weight: 500; fill: var(--ink-2); }
 @media (max-width: 560px) {
   .name input { width: 120px; }
   .controls .spacer { display: none; }
@@ -288,6 +291,7 @@ svg text { font-family: var(--f-body); }
   <section id="panelDraw" role="tabpanel" aria-labelledby="tabDraw">
     <div class="sheet">
       <div class="rank-wrap" id="rankBox" hidden></div>
+      <div class="plot drawable" id="mapPlot" hidden></div>
       <div class="plot drawable" id="drawPlot"><div class="hint" id="hint">Drag to draw your curve<br><small>or tap to drop points</small></div></div>
       <div class="controls">
         <button class="btn ghost" id="undo" disabled>Undo</button>
@@ -318,7 +322,7 @@ svg text { font-family: var(--f-body); }
         <button class="btn primary" id="openGroups2">Groups &amp; profile</button>
       </div>
       <div id="resultsBody">
-        <div class="plot" id="resPlot"></div><div class="plot" id="rankPlot" hidden></div>
+        <div class="plot" id="resPlot"></div><div class="plot" id="rankPlot" hidden></div><div class="plot" id="mapRes" hidden></div>
         <div class="legend" id="legend"></div>
       </div>
     </div>
@@ -409,8 +413,23 @@ const RANKS = [
  R("vowels", "Life", "Rank the vowels", "Yes, Y counts today.", ["A","E","I","O","U","Y"]),
  R("numbers-vibes", "Life", "Rank the numbers 1 to 10 by vibes", "Best number to worst number. No math allowed.", ["1","2","3","4","5","6","7","8","9","10"]),
 ];
+const M = (id, cat, title, sub, x, y) => ({ id, cat, kind: "map", title, sub, x, y });
+const MAPS = [
+ M("owl-chaos", "Life", "Where are you on the chaos map?", "Drop yourself where you honestly live.", { lo: "Chaos", hi: "Order" }, { lo: "Early bird", hi: "Night owl" }),
+ M("party-role", "Social", "What kind of party person are you?", "Think about the last few parties you went to.", { lo: "Leaves first", hi: "Closes the place" }, { lo: "Wallflower", hi: "Center of attention" }),
+ M("texting", "Social", "What's your texting style?", "Be honest. Your friends will check.", { lo: "Replies in 3 days", hi: "Replies instantly" }, { lo: "Dry texter", hi: "Paragraphs and emojis" }),
+ M("trip-role", "Social", "What are you like on a group trip?", "Same trip, same budget, same friends.", { lo: "Along for the ride", hi: "Made the itinerary" }, { lo: "Budget", hi: "Bougie" }),
+ M("food-map", "Food", "Map your taste buds", "What you actually reach for.", { lo: "Sweet", hi: "Savory" }, { lo: "Healthy", hi: "Junk food" }),
+ M("pets-places", "Life", "Pick your corner", "Pets and getaways.", { lo: "Cat person", hi: "Dog person" }, { lo: "Beach", hi: "Mountains" }),
+ M("movie-taste", "Media", "Map your movie taste", "What you'd pick for a Friday night.", { lo: "Blockbuster", hi: "Indie" }, { lo: "Comedy", hi: "Horror" }),
+ M("driver", "Life", "What kind of driver are you?", "Or what kind of passenger, if you don't drive.", { lo: "Grandma pace", hi: "Fast & Furious" }, { lo: "Silent car", hi: "Karaoke car" }),
+ M("phone-life", "Life", "How do you run your phone?", "Check your notification badge before answering.", { lo: "Zero unread", hi: "9,999 unread" }, { lo: "Never on it", hi: "Screen time shame" }),
+ M("on-time", "Life", "How do you show up?", "To plans with friends.", { lo: "10 minutes early", hi: "20 minutes late" }, { lo: "Room is a mess", hi: "Room is spotless" }),
+ M("social-energy", "Social", "Introvert or extrovert?", "And how much do you plan your weekends?", { lo: "Introvert", hi: "Extrovert" }, { lo: "Go with the flow", hi: "Every hour planned" }),
+ M("money", "Life", "How do you handle money?", "Your real habits, not your goals.", { lo: "Saver", hi: "Spender" }, { lo: "Never checks the account", hi: "Spreadsheet person" }),
+];
 /* daily order: the first three curve questions, then one ranking after every three curves */
-const Q = (() => { const out = CURVES.slice(0, 3); let ri = 0; for (let i = 3; i < CURVES.length; i++) { out.push(CURVES[i]); if ((i - 2) % 3 === 0 && ri < RANKS.length) out.push(RANKS[ri++]); } while (ri < RANKS.length) out.push(RANKS[ri++]); return out; })();
+const Q = (() => { const out = CURVES.slice(0, 3); let ri = 0, mi = 0; for (let i = 3; i < CURVES.length; i++) { out.push(CURVES[i]); if ((i - 2) % 3 === 0 && ri < RANKS.length) out.push(RANKS[ri++]); if ((i - 3) % 4 === 0 && mi < MAPS.length) out.push(MAPS[mi++]); } while (ri < RANKS.length) out.push(RANKS[ri++]); while (mi < MAPS.length) out.push(MAPS[mi++]); return out; })();
 const CATS = ["All", ...Array.from(new Set(Q.map(q=>q.cat)))];
 const ROT_START = Date.UTC(2026,10,9); // day 0 of the rotation (Nov 9 2026)
 const ROT_OFFSET = 2; // the group has already done energy + drinks
@@ -486,7 +505,7 @@ function currentQ(){ if (S.qid) return Q.find(q=>q.id===S.qid) || qForDay(todayI
 const myName = () => S.me ? S.me.display_name : "";
 const group = () => S.groups.find(g => g.id === S.gid) || null;
 const rkey = (qid) => S.gid + "|" + qid;
-const entriesFor = (qid) => { const r = S.results[rkey(qid)]; return r && r.answered ? (r.answers || []).map(a => ({ key: a.username, name: a.name, createdAt: Date.parse(a.joined) || 0, ...a.payload })).filter(e => Array.isArray(e.ys) || Array.isArray(e.order)) : []; };
+const entriesFor = (qid) => { const r = S.results[rkey(qid)]; return r && r.answered ? (r.answers || []).map(a => ({ key: a.username, name: a.name, createdAt: Date.parse(a.joined) || 0, ...a.payload })).filter(e => Array.isArray(e.ys) || Array.isArray(e.order) || Array.isArray(e.pt)) : []; };
 const groupCount = (qid) => { const r = S.results[rkey(qid)]; if (r) return r.count; const g = group(); return g && g.counts ? (g.counts[qid] || 0) : 0; };
 const myEntry = (qid) => S.me && S.mine[qid] ? { key: S.me.username, name: S.me.display_name, ...S.mine[qid] } : null;
 
@@ -538,7 +557,7 @@ async function loadResults(force){
   if (my === resultsReq && rkey(currentQ().id) === k) { $("count").textContent = groupCount(q.id); renderBank(); if (S.tab === "res") renderResults(); }
 }
 S.store = { save: async (entry) => {
-  const payload = entry.order ? { order: entry.order } : { ys: entry.ys };
+  const payload = entry.order ? { order: entry.order } : entry.pt ? { pt: entry.pt } : { ys: entry.ys };
   await rpc("submit_answer", { p_secret: S.secret, p_qid: entry.qid, p_payload: payload });
   S.mine[entry.qid] = payload; delete S.results[rkey(entry.qid)];
   refreshMe().then(() => { renderGroupbar(); renderBank(); }).catch(() => {});
@@ -634,8 +653,8 @@ function geom(box, q){
   const W = Math.max(300, Math.round(box.clientWidth));
   const narrow = W < 520;
   const y = yInfo(q);
-  const labelW = y.bands ? (narrow ? 78 : 112) : (narrow ? 40 : 52);
-  const m = { l: labelW + 10, r: narrow ? 12 : 22, t: 18, b: 56 };
+  const labelW = narrow ? 82 : 112;
+  const m = { l: labelW + 14, r: narrow ? 12 : 22, t: 30, b: 52 };
   const H = Math.round(clamp(W * 0.6, 300, 470));
   const pw = W - m.l - m.r, ph = H - m.t - m.b;
   const X = (t) => m.l + t*pw, Y = (v) => m.t + (1 - (v - y.min)/(y.max - y.min)) * ph;
@@ -659,24 +678,28 @@ function drawFrame(svg, g, q){
   for (let i=0;i<=nMaj;i++){ const t = i/nMaj, px = X(t); el("line", { x1:px, x2:px, y1:m.t, y2:m.t+ph, stroke:"var(--grid-major)", "stroke-width":1 }, gridG); if (i % skip === 0) { const tx = el("text", { x:px, y:m.t+ph+18, "text-anchor":"middle", class:"tick" }, svg); tx.textContent = fmtX(q.x, tToX(q,t)); } }
   // axes
   el("path", { d:`M${m.l},${m.t} V${m.t+ph} H${m.l+pw}`, fill:"none", stroke:"var(--ink)", "stroke-width":1.6, "stroke-linecap":"round" }, svg);
-  const xt = el("text", { x: m.l + pw/2, y: g.H - 8, "text-anchor":"middle", class:"ax-t" }, svg); xt.textContent = q.x.label + (q.x.max < q.x.min ? "  →" : "");
-  // y labels
+  const xt = el("text", { x: m.l + pw, y: g.H - 10, "text-anchor":"end", class:"ax-cap" }, svg); xt.textContent = q.x.label.toUpperCase() + " →";
+  // y axis: a rail that gets darker toward the top, with zone names (or the two end labels) beside it
+  const rail = m.l - 8, gid = "yg" + Math.random().toString(36).slice(2, 8);
+  const defs = el("defs", {}, svg); const lg = el("linearGradient", { id: gid, x1: 0, y1: 1, x2: 0, y2: 0 }, defs);
+  el("stop", { offset: "0%", "stop-color": "var(--pen)", "stop-opacity": .12 }, lg); el("stop", { offset: "100%", "stop-color": "var(--pen)", "stop-opacity": 1 }, lg);
+  const wrapLines = (txt, max) => { const out = []; let cur = ""; txt.split(" ").forEach(w => { if ((cur + " " + w).trim().length > max && cur) { out.push(cur); cur = w; } else cur = (cur + " " + w).trim(); }); if (cur) out.push(cur); return out.slice(0, 3); };
+  const maxCh = g.narrow ? 11 : 15;
+  const label = (txt, x, yMid, cls, anchor) => { const lines = wrapLines(txt, maxCh); const t = el("text", { x, y: yMid - (lines.length - 1) * 6.5 + 4, "text-anchor": anchor || "end", class: cls }, svg); lines.forEach((ln, i) => { const ts = el("tspan", { x, dy: i ? 13 : 0 }, t); ts.textContent = ln; }); return t; };
   if (y.bands) {
-    y.bands.forEach(b => {
-      const y1 = Y(b.to)+3, y2 = Y(b.from)-3, mid = (y1+y2)/2, bx = m.l - 8;
-      el("path", { d:`M${bx},${y1} q-5,0 -5,5 V${mid-4} l-4,4 l4,4 V${y2-5} q0,5 5,5`, fill:"none", stroke:"var(--ink-3)", "stroke-width":1.2, "stroke-linejoin":"round" }, svg);
-      const lab = el("text", { x: bx - 13, y: mid + 5, "text-anchor":"end", class:"band-l" }, svg); lab.textContent = b.label;
-      if (g.narrow && b.label.length > 9) lab.setAttribute("textLength", Math.min(64, b.label.length*6.5)), lab.setAttribute("lengthAdjust","spacingAndGlyphs");
+    const nb = y.bands.length;
+    y.bands.forEach((b, i) => {
+      const y1 = Y(b.to) + 1.5, y2 = Y(b.from) - 1.5, mid = (y1 + y2) / 2;
+      el("rect", { x: rail - 3, y: y1, width: 5, height: Math.max(2, y2 - y1), rx: 2.5, fill: "var(--pen)", opacity: (0.16 + 0.84 * i / Math.max(1, nb - 1)).toFixed(2) }, svg);
+      const lb = label(b.label, rail - 10, mid, "band-l"); if (y2 - y1 < 14) lb.setAttribute("font-size", 11);
     });
   } else {
-    [0, .5, 1].forEach(f => { const v = y.min + f*(y.max-y.min); const tx = el("text", { x:m.l-8, y:Y(v)+4, "text-anchor":"end", class:"tick" }, svg); tx.textContent = y.fmt === "pct" ? Math.round(v)+"%" : String(Math.round(v)); });
-    const hi = el("text", { x:m.l+8, y:m.t+18, class:"ax-t" }, svg); hi.textContent = "↑ " + y.hi;
-    const lo = el("text", { x:m.l+8, y:m.t+ph-10, class:"ax-t" }, svg); lo.textContent = "↓ " + y.lo;
-    hi.setAttribute("opacity", .75); lo.setAttribute("opacity", .75);
+    el("rect", { x: rail - 3, y: m.t, width: 5, height: ph, rx: 2.5, fill: `url(#${gid})` }, svg);
+    label(y.hi, rail - 10, m.t + 10, "band-l");
+    label(y.lo, rail - 10, m.t + ph - 14, "band-l");
+    if (y.fmt === "pct") [0, .5, 1].forEach(f => { const v = y.min + f * (y.max - y.min); if (f === .5) { const t = el("text", { x: rail - 10, y: Y(v) + 4, "text-anchor": "end", class: "tick" }, svg); t.textContent = Math.round(v) + "%"; } });
   }
-  const yl = el("text", { x: 14, y: m.t + ph/2, "text-anchor":"middle", class:"ax-t", transform:`rotate(-90 14 ${m.t+ph/2})` }, svg); yl.textContent = y.label;
-  if (y.bands) yl.setAttribute("opacity", 0);
-  if (y.bands) { const yt = el("text", { x: 4, y: m.t - 4, class:"ax-t" }, svg); yt.textContent = y.label; yt.setAttribute("font-weight", 700); }
+  const yt = el("text", { x: 2, y: m.t - 14, class: "ax-cap" }, svg); yt.textContent = y.label.toUpperCase() + " ↑";
 }
 function curvePath(g, pts){
   if (!pts.length) return "";
@@ -700,9 +723,10 @@ function mergeStroke(pts, st){
   return [...pts.filter(o => o.t < tmin - 0.006 || o.t > tmax + 0.006), ...fresh].sort((a,b)=>a.t-b.t);
 }
 function renderDraw(){
-  const q = currentQ(), box = $("drawPlot"), isRank = q.kind === "rank";
-  $("rankBox").hidden = !isRank; box.hidden = isRank;
-  $("tabDraw").textContent = isRank ? "Rank yours" : "Draw yours";
+  const q = currentQ(), box = $("drawPlot"), isRank = q.kind === "rank", isMap = q.kind === "map";
+  $("rankBox").hidden = !isRank; box.hidden = isRank || isMap; $("mapPlot").hidden = !isMap;
+  if (isMap) { $("howto").textContent = "Tap anywhere to drop your dot. Tap again to move it."; renderMapInput(); return; }
+  $("tabDraw").textContent = isRank ? "Rank yours" : isMap ? "Place yours" : "Draw yours";
   $("howto").textContent = isRank ? "Drag the rows into order, or use the arrows. The top is " + q.best + "." : "Redraw over any stretch to replace it. Leave gaps blank if you have no idea; only the part you draw counts.";
   if (isRank) { renderRank(); return; }
   if (drawSvg) drawSvg.remove();
@@ -733,18 +757,19 @@ function paintDraw(){
   $("hint").hidden = pts.length > 0 || !!stroke || !S.canWrite;
 }
 function syncControls(){
-  const q = currentQ(), has = q.kind === "rank" ? S.order.length > 0 : S.pts.length >= 2, name = myName();
-  $("undo").disabled = !S.undo.length; $("clear").disabled = q.kind === "rank" ? !S.undo.length : !S.pts.length; $("clear").textContent = q.kind === "rank" ? "Reset" : "Clear";
+  const q = currentQ(), has = q.kind === "rank" ? S.order.length > 0 : q.kind === "map" ? !!S.pt : S.pts.length >= 2, name = myName();
+  $("undo").disabled = !S.undo.length; $("clear").disabled = q.kind === "rank" ? !S.undo.length : q.kind === "map" ? !S.pt : !S.pts.length; $("clear").textContent = q.kind === "rank" ? "Reset" : "Clear";
   $("submit").disabled = !has || !S.me || !S.canWrite;
   const mine = myEntry(q.id);
   $("submit").textContent = mine ? "Update my answer" : "Submit";
 }
 const draftKey = () => "gg-draft-" + currentQ().id;
-function persistDraft(){ ls.set(draftKey(), currentQ().kind === "rank" ? S.order : S.pts); }
+function persistDraft(){ const k = currentQ().kind; ls.set(draftKey(), k === "rank" ? S.order : k === "map" ? { pt: S.pt } : S.pts); }
 function loadPtsForQ(){
   const q = currentQ(); if (S.drawnFor === q.id) return; S.drawnFor = q.id; S.undo = [];
   const mine = myEntry(q.id);
   const draft = ls.get(draftKey(), null);
+  if (q.kind === "map") { S.pt = draft && Array.isArray(draft.pt) ? draft.pt : mine && Array.isArray(mine.pt) ? mine.pt.slice() : null; return; }
   if (q.kind === "rank") {
     const ok = (a) => Array.isArray(a) && a.length === q.items.length && a.every(v => typeof v === "number");
     S.order = ok(draft) ? draft.slice() : mine && ok(mine.order) ? mine.order.slice() : q.items.map((_, i) => i);
@@ -782,10 +807,11 @@ function renderResults(){
   
   $("gateText").textContent = "";
   $("table").closest("details").hidden = gated || list.length === 0;
-  if (gated) $("gateText").textContent = `${total} ${total===1?"person has":"people have"} answered. ${q.kind === "rank" ? "Submit your own ranking" : "Draw and submit your own curve"} first so their answers don't sway yours.`;
+  if (gated) $("gateText").textContent = `${total} ${total===1?"person has":"people have"} answered. ${q.kind === "rank" ? "Submit your own ranking" : q.kind === "map" ? "Place your own dot" : "Draw and submit your own curve"} first so their answers don't sway yours.`;
   if (gated || list.length === 0) return;
 
-  $("resPlot").hidden = q.kind === "rank"; $("rankPlot").hidden = q.kind !== "rank";
+  $("resPlot").hidden = q.kind !== undefined && q.kind !== "curve"; $("rankPlot").hidden = q.kind !== "rank"; $("mapRes").hidden = q.kind !== "map";
+  if (q.kind === "map") { renderMapResults(q, list, mine); return; }
   if (q.kind === "rank") { renderRankResults(q, list, mine); return; }
   const box = $("resPlot"); if (resSvg) resSvg.remove();
   resSvg = el("svg", { role:"img", "aria-label": `Everyone's answers: ${q.title}` }); box.appendChild(resSvg);
@@ -1000,6 +1026,103 @@ function renderRankResults(q, list, mine){
   rows.forEach(row => { const tr = document.createElement("tr"); const c0 = document.createElement("td"); c0.textContent = row.label; tr.appendChild(c0); const c1 = document.createElement("td"); c1.className = "num"; c1.textContent = row.avg.toFixed(1); tr.appendChild(c1); people.forEach(e => { const c = document.createElement("td"); c.className = "num"; c.textContent = rankOf(e, row.i); tr.appendChild(c); }); t.appendChild(tr); });
 }
 
+/* ---------------- map questions ---------------- */
+function mapGeom(box){
+  const W = Math.max(300, Math.round(box.clientWidth || 600)), narrow = W < 520;
+  const H = Math.round(clamp(W * (narrow ? 0.95 : 0.62), 300, 520));
+  const m = { l: 6, r: 6, t: 6, b: 6 }, pw = W - m.l - m.r, ph = H - m.t - m.b;
+  return { W, H, m, pw, ph, narrow, X: (v) => m.l + v * pw, Y: (v) => m.t + (1 - v) * ph, inv: (px, py) => [clamp((px - m.l) / pw, 0, 1), clamp(1 - (py - m.t) / ph, 0, 1)] };
+}
+function drawMapFrame(svg, g, q){
+  svg.setAttribute("viewBox", `0 0 ${g.W} ${g.H}`); svg.setAttribute("width", g.W); svg.setAttribute("height", g.H);
+  const { m, pw, ph } = g;
+  el("rect", { x: m.l, y: m.t, width: pw, height: ph, rx: 10, fill: "var(--sheet)", stroke: "var(--line)" }, svg);
+  // quadrant tints: a faint wash in each corner so the four "types" read at a glance
+  [[0, 0], [1, 0], [0, 1], [1, 1]].forEach(([a, b], i) => el("rect", { x: m.l + a * pw / 2, y: m.t + b * ph / 2, width: pw / 2, height: ph / 2, fill: "var(--pen)", opacity: [0.03, 0.06, 0.06, 0.03][i] }, svg));
+  for (let i = 1; i < 10; i++) { el("line", { x1: m.l + pw * i / 10, x2: m.l + pw * i / 10, y1: m.t, y2: m.t + ph, stroke: "var(--grid)" }, svg); el("line", { y1: m.t + ph * i / 10, y2: m.t + ph * i / 10, x1: m.l, x2: m.l + pw, stroke: "var(--grid)" }, svg); }
+  el("line", { x1: m.l + pw / 2, x2: m.l + pw / 2, y1: m.t + 26, y2: m.t + ph - 26, stroke: "var(--ink-3)", "stroke-width": 1.5 }, svg);
+  el("line", { y1: m.t + ph / 2, y2: m.t + ph / 2, x1: m.l + 8, x2: m.l + pw - 8, stroke: "var(--ink-3)", "stroke-width": 1.5 }, svg);
+  const pole = (txt, x, y, anchor) => { const t = el("text", { x, y, "text-anchor": anchor, class: "map-pole" }, svg); t.textContent = txt; const bb = t.getBBox(); const r = el("rect", { x: bb.x - 7, y: bb.y - 3, width: bb.width + 14, height: bb.height + 6, rx: 99, fill: "var(--sheet)", stroke: "var(--line)" }, svg); svg.insertBefore(r, t); };
+  pole(q.y.hi, m.l + pw / 2, m.t + 20, "middle");
+  pole(q.y.lo, m.l + pw / 2, m.t + ph - 10, "middle");
+  pole(q.x.lo, m.l + 12, m.t + ph / 2 - 10, "start");
+  pole(q.x.hi, m.l + pw - 12, m.t + ph / 2 - 10, "end");
+}
+function renderMapInput(){
+  const q = currentQ(), box = $("mapPlot"); box.innerHTML = "";
+  const svg = el("svg", { role: "img", "aria-label": `Map: ${q.x.lo} to ${q.x.hi}, ${q.y.lo} to ${q.y.hi}. Tap to place yourself.` }, box);
+  const g = mapGeom(box); drawMapFrame(svg, g, q);
+  const mine = myEntry(q.id), c = mine ? colorOf(mine.key).c : "var(--pen)";
+  const layer = el("g", {}, svg);
+  const paint = () => { layer.innerHTML = ""; if (!S.pt) return; const cx = g.X(S.pt[0]), cy = g.Y(S.pt[1]);
+    el("circle", { cx, cy, r: 16, fill: c, opacity: .15 }, layer); el("circle", { cx, cy, r: 8, fill: c, stroke: "var(--sheet)", "stroke-width": 3 }, layer);
+    const t = el("text", { x: cx, y: cy - 16, "text-anchor": "middle", class: "map-name" }, layer); t.textContent = myName() || "you"; };
+  paint();
+  let dragging = false;
+  const place = (ev) => { const r = svg.getBoundingClientRect(), sx = g.W / r.width; S.pt = g.inv((ev.clientX - r.left) * sx, (ev.clientY - r.top) * sx).map(v => Math.round(v * 1000) / 1000); paint(); };
+  svg.addEventListener("pointerdown", (ev) => { if (!S.canWrite || ev.button !== 0) return; ev.preventDefault(); svg.setPointerCapture(ev.pointerId); S.undo.push(S.pt); dragging = true; place(ev); });
+  svg.addEventListener("pointermove", (ev) => { if (dragging) place(ev); });
+  const end = () => { if (!dragging) return; dragging = false; persistDraft(); syncControls(); };
+  svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end);
+  svg.style.touchAction = "none";
+}
+const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+function lean(v, lo, hi){ const d = v - 0.5, a = Math.abs(d); const pole = (d < 0 ? lo : hi).toLowerCase(); if (a < 0.07) return `right between ${lo.toLowerCase()} and ${hi.toLowerCase()}`; return (a < 0.2 ? "a little " : a < 0.35 ? "clearly " : "hard ") + "toward " + pole; }
+function renderMapResults(q, list, mine){
+  list = list.filter(e => Array.isArray(e.pt));
+  const box = $("mapRes"); box.innerHTML = "";
+  const svg = el("svg", { role: "img", "aria-label": `Everyone's spots: ${q.title}` }, box);
+  const g = mapGeom(box); drawMapFrame(svg, g, q);
+  const cen = list.length ? [list.reduce((a, e) => a + e.pt[0], 0) / list.length, list.reduce((a, e) => a + e.pt[1], 0) / list.length] : null;
+  if (cen && list.length > 1 && !S.hidden.has("__avg")) { const cx = g.X(cen[0]), cy = g.Y(cen[1]);
+    el("circle", { cx, cy, r: 13, fill: "none", stroke: "var(--ink)", "stroke-width": 2.5, "stroke-dasharray": "3 3" }, svg);
+    el("path", { d: `M${cx - 5},${cy}H${cx + 5}M${cx},${cy - 5}V${cy + 5}`, stroke: "var(--ink)", "stroke-width": 2.5, "stroke-linecap": "round" }, svg);
+    const t = el("text", { x: cx, y: cy + 28, "text-anchor": "middle", class: "map-name" }, svg); t.textContent = "group avg"; }
+  const marks = {};
+  // place name labels, nudging ones that would collide
+  const placed = [];
+  list.forEach(e => {
+    const isMe = mine && e.key === mine.key, cx = g.X(e.pt[0]), cy = g.Y(e.pt[1]); const gg = el("g", {}, svg); marks[e.key] = gg;
+    el("circle", { cx, cy, r: isMe ? 9 : 7.5, fill: colorOf(e.key).c, stroke: "var(--sheet)", "stroke-width": 2.5 }, gg);
+    let ly = cy - 14; for (let k = 0; k < 6 && placed.some(p => Math.abs(p.x - cx) < 60 && Math.abs(p.y - ly) < 14); k++) ly += (k % 2 ? -1 : 1) * 14 * (k + 1);
+    placed.push({ x: cx, y: ly });
+    const t = el("text", { x: cx, y: ly, "text-anchor": cx < 40 ? "start" : cx > g.W - 40 ? "end" : "middle", class: "map-name" }, gg); t.textContent = e.name + (isMe ? " (you)" : "");
+    if (S.hidden.has(e.key)) gg.setAttribute("opacity", .1);
+  });
+  // legend
+  const lgd = $("legend"); lgd.innerHTML = "";
+  const chip = (key, label, sw, isMe) => { const b = document.createElement("button"); b.className = "chip" + (S.hidden.has(key) ? " off" : "") + (isMe ? " me" : ""); b.setAttribute("aria-pressed", String(!S.hidden.has(key))); const sp = document.createElement("span"); sp.className = "sw"; sp.style.cssText = sw; const t = document.createElement("span"); t.textContent = label; b.append(sp, t); b.addEventListener("click", () => { S.hidden.has(key) ? S.hidden.delete(key) : S.hidden.add(key); renderResults(); }); lgd.appendChild(b); };
+  if (list.length > 1) chip("__avg", "Group average", "width:12px;height:12px;border-radius:50%;border:2px dashed var(--ink);background:none");
+  list.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(e => chip(e.key, e.name + (mine && e.key === mine.key ? " (you)" : ""), `width:10px;height:10px;border-radius:50%;background:${colorOf(e.key).c}`, mine && e.key === mine.key));
+  // stats
+  $("stats").innerHTML = ""; const F = {};
+  if (list.length >= 2) {
+    const pct = (d) => Math.round(d / Math.SQRT2 * 100);
+    statCard("Group vibe", escH(lean(cen[0], q.x.lo, q.x.hi).replace(/^./, c => c.toUpperCase())), `and ${escH(lean(cen[1], q.y.lo, q.y.hi))}`);
+    const pairs = []; for (let a = 0; a < list.length; a++) for (let b = a + 1; b < list.length; b++) pairs.push({ a: list[a], b: list[b], d: dist(list[a].pt, list[b].pt) });
+    pairs.sort((x, y) => x.d - y.d); F.similar = pairs[0]; F.different = pairs[pairs.length - 1];
+    statCard("Most similar answers", pairH(F.similar.a, F.similar.b), `Only ${pct(F.similar.d)}% of the map apart`);
+    if (pairs.length > 1) statCard("Most different answers", pairH(F.different.a, F.different.b), `Opposite corners: ${pct(F.different.d)}% of the map apart`);
+    if (list.length >= 3) { const lw = list.map(e => { const o = list.filter(x => x !== e); const c2 = [o.reduce((a, x) => a + x.pt[0], 0) / o.length, o.reduce((a, x) => a + x.pt[1], 0) / o.length]; return { e, d: dist(e.pt, c2) }; }).sort((a, b) => b.d - a.d)[0]; F.lone = lw; statCard("Lone wolf", `${dotH(lw.e)}${escH(lw.e.name)}`, `Furthest from where everyone else landed`); }
+    const ex = list.map(e => ({ e, d: dist(e.pt, [0.5, 0.5]) })).sort((a, b) => b.d - a.d)[0];
+    F.extreme = { e: ex.e, xp: ex.e.pt[0] < .5 ? q.x.lo : q.x.hi, yp: ex.e.pt[1] < .5 ? q.y.lo : q.y.hi };
+    statCard("Most extreme", `${dotH(ex.e)}${escH(ex.e.name)}`, `Deepest into ${escH(F.extreme.xp.toLowerCase())} + ${escH(F.extreme.yp.toLowerCase())}`);
+    const mid = list.map(e => ({ e, d: dist(e.pt, [0.5, 0.5]) })).sort((a, b) => a.d - b.d)[0];
+    statCard("Most balanced", `${dotH(mid.e)}${escH(mid.e.name)}`, `Closest to the middle of the map`);
+    // corners count
+    const corners = {}; list.forEach(e => { const k = (e.pt[0] < .5 ? q.x.lo : q.x.hi) + " + " + (e.pt[1] < .5 ? q.y.lo : q.y.hi); corners[k] = (corners[k] || 0) + 1; });
+    const top = Object.entries(corners).sort((a, b) => b[1] - a[1])[0];
+    if (top[1] > 1) { F.corner = top; statCard("Most crowded corner", escH(top[0]), `${top[1]} of ${list.length} people landed here`); }
+  }
+  renderFun(q, list, F);
+  // table
+  const t = $("table"); t.innerHTML = "";
+  const hr = document.createElement("tr"); ["Person", `${q.x.lo} ← → ${q.x.hi}`, `${q.y.lo} ← → ${q.y.hi}`].forEach(h => { const th = document.createElement("th"); th.textContent = h; hr.appendChild(th); }); t.appendChild(hr);
+  const row = (name, pt) => { const tr = document.createElement("tr"); const c0 = document.createElement("td"); c0.textContent = name; tr.appendChild(c0); pt.forEach(v => { const c = document.createElement("td"); c.className = "num"; c.textContent = Math.round(v * 100) + "%"; tr.appendChild(c); }); t.appendChild(tr); };
+  if (cen && list.length > 1) row("Group average", cen);
+  list.forEach(e => row(e.name, e.pt));
+}
+
 /* ---------------- jokes ---------------- */
 function hashStr(str){ let h = 2166136261; for (const ch of str) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 function pick(arr, seed){ return arr[(seed >>> 0) % arr.length]; }
@@ -1019,7 +1142,10 @@ function quips(q, list, F){
     `${nm(F.lone.e)} is either a visionary or wrong. The group has voted.`,
     `${nm(F.lone.e)} marches to the beat of a completely different drum. Possibly a kazoo.`,
     `Every group has a wildcard, and today it's ${nm(F.lone.e)}.`], seed >>> 5));
-  if (q.kind === "rank") {
+  if (q.kind === "map") {
+    if (F.extreme) out.push(pick([`${nm(F.extreme.e)} is about as ${F.extreme.xp.toLowerCase()} and ${F.extreme.yp.toLowerCase()} as a person can get. Respect.`, `${nm(F.extreme.e)} went all the way to the ${F.extreme.xp.toLowerCase()} / ${F.extreme.yp.toLowerCase()} corner and set up camp.`], seed >>> 7));
+    if (F.corner && F.corner[1] >= Math.ceil(list.length / 2)) out.push(`The "${F.corner[0].toLowerCase()}" corner is getting crowded. Somebody start charging rent.`);
+  } else if (q.kind === "rank") {
     if (F.divisive && F.divisive.max - F.divisive.min >= Math.ceil(q.items.length / 2)) out.push(pick([
       `${F.divisive.label} has torn this friend group apart: somewhere between #${F.divisive.min} and #${F.divisive.max}. Talk it out.`,
       `Nobody can agree on ${F.divisive.label}. Some of you would die for it, the rest want it gone.`], seed >>> 7));
@@ -1053,12 +1179,13 @@ async function doRoast(){
   const { q, list } = ctx, btn = $("roastBtn");
   btn.disabled = true; const old = btn.textContent; btn.textContent = "Claude is thinking…";
   let summary;
-  if (q.kind === "rank") summary = list.map(e => `${e.name}: ${e.order.map(i => q.items[i]).join(" > ")}`).join("\n");
+  if (q.kind === "map") summary = list.map(e => `${e.name}: ${Math.round(e.pt[0]*100)}% toward ${q.x.hi} (vs ${q.x.lo}), ${Math.round(e.pt[1]*100)}% toward ${q.y.hi} (vs ${q.y.lo})`).join("\n");
+  else if (q.kind === "rank") summary = list.map(e => `${e.name}: ${e.order.map(i => q.items[i]).join(" > ")}`).join("\n");
   else { const idx = []; const step = N / 8; for (let i = 0; i <= N; i += step) idx.push(Math.round(i));
     summary = list.map(e => `${e.name}: ` + idx.map(i => e.ys[i] == null ? null : `${fmtX(q.x, tToX(q, i/N), true)}=${fmtY(q, e.ys[i])}`).filter(Boolean).join(", ")).join("\n"); }
   const stats = [...$("stats").querySelectorAll(".stat")].map(c => c.innerText.replace(/\n+/g, ": ")).join("\n");
   const prompt = `You're the funny friend reading out the results of a friend group's daily question game. Today's question: "${q.title}" (${q.sub})\n` +
-    (q.kind === "rank" ? `Each person ranked these from ${q.best} to ${q.worst}.` : `Each person drew a curve: x is ${q.x.label}, y is ${q.y.label}.`) +
+    (q.kind === "map" ? `Each person placed themselves on a 2D map.` : q.kind === "rank" ? `Each person ranked these from ${q.best} to ${q.worst}.` : `Each person drew a curve: x is ${q.x.label}, y is ${q.y.label}.`) +
     `\n\nAnswers:\n${summary}\n\nStats:\n${stats}\n\nWrite 3 short, playful roast jokes about these specific answers, naming people. Affectionate teasing between close friends, nothing mean-spirited about looks, identity, or anything sensitive. Each joke at most 2 sentences. Return JSON: {"lines": ["...", "...", "..."]}`;
   try {
     const res = await S.sample.json(prompt, { modelTier: "quick", cache: false });
@@ -1110,7 +1237,7 @@ function renderBank(){
 function setTab(t){ if (t === "res") loadResults(true); S.tab = t; $("tabDraw").setAttribute("aria-selected", String(t==="draw")); $("tabRes").setAttribute("aria-selected", String(t==="res")); $("panelDraw").hidden = t!=="draw"; $("panelRes").hidden = t!=="res"; if (t==="draw") renderDraw(); else renderResults(); }
 function renderAll(full){
   loadPtsForQ();
-  $("tabDraw").textContent = currentQ().kind === "rank" ? "Rank yours" : "Draw yours";
+  $("tabDraw").textContent = { rank: "Rank yours", map: "Place yours" }[currentQ().kind] || "Draw yours";
   renderHeader(); renderBank();
   if (S.tab === "draw") { if (!stroke) renderDraw(); } else renderResults();
   $("count").textContent = groupCount(currentQ().id);
@@ -1128,8 +1255,8 @@ $("tabRes").addEventListener("click", ()=>setTab("res"));
 $("goDraw").addEventListener("click", ()=>setTab("draw"));
 $("roastBtn").addEventListener("click", doRoast);
 
-$("undo").addEventListener("click", ()=>{ if (!S.undo.length) return; if (currentQ().kind === "rank") { S.order = S.undo.pop(); persistDraft(); renderRank(); } else { S.pts = S.undo.pop(); persistDraft(); paintDraw(); } syncControls(); });
-$("clear").addEventListener("click", ()=>{ const q = currentQ(); if (q.kind === "rank") { S.undo.push(S.order.slice()); S.order = q.items.map((_, i) => i); persistDraft(); renderRank(); } else { S.undo.push(S.pts); S.pts = []; persistDraft(); paintDraw(); } syncControls(); });
+$("undo").addEventListener("click", ()=>{ if (!S.undo.length) return; if (currentQ().kind === "map") { S.pt = S.undo.pop(); persistDraft(); renderMapInput(); } else if (currentQ().kind === "rank") { S.order = S.undo.pop(); persistDraft(); renderRank(); } else { S.pts = S.undo.pop(); persistDraft(); paintDraw(); } syncControls(); });
+$("clear").addEventListener("click", ()=>{ const q = currentQ(); if (q.kind === "map") { S.undo.push(S.pt); S.pt = null; persistDraft(); renderMapInput(); } else if (q.kind === "rank") { S.undo.push(S.order.slice()); S.order = q.items.map((_, i) => i); persistDraft(); renderRank(); } else { S.undo.push(S.pts); S.pts = []; persistDraft(); paintDraw(); } syncControls(); });
 const who = $("who");
 $("modeNew").addEventListener("click", () => { $("modeNew").setAttribute("aria-pressed","true"); $("modeBack").setAttribute("aria-pressed","false"); $("newForm").hidden = false; $("backForm").hidden = true; $("authErr").textContent = ""; });
 $("modeBack").addEventListener("click", () => { $("modeBack").setAttribute("aria-pressed","true"); $("modeNew").setAttribute("aria-pressed","false"); $("newForm").hidden = true; $("backForm").hidden = false; $("authErr").textContent = ""; });
@@ -1154,6 +1281,7 @@ $("submit").addEventListener("click", async ()=>{
   const prev = entriesFor(q.id).find(e => e.key === key);
   let payload;
   if (q.kind === "rank") payload = { order: S.order.slice() };
+  else if (q.kind === "map") { if (!S.pt) { setStatus("Tap the map to place your dot first.", true); return; } payload = { pt: S.pt.slice() }; }
   else { const ys = toGrid(S.pts, q); if (!ys) { setStatus("Draw at least a short stretch of curve first.", true); return; } payload = { ys }; }
   const entry = { qid: q.id, key, name, ...payload, createdAt: prev?.createdAt || Date.now(), updatedAt: Date.now() };
   $("submit").disabled = true; setStatus("Saving…");
