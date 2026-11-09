@@ -8,6 +8,8 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - **Groups:** permanent rooms. Whoever creates a group is its host and adds friends by username. You can be in several groups.
 - **No peeking:** the database only returns a group's answers to people who've answered that question themselves.
 - **Group chat:** each question has a chat that only your group sees. Post a comment, or add a "rule" (a further constraint like "assume you slept 8 hours") that's pinned above the question.
+- **Your color:** under Groups & profile, pick one of 8 colors and you're that color on every chart. If someone in a group picked it first, you get a free color there.
+- **Group streak and nudges:** today's question shows how many days in a row everyone in the group has answered, who's answered today, and a Nudge button next to anyone who hasn't. A nudge can carry a short message; it shows up in the app and as a notification if they turned those on.
 - **Daily reminder:** under 🔔 Reminder, pick an hour and turn on phone notifications (iPhone: add the site to your Home Screen first), or add a repeating event to Apple/Outlook/Google Calendar. Notifications skip days you've already answered.
 
 ## Files
@@ -15,10 +17,10 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - `index.html`: the whole app (no build step).
 - `config.js`: your Supabase project URL and anon key.
 - `supabase/setup.sql`: run once in Supabase's SQL Editor to create the tables and functions.
-- `supabase/comments.sql`, `supabase/reminders.sql`, `supabase/summary.sql`, `supabase/ideas.sql`, `supabase/feedback.sql`, `supabase/groups-extra.sql`: the same additions on their own, for a database set up before they existed.
+- `supabase/comments.sql`, `supabase/reminders.sql`, `supabase/summary.sql`, `supabase/ideas.sql`, `supabase/feedback.sql`, `supabase/groups-extra.sql`, `supabase/social.sql`: the same additions on their own, for a database set up before they existed.
 - `keys.html`: one-time page that makes the notification key pair in your browser.
 - `sw.js`, `manifest.webmanifest`, icons: let the site install to a home screen and receive notifications.
-- `scripts/send-reminders.mjs` + `.github/workflows/reminders.yml`: an hourly GitHub Action that sends the reminders.
+- `scripts/send-reminders.mjs` + `.github/workflows/reminders.yml`: a GitHub Action that runs every 10 minutes and sends the reminders and nudges.
 
 ## Setup
 
