@@ -22,4 +22,4 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 
 ## Adding questions
 
-Questions live in the `CURVES`, `RANKS` and `MAPS` arrays near the top of the script in `index.html`. The daily question rotates through them in order.
+Questions live in the `CURVES`, `RANKS` and `MAPS` arrays near the top of the script in `index.html`. Players only ever see one question a day (today's, plus earlier days via the back arrow); the rotation goes through the bank in order starting Nov 9, 2026.

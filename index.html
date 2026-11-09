@@ -337,7 +337,7 @@ svg text { font-family: var(--f-body); }
   </section>
 
   </div>
-  <details class="box" id="bankBox">
+  <details class="box" id="bankBox" hidden>
     <summary>Question bank (<span id="bankN"></span>)</summary>
     <div class="filters" id="filters"></div>
     <div class="bank" id="bank"></div>
@@ -567,7 +567,7 @@ S.store = { save: async (entry) => {
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
   $("authPanel").hidden = name !== "auth"; $("codePanel").hidden = name !== "code"; $("groupsPanel").hidden = name !== "groups";
-  $("appMain").hidden = name === "auth" || name === "code"; $("bankBox").hidden = name === "auth" || name === "code";
+  $("appMain").hidden = name === "auth" || name === "code"; $("bankBox").hidden = true;
   $("groupbar").hidden = name === "auth" || name === "code" || !S.me;
   if (name === "groups") renderGroupsPanel();
 }
@@ -1214,12 +1214,12 @@ function renderHeader(){
   else { b.textContent = "From the bank"; s.textContent = "back to today ›"; }
   when.append(b, s);
   $("nextDay").disabled = isDaily && S.dayOffset >= 0;
-  $("prevDay").disabled = isDaily && ti + S.dayOffset <= -ROT_OFFSET;
+  $("prevDay").disabled = isDaily && ti + S.dayOffset <= 0;
   const eb = $("eyebrow"); eb.innerHTML = "";
   const qi = Q.indexOf(q) + 1;
   if (isDaily && S.dayOffset === 0) { const t = document.createElement("span"); t.className = "today"; t.textContent = "Today's graph"; eb.appendChild(t); }
   const c = document.createElement("span"); c.textContent = q.cat; eb.appendChild(c);
-  const n = document.createElement("span"); n.textContent = `No. ${qi} of ${Q.length}`; eb.appendChild(n);
+  const n = document.createElement("span"); n.textContent = "Day " + (ti + S.dayOffset + 1); eb.appendChild(n);
   $("prompt").textContent = q.title; $("sub").textContent = q.sub || "";
   document.title = "GroupGraphs";
 }
@@ -1289,7 +1289,7 @@ $("submit").addEventListener("click", async ()=>{
   catch (e) { setStatus(errText(e), true); if (e.message === "not_signed_in") signOut(); }
   syncControls();
 });
-function fromHash(){ const h = location.hash.replace(/^#/, ""); if (h.startsWith("q-") && Q.some(q=>q.id===h.slice(2))) { S.qid = h.slice(2); } else S.qid = null; go(); if (S.qid) window.scrollTo({ top: 0, behavior: "smooth" }); }
+function fromHash(){ S.qid = null; go(); } // one question a day: links to other questions are ignored
 window.addEventListener("hashchange", fromHash);
 let rz; window.addEventListener("resize", ()=>{ clearTimeout(rz); rz = setTimeout(()=>{ if (S.tab === "draw") renderDraw(); else renderResults(); }, 120); });
 
