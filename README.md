@@ -15,7 +15,7 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - `index.html`: the whole app (no build step).
 - `config.js`: your Supabase project URL and anon key.
 - `supabase/setup.sql`: run once in Supabase's SQL Editor to create the tables and functions.
-- `supabase/comments.sql`, `supabase/reminders.sql`, `supabase/summary.sql`, `supabase/ideas.sql`, `supabase/feedback.sql`: the same additions on their own, for a database set up before they existed.
+- `supabase/comments.sql`, `supabase/reminders.sql`, `supabase/summary.sql`, `supabase/ideas.sql`, `supabase/feedback.sql`, `supabase/groups-extra.sql`: the same additions on their own, for a database set up before they existed.
 - `keys.html`: one-time page that makes the notification key pair in your browser.
 - `sw.js`, `manifest.webmanifest`, icons: let the site install to a home screen and receive notifications.
 - `scripts/send-reminders.mjs` + `.github/workflows/reminders.yml`: an hourly GitHub Action that sends the reminders.
@@ -29,4 +29,4 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 
 ## Adding questions
 
-Questions live in the `CURVES`, `RANKS`, `MAPS` and `SCI` (lab) arrays near the top of the script in `index.html`. Lab questions come up every third day. Players only ever see one question a day (today's, plus earlier days via the back arrow); the rotation goes through the bank in order starting Nov 3, 2026 (Nov 5 is the drinks question, Nov 6 numbers by vibes).
+Questions live in the `CURVES`, `RANKS`, `MAPS` and `SCI` (lab) arrays near the top of the script in `index.html`. Lab questions come up every third day. Players only ever see one question a day (today's, plus earlier days via the back arrow); the rotation goes through the bank in order starting Nov 3, 2026, and the new question appears at midnight Central time for everyone (Nov 5 is the drinks question, Nov 6 numbers by vibes).
