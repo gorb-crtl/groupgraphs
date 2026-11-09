@@ -29,4 +29,4 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 
 ## Adding questions
 
-Questions live in the `CURVES`, `RANKS`, `MAPS` and `SCI` (lab) arrays near the top of the script in `index.html`. Lab questions come up every third day. Players only ever see one question a day (today's, plus earlier days via the back arrow); the rotation goes through the bank in order starting Nov 9, 2026.
+Questions live in the `CURVES`, `RANKS`, `MAPS` and `SCI` (lab) arrays near the top of the script in `index.html`. Lab questions come up every third day. Players only ever see one question a day (today's, plus earlier days via the back arrow); the rotation goes through the bank in order starting Nov 3, 2026 (Nov 5 is the drinks question, Nov 6 numbers by vibes).

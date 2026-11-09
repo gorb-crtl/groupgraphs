@@ -543,15 +543,39 @@ const SCI = [
 const Q = (() => { const out = CURVES.slice(0, 3); let ri = 0, mi = 0; for (let i = 3; i < CURVES.length; i++) { out.push(CURVES[i]); if ((i - 2) % 3 === 0 && ri < RANKS.length) out.push(RANKS[ri++]); if ((i - 3) % 4 === 0 && mi < MAPS.length) out.push(MAPS[mi++]); } while (ri < RANKS.length) out.push(RANKS[ri++]); while (mi < MAPS.length) out.push(MAPS[mi++]); return out; })();
 /* mix the lab questions in: every third day from tomorrow on is a lab question */
 { const base = Q.splice(3); let si = 0; base.forEach((q, i) => { if (i % 2 === 0 && si < SCI.length) Q.push(SCI[si++]); Q.push(q); }); while (si < SCI.length) Q.push(SCI[si++]); }
+/* "who in the group is most likely to…": rank your friends (items come from the group's members) */
+const W = (id, likely, sub) => ({ id, cat: "Group", kind: "rank", people: true, likely, title: "Who's most likely to " + likely + "?", sub, items: ["Garrett","Emily","Maddie","Michaela","Faith","Ian"], best: "most likely", worst: "least likely" });
+const WHO = [
+ W("who-lab-fire", "cause a lab fire", "Not if. When. Rank the whole group, yourself included."),
+ W("who-famous", "become famous", "Reality TV counts. Being a meme counts."),
+ W("who-zombies", "survive a zombie apocalypse", "Day one, the power goes out. Who's still standing in a month?"),
+ W("who-nobel", "win a Nobel Prize", "And thank everyone in this group by name in the speech. Probably."),
+ W("who-late-wedding", "be late to their own wedding", "Bonus points if they text 'omw' from the shower."),
+ W("who-cats", "end up with seven cats", "It starts with one. It never stays one."),
+ W("who-cry-movie", "cry at a movie", "Including animated movies. Especially animated movies."),
+ W("who-viral", "accidentally go viral", "For the worst possible reason."),
+ W("who-element-baby", "name their kid after an element", "Little Carbon. Baby Argon. Xenon Jr."),
+ W("who-group-chat", "start a fight in the group chat", "Over something extremely small."),
+ W("who-reality-show", "win a reality TV show", "Pick the show yourself. Survivor, Bake Off, Love Island."),
+ W("who-taste-test", "lick something in the lab", "Hypothetically. For science. Please don't."),
+];
+/* a "most likely to" question every fifth day from Nov 12 */
+{ let k = 5; WHO.forEach(w => { Q.splice(k, 0, w); k += 5; }); }
 /* Nov 6 opens with the whiteboard classic: numbers by vibes */
 { const i = Q.findIndex(q => q.id === "numbers-vibes"); Q.unshift(Q.splice(i, 1)[0]); }
 /* the group already did energy and drinks on paper, so Nov 7 and 8 get fresh questions instead */
 Q.splice(Q.findIndex(q => q.id === "energy-day"), 1,
   {id:"dog-size", cat:"Life", title:"How much you want to pet a dog, by its size", sub:"A stranger's dog on the sidewalk. The owner says it's friendly. The owner always says that.", x:{label:"dog weight (lbs)", min:0, max:150, step:25}, y:{label:"pet urge", bands:B([[0,2,"crossing the street"],[2,4,"polite nod"],[4,6,"asking first"],[6,8,"already crouching"],[8,10,"let me hold him"]])}});
+const DRINKS = Q[Q.findIndex(q => q.id === "drunk-drinks")];
 Q.splice(Q.findIndex(q => q.id === "drunk-drinks"), 1,
   R("wake-ups", "Life", "Rank the ways to wake up", "Least awful to most awful. The cat knows what it did.", ["Your alarm","Sunlight","Smell of coffee","Cat sitting on your face","Phone call from your mom","Fire alarm test","Roommate vacuuming","Your own snoring","A hangover","Construction at 7am"], "least awful", "most awful"));
+/* three warm-up days before the numbers: Nov 3, Nov 4, and the drinks classic on Nov 5 */
+Q.unshift(
+  M("grocery-style", "Life", "What kind of grocery shopper are you?", "Be honest about the list you left on the counter.", { lo: "Strict list", hi: "Pure vibes" }, { lo: "In and out in 5 min", hi: "Lives in the store" }),
+  R("late-excuses", "Social", "Rank the excuses for being late", "Most believable to least believable. We've heard all of them.", ["Traffic","Couldn't find parking","My alarm didn't go off","The bus was late","I was already on my way","Couldn't find my keys","My cat was sick","Lost track of time","My experiment ran over","I thought it was tomorrow"], "most believable", "least believable"),
+  DRINKS);
 const CATS = ["All", ...Array.from(new Set(Q.map(q=>q.cat)))];
-const ROT_START = Date.UTC(2026,10,6); // day 0 of the rotation (Nov 6 2026): numbers, energy, drinks, then hunger on Nov 9
+const ROT_START = Date.UTC(2026,10,3); // day 0 of the rotation (Nov 3 2026): grocery map, late excuses, drinks, numbers on Nov 6, hunger on Nov 9
 const ROT_OFFSET = 0;
 const N = 80; // grid intervals -> 81 samples per answer
 
@@ -621,13 +645,28 @@ const S = {
 };
 const todayIndex = () => { const now = new Date(); const d = Math.floor((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - ROT_START) / 864e5); return d; };
 const qForDay = (d) => Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
-function currentQ(){ if (S.qid) return Q.find(q=>q.id===S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
+function baseQ(){ if (S.qid) return Q.find(q=>q.id===S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
+/* "most likely to" questions rank the current group's members, so each group gets its own copy of the question */
+function withPeople(q){
+  if (!q || !q.people) return q; const g = group(); if (!g) return q;
+  const ms = g.members.slice().sort((a, b) => a.username.localeCompare(b.username));
+  return Object.assign({}, q, { id: q.id + "@" + g.id.slice(0, 8), baseId: q.id, items: ms.map(m => m.display_name), keys: ms.map(m => m.username) });
+}
+function currentQ(){ return withPeople(baseQ()); }
+/* map a saved people-ranking onto the group's current member list (people may have joined since) */
+function remapPeople(p, q){
+  if (!p || !q || !q.keys || !Array.isArray(p.order) || !Array.isArray(p.keys)) return p;
+  const ord = p.order.map(i => q.keys.indexOf(p.keys[i])).filter(i => i >= 0);
+  q.keys.forEach((u, i) => { if (!ord.includes(i)) ord.push(i); });
+  return Object.assign({}, p, { order: ord });
+}
+const qFor = (qid) => { const q = currentQ(); return q && q.id === qid ? q : null; };
 const myName = () => S.me ? S.me.display_name : "";
 const group = () => S.groups.find(g => g.id === S.gid) || null;
 const rkey = (qid) => S.gid + "|" + qid;
-const entriesFor = (qid) => { const r = S.results[rkey(qid)]; return r && r.answered ? (r.answers || []).map(a => ({ key: a.username, name: a.name, createdAt: Date.parse(a.joined) || 0, ...a.payload })).filter(e => Array.isArray(e.ys) || Array.isArray(e.order) || Array.isArray(e.pt)) : []; };
+const entriesFor = (qid) => { const r = S.results[rkey(qid)], q = qFor(qid); return r && r.answered ? (r.answers || []).map(a => ({ key: a.username, name: a.name, createdAt: Date.parse(a.joined) || 0, ...remapPeople(a.payload, q) })).filter(e => Array.isArray(e.ys) || Array.isArray(e.order) || Array.isArray(e.pt)) : []; };
 const groupCount = (qid) => { const r = S.results[rkey(qid)]; if (r) return r.count; const g = group(); return g && g.counts ? (g.counts[qid] || 0) : 0; };
-const myEntry = (qid) => S.me && S.mine[qid] ? { key: S.me.username, name: S.me.display_name, ...S.mine[qid] } : null;
+const myEntry = (qid) => S.me && S.mine[qid] ? { key: S.me.username, name: S.me.display_name, ...remapPeople(S.mine[qid], qFor(qid)) } : null;
 
 /* stable colour per person: the order they were added to the current group */
 function colorOf(key){
@@ -677,7 +716,8 @@ async function loadResults(force){
   if (my === resultsReq && rkey(currentQ().id) === k) { $("count").textContent = groupCount(q.id); renderBank(); if (S.tab === "res") renderResults(); }
 }
 S.store = { save: async (entry) => {
-  const payload = entry.order ? { order: entry.order } : entry.pt ? { pt: entry.pt } : { ys: entry.ys };
+  const cq = qFor(entry.qid);
+  const payload = entry.order ? (cq && cq.keys ? { order: entry.order, keys: cq.keys } : { order: entry.order }) : entry.pt ? { pt: entry.pt } : { ys: entry.ys };
   await rpc("submit_answer", { p_secret: S.secret, p_qid: entry.qid, p_payload: payload });
   S.mine[entry.qid] = payload; delete S.results[rkey(entry.qid)];
   refreshMe().then(() => { renderGroupbar(); renderBank(); }).catch(() => {});
@@ -1251,8 +1291,8 @@ function renderRankResults(q, list, mine){
   if (list.length >= 2) {
     const fav = rows[0], least = rows[rows.length - 1];
     F.fav = fav; F.least = least;
-    statCard("Most liked", escH(fav.label), `Average rank ${fav.avg.toFixed(1)}` + (fav.max === 1 ? ", and it was everyone's #1" : ""));
-    statCard("Most disliked", escH(least.label), `Average rank ${least.avg.toFixed(1)} out of ${n}`);
+    statCard(q.people ? "Most likely" : "Most liked", escH(fav.label), `Average rank ${fav.avg.toFixed(1)}` + (fav.max === 1 ? ", and it was everyone's #1" : ""));
+    statCard(q.people ? "Least likely" : "Most disliked", escH(least.label), `Average rank ${least.avg.toFixed(1)} out of ${n}`);
     const bySd = rows.slice().sort((a, b) => a.sd - b.sd || a.avg - b.avg);
     F.agreed = bySd[0]; F.divisive = bySd[bySd.length - 1];
     statCard("Most agreed on", escH(F.agreed.label), F.agreed.min === F.agreed.max ? `Everyone put it at #${F.agreed.min}` : `Everyone put it between #${F.agreed.min} and #${F.agreed.max}`);
@@ -1375,35 +1415,105 @@ function pick(arr, seed){ return arr[(seed >>> 0) % arr.length]; }
 function quips(q, list, F){
   const out = [], seed = hashStr(q.id + list.map(e => e.key).join(","));
   const nm = (e) => e.name;
-  if (list.length === 1) out.push(pick([`${nm(list[0])} is the only one who answered. Everyone else, your silence has been noted.`, `So far it's just ${nm(list[0])} out here, drawing alone. Somebody keep them company.`], seed));
-  if (F.similar) out.push(pick([
+  const P = (arr, shift) => pick(arr, seed >>> (shift || 0));
+  if (list.length === 1) out.push(P([
+    `${nm(list[0])} is the only one who answered. Everyone else, your silence has been noted.`,
+    `So far it's just ${nm(list[0])} out here, drawing alone. Somebody keep them company.`,
+    `n = 1. ${nm(list[0])} is technically the group average right now. Congratulations, I guess.`,
+    `${nm(list[0])} showed up. The rest of you are being marked absent.`]));
+  if (list.length >= 4) out.push(P([
+    `${list.length} answers in. That's a statistically significant friend group.`,
+    `${list.length} people answered. Reviewer 2 still wants a bigger sample size.`,
+    `With ${list.length} answers, this is now peer-reviewed science.`], 2));
+  if (F.similar && list.length >= 3) out.push(P([
     `${nm(F.similar.a)} and ${nm(F.similar.b)} gave nearly identical answers. Either they're soulmates or one of them was looking at the other's phone.`,
     `${nm(F.similar.a)} and ${nm(F.similar.b)} share one brain cell, and today it was working.`,
-    `If ${nm(F.similar.a)} and ${nm(F.similar.b)} ever disagree on this, check whether one of them has been replaced by a clone.`], seed));
-  if (F.different && list.length > 2) out.push(pick([
+    `If ${nm(F.similar.a)} and ${nm(F.similar.b)} ever disagree on this, check whether one of them has been replaced by a clone.`,
+    `${nm(F.similar.a)} and ${nm(F.similar.b)}: same answer, same vibe, same suspicious timing.`,
+    `${nm(F.similar.a)} and ${nm(F.similar.b)} are basically duplicate samples. Pick one and save on reagents.`,
+    `Somebody check whether ${nm(F.similar.a)} and ${nm(F.similar.b)} are the same person with two accounts.`], 1));
+  if (F.different && list.length > 2) out.push(P([
     `${nm(F.different.a)} and ${nm(F.different.b)} should never plan a trip together.`,
     `${nm(F.different.a)} and ${nm(F.different.b)} answered like they were given two different questions.`,
-    `Somewhere there's a universe where ${nm(F.different.a)} and ${nm(F.different.b)} agree. It isn't this one.`], seed >>> 3));
-  if (F.lone) out.push(pick([
+    `Somewhere there's a universe where ${nm(F.different.a)} and ${nm(F.different.b)} agree. It isn't this one.`,
+    `${nm(F.different.a)} and ${nm(F.different.b)} are immiscible. Do not shake.`,
+    `Seating chart note: ${nm(F.different.a)} and ${nm(F.different.b)}, opposite ends of the table.`,
+    `${nm(F.different.a)} and ${nm(F.different.b)} have entered their rivalry arc.`], 3));
+  if (F.lone) out.push(P([
     `${nm(F.lone.e)} is either a visionary or wrong. The group has voted.`,
     `${nm(F.lone.e)} marches to the beat of a completely different drum. Possibly a kazoo.`,
-    `Every group has a wildcard, and today it's ${nm(F.lone.e)}.`], seed >>> 5));
+    `Every group has a wildcard, and today it's ${nm(F.lone.e)}.`,
+    `${nm(F.lone.e)} is the outlier. Normally we'd run a Q-test and throw them out, but we love them.`,
+    `${nm(F.lone.e)} answered this one from a parallel dimension.`,
+    `Bold of ${nm(F.lone.e)} to disagree with literally everyone. Iconic, honestly.`], 5));
   if (q.kind === "map") {
-    if (F.extreme) out.push(pick([`${nm(F.extreme.e)} is about as ${F.extreme.xp.toLowerCase()} and ${F.extreme.yp.toLowerCase()} as a person can get. Respect.`, `${nm(F.extreme.e)} went all the way to the ${F.extreme.xp.toLowerCase()} / ${F.extreme.yp.toLowerCase()} corner and set up camp.`], seed >>> 7));
-    if (F.corner && F.corner[1] >= Math.ceil(list.length / 2)) out.push(`The "${F.corner[0].toLowerCase()}" corner is getting crowded. Somebody start charging rent.`);
+    if (F.extreme) out.push(P([
+      `${nm(F.extreme.e)} is about as ${F.extreme.xp.toLowerCase()} and ${F.extreme.yp.toLowerCase()} as a person can get. Respect.`,
+      `${nm(F.extreme.e)} went all the way to the ${F.extreme.xp.toLowerCase()} / ${F.extreme.yp.toLowerCase()} corner and set up camp.`,
+      `${nm(F.extreme.e)} didn't pick a spot on the map, they picked the edge of the map.`], 7));
+    if (F.corner && F.corner[1] >= Math.ceil(list.length / 2)) out.push(P([
+      `The "${F.corner[0].toLowerCase()}" corner is getting crowded. Somebody start charging rent.`,
+      `Half the group lives in "${F.corner[0].toLowerCase()}". The other corners are filing a complaint.`], 9));
+  } else if (q.kind === "rank" && q.people) {
+    const top = F.fav, bottom = F.least, thing = q.likely || "do this";
+    if (top) out.push(P([
+      `The people have spoken: ${top.label} is most likely to ${thing}. No appeals.`,
+      `${top.label} came out on top for "most likely to ${thing}". We'll be watching.`,
+      `${top.label}, the group thinks you're going to ${thing}. Prove them wrong. Or don't.`,
+      `Group consensus: ${top.label} will ${thing}. Screenshot this for later.`], 7));
+    if (bottom && list.length >= 2) out.push(P([
+      `${bottom.label} is the least likely to ${thing}. Boring, but stable.`,
+      `Nobody thinks ${bottom.label} will ${thing}. ${bottom.label}, is that a compliment?`,
+      `The group is certain ${bottom.label} will never ${thing}. ${bottom.label}, prove them wrong.`], 9));
+    if (Array.isArray(q.keys)) {
+      const selfTop = list.filter(e => { const i = q.keys.indexOf(e.key); return i >= 0 && rankOf(e, i) === 1; });
+      const selfLast = list.filter(e => { const i = q.keys.indexOf(e.key); return i >= 0 && rankOf(e, i) === q.items.length; });
+      if (selfTop.length) out.push(P([`${selfTop.map(nm).join(" and ")} put themselves at #1. Self-awareness is a gift.`, `${selfTop.map(nm).join(" and ")} ranked themselves first. At least they're honest.`], 11));
+      if (selfLast.length && q.items.length > 2) out.push(P([`${selfLast.map(nm).join(" and ")} ranked themselves dead last. The group would like a word.`, `${selfLast.map(nm).join(" and ")} put themselves last. That's called denial.`], 13));
+    }
+    if (q.items.length >= 4 && F.divisive && F.divisive.max - F.divisive.min >= Math.ceil(q.items.length / 2)) out.push(`Nobody can agree on ${F.divisive.label}: somewhere between #${F.divisive.min} and #${F.divisive.max}. ${F.divisive.label} is a mystery to us all.`);
   } else if (q.kind === "rank") {
-    if (F.divisive && F.divisive.max - F.divisive.min >= Math.ceil(q.items.length / 2)) out.push(pick([
+    if (F.divisive && F.divisive.max - F.divisive.min >= Math.ceil(q.items.length / 2)) out.push(P([
       `${F.divisive.label} has torn this friend group apart: somewhere between #${F.divisive.min} and #${F.divisive.max}. Talk it out.`,
-      `Nobody can agree on ${F.divisive.label}. Some of you would die for it, the rest want it gone.`], seed >>> 7));
-    if (F.least) out.push(pick([`Sorry, ${F.least.label}. The people have spoken.`, `${F.least.label} came in dead last. Thoughts and prayers.`, `${F.least.label} will be hearing about this ranking in therapy.`], seed >>> 9));
+      `Nobody can agree on ${F.divisive.label}. Some of you would die for it, the rest want it gone.`,
+      `${F.divisive.label} ranked everywhere from #${F.divisive.min} to #${F.divisive.max}. That's not a ranking, that's a crime scene.`,
+      `${F.divisive.label} is the pineapple-on-pizza of this question.`], 7));
+    if (F.least) out.push(P([
+      `Sorry, ${F.least.label}. The people have spoken.`,
+      `${F.least.label} came in dead last. Thoughts and prayers.`,
+      `${F.least.label} will be hearing about this ranking in therapy.`,
+      `${F.least.label} has been voted off the island.`,
+      `Last place: ${F.least.label}. Someone tell it gently.`], 9));
     if (F.fav && F.fav.max === 1) out.push(`A unanimous #1 for ${F.fav.label}. Even the haters agree.`);
+    else if (F.fav) out.push(P([
+      `${F.fav.label} takes the crown. Long may it reign.`,
+      `${F.fav.label} wins. Its acceptance speech will be brief.`,
+      `${F.fav.label} is the group's favorite. Everyone else, try harder.`], 11));
+    if (F.agreed && F.agreed !== F.fav && F.agreed !== F.least && F.agreed.max - F.agreed.min <= 1) out.push(`Rare moment of peace: everyone put ${F.agreed.label} at #${F.agreed.min}${F.agreed.max !== F.agreed.min ? " or #" + F.agreed.max : ""}.`);
   } else {
-    if (F.peak && q.y.bands) out.push(pick([`${nm(F.peak.e)} hit "${F.peak.y.split(" · ")[1]}" first, at ${F.peak.x}. Someone check on ${nm(F.peak.e)}.`, `${nm(F.peak.e)} got to the top of the chart first, at ${F.peak.x}. Speedrun record.`], seed >>> 7));
-    else if (F.peak) out.push(`${nm(F.peak.e)} peaked at ${F.peak.x}. It's all downhill from there, emotionally.`);
-    if (F.disagreeAt && F.disagreeAt.lo && F.disagreeAt.hi && F.disagreeAt.lo.e !== F.disagreeAt.hi.e) out.push(pick([
+    if (F.peak && q.y.bands) out.push(P([
+      `${nm(F.peak.e)} hit "${F.peak.y.split(" · ")[1]}" first, at ${F.peak.x}. Someone check on ${nm(F.peak.e)}.`,
+      `${nm(F.peak.e)} got to the top of the chart first, at ${F.peak.x}. Speedrun record.`,
+      `${nm(F.peak.e)} peaked at ${F.peak.x}. Rate-determining step: none.`], 7));
+    else if (F.peak) out.push(P([
+      `${nm(F.peak.e)} peaked at ${F.peak.x}. It's all downhill from there, emotionally.`,
+      `${nm(F.peak.e)} reached the top at ${F.peak.x} and has never been the same.`], 7));
+    if (F.disagreeAt && F.disagreeAt.lo && F.disagreeAt.hi && F.disagreeAt.lo.e !== F.disagreeAt.hi.e) out.push(P([
       `At ${F.disagreeAt.x}, ${nm(F.disagreeAt.hi.e)} and ${nm(F.disagreeAt.lo.e)} are living completely different lives.`,
-      `The group falls apart at ${F.disagreeAt.x}. Classic.`], seed >>> 9));
+      `The group falls apart at ${F.disagreeAt.x}. Classic.`,
+      `${F.disagreeAt.x} is where the group chat would start arguing.`], 9));
+    if (F.agreeAt) out.push(P([
+      `Everyone agrees about ${F.agreeAt.x}. Write it down, this won't happen again.`,
+      `At ${F.agreeAt.x} the whole group is in sync. Spooky.`], 11));
+    if (F.groupPeak && list.length >= 3) out.push(P([
+      `As a collective organism, the group peaks at ${F.groupPeak.x}.`,
+      `The group average tops out at ${F.groupPeak.x}. Schedule all future hangouts accordingly.`], 13));
   }
+  if (q.cat === "Lab" && list.length >= 2) out.push(P([
+    `These results are reproducible, which is more than can be said for most of your experiments.`,
+    `Error bars: enormous. Conclusions: confident. Very on brand for a chem group.`,
+    `If this were a paper, the abstract would say "results varied". It would still get cited.`,
+    `PI review: "interesting data, run it again in triplicate."`], 15));
   return out;
 }
 function renderFun(q, list, F){
