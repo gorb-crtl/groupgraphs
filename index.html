@@ -102,6 +102,16 @@ button { cursor: pointer; }
 .nbtxt { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 14px; }
 .nbtxt b { font-weight: 800; }
 .nbtxt span { color: var(--ink-2); overflow-wrap: anywhere; }
+.stbars { display: flex; flex-direction: column; gap: 8px; }
+.stbar { display: grid; grid-template-columns: 92px minmax(0, 1fr) 44px; align-items: center; gap: 8px; font-size: 14px; }
+.stbar .nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stbar .tr { height: 12px; border-radius: 6px; background: var(--line); overflow: hidden; }
+.stbar .fl { height: 100%; border-radius: 6px; }
+.stbar .pc { font-family: var(--f-mono); font-size: 13px; text-align: right; color: var(--ink-2); }
+.stdays { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 4px; }
+.stdays span { aspect-ratio: 1; border-radius: 4px; background: var(--line); }
+.stdays span.on { background: var(--pen); }
+.stdays span.today { box-shadow: inset 0 0 0 2px var(--ink); }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .brand { font-family: var(--f-hand); font-weight: 800; font-size: 24px; line-height: 1; letter-spacing: -.03em; display: flex; align-items: baseline; gap: 8px; }
 .brand .mark { display: inline-block; width: 26px; height: 22px; flex: none; transform: translateY(3px); }
@@ -467,6 +477,10 @@ svg text { font-family: var(--f-body); }
     <div class="calhead"><b>Pick a theme</b><button id="themeClose" type="button" aria-label="Close">&times;</button></div>
     <div class="thgrid" id="themeGrid"></div>
   </div></div>
+  <div class="sumback" id="statsBack" hidden role="dialog" aria-label="Your stats"><div class="sumwrap">
+    <div class="sumtop"><div><div class="k" id="statsGroup"></div><h2 id="statsTitle">Your stats</h2></div><button id="statsClose" type="button">Close</button></div>
+    <div id="statsBody"><p class="note">Loading…</p></div>
+  </div></div>
   <div class="calback" id="calBack" hidden><div class="cal" role="dialog" aria-label="Pick a day">
     <div class="calhead"><button id="calPrev" aria-label="Previous month">&#8249;</button><b id="calTitle"></b><button id="calNext" aria-label="Next month">&#8250;</button></div>
     <div class="calgrid" id="calGrid"></div>
@@ -575,6 +589,7 @@ svg text { font-family: var(--f-body); }
       <button class="qbox" id="sumJump" type="button"><span id="sumLabel">Group summary</span></button>
       <button class="qbox" id="ideaJump" type="button"><span>Question ideas</span><span class="count" id="ideaCount" hidden>0</span></button>
       <button class="qbox" id="notifJump" type="button"><span id="notifLabel">Get reminders</span></button>
+      <button class="qbox" id="statsJump" type="button"><span>Your stats</span></button>
       <button class="qbox" id="fbJump" type="button"><span>Feedback</span><span class="count" id="fbCount" hidden>0</span></button>
     </div>
     <div class="pulse" id="pulse" hidden>
@@ -992,6 +1007,7 @@ S.store = { save: async (entry) => {
   await rpc("submit_answer", { p_secret: S.secret, p_qid: entry.qid, p_payload: payload });
   S.mine[entry.qid] = payload; delete S.results[rkey(entry.qid)];
   loadActivity(true); if ((S.nudges.list || []).some(n => n.qid === entry.qid)) dismissNudges(); else renderNudges();
+  rpc("check_group_done", { p_secret: S.secret, p_qid: entry.qid }).catch(() => {});
   refreshMe().then(() => { renderGroupbar(); renderBank(); }).catch(() => {});
   await loadResults(true);
 } };
@@ -1544,6 +1560,91 @@ $("nbGo").addEventListener("click", () => {
   if (n && n.group_id && n.group_id !== S.gid && S.groups.some(g => g.id === n.group_id)) { S.gid = n.group_id; ls.set("gg-group", S.gid); renderGroupbar(); }
   S.dayOffset = 0; S.qid = null; setTab("draw"); go(); $("panelDraw").scrollIntoView({ behavior: "smooth", block: "start" });
 });
+
+/* ---------------- your stats ---------------- */
+function openStats(){
+  const g = group(); if (!g || !S.me) return;
+  $("statsGroup").textContent = "@" + S.me.username + " · in " + g.name; $("statsBody").innerHTML = '<p class="note">Crunching your answers…</p>';
+  $("statsBack").hidden = false; document.body.style.overflow = "hidden"; loadStats(g);
+}
+function closeStats(){ $("statsBack").hidden = true; document.body.style.overflow = ""; }
+$("statsJump").addEventListener("click", openStats);
+$("statsClose").addEventListener("click", closeStats);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("statsBack").hidden) closeStats(); });
+async function loadStats(g){
+  let d;
+  try { d = await rpc("get_summary", { p_secret: S.secret, p_group: g.id }); if (!S.act || S.act.gid !== g.id) await loadActivity(true); }
+  catch (e) { if (e.message === "not_signed_in") return signOut(); $("statsBody").innerHTML = ""; const p = document.createElement("p"); p.className = "note"; p.textContent = errText(e); $("statsBody").appendChild(p); return; }
+  if (S.gid !== g.id || $("statsBack").hidden) return;
+  renderMyStats(g, buildMyStats(g, d));
+}
+/* my streak from the group's last 60 days: a day counts when I answered that day's question on the day */
+function myStreak(){
+  const A = S.act; if (!A || A.err || !S.me) return null;
+  const mine = {}; (A.data.answers || []).forEach(a => { if (a.username === S.me.username) mine[a.qid] = String(a.day).slice(0, 10); });
+  const on = (d) => { const q = A.qids[d], day = mine[q]; return !!(q && day && day <= idxISO(d)); };
+  const t = A.t; let cur = 0; for (let d = on(t) ? t : t - 1; d >= A.from; d--) { if (on(d)) cur++; else break; }
+  let best = 0, run = 0; for (let d = A.from; d <= t; d++) { if (on(d)) { run++; best = Math.max(best, run); } else if (d < t) run = 0; }
+  const last14 = []; for (let d = t - 13; d <= t; d++) last14.push({ d, on: d >= 0 && on(d), today: d === t, off: d < 0 });
+  return { cur, best, last14, todayDone: on(t) };
+}
+function buildMyStats(g, d){
+  const R = buildSummary(g, d, "all"), me = S.me.username, nm = (k) => R.names[k] || k;
+  const mineQs = R.played.filter(x => x.list.some(e => e.key === me));
+  const takes = [], withF = {}, cats = {};
+  let odd = 0;
+  mineQs.forEach(({ q, list }) => {
+    cats[q.cat] = (cats[q.cat] || 0) + 1;
+    const myE = list.find(e => e.key === me); let s = 0, n = 0;
+    list.forEach(o => { if (o.key === me) return; const v = sumSim(q, myE, o); if (v == null) return; s += v; n++; (withF[o.key] = withF[o.key] || { s: 0, n: 0 }).s += v; withF[o.key].n++; });
+    if (n) takes.push({ q, v: s / n });
+  });
+  odd = R.outl[me] || 0;
+  const friends = Object.entries(withF).map(([k, v]) => ({ k, name: nm(k), v: v.s / v.n, n: v.n })).sort((a, b) => b.v - a.v);
+  const rank = R.ranked.findIndex(([k]) => k === me);
+  const favCat = Object.entries(cats).sort((a, b) => b[1] - a[1])[0];
+  return { R, me, answered: Object.keys(S.mine).length, together: mineQs.length, odd, friends, rank, nRanked: R.ranked.length, mySync: (R.ranked.find(([k]) => k === me) || [])[1],
+    favCat, titles: R.titles[me] || 0, takes: takes.sort((a, b) => a.v - b.v).slice(0, 3), streak: myStreak() };
+}
+function renderMyStats(g, T){
+  const body = $("statsBody"); body.innerHTML = ""; const pct = (v) => Math.round(v * 100) + "%";
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const tile = (k, v, dsc, onClick) => { const t = el("div", "sumtile" + (onClick ? " link qt" : "")); t.append(el("span", "k", k), el("span", "v", v), el("span", "d", dsc)); if (onClick) { t.setAttribute("role", "button"); t.tabIndex = 0; t.addEventListener("click", onClick); } return t; };
+  const jumpTo = (q) => () => { const ti = todayIndex(); let i = -1; for (let x = ti; x >= 0; x--) if (qForDay(x).id === q.id) { i = x; break; } closeStats(); if (i >= 0) { S.qid = null; S.dayOffset = i - ti; } else { S.qid = q.id; } go(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:14px";
+  const tiles = el("div", "sumtiles");
+  const st = T.streak;
+  tiles.append(tile("Your streak", st ? st.cur + (st.cur === 1 ? " day" : " days") : "–", st ? (st.best > st.cur ? "Best: " + st.best + " days" : st.todayDone ? "Answered today too" : st.cur ? "Answer today to keep it going" : "Answer today to start one") : "Couldn't load your days"));
+  tiles.append(tile("Answered", String(T.answered), T.answered === 1 ? "question so far" : "questions so far"));
+  if (T.mySync != null) tiles.append(tile("In sync with the group", pct(T.mySync), T.rank >= 0 && T.nRanked > 1 ? (T.rank === 0 ? "Most in sync of all " + T.nRanked + " of you" : T.rank === T.nRanked - 1 ? "The group's free spirit" : "#" + (T.rank + 1) + " of " + T.nRanked) : "how alike your answers are to everyone's"));
+  tiles.append(tile("Odd one out", T.odd + "×", T.together ? "on " + Math.round(T.odd / T.together * 100) + "% of the " + T.together + " questions you shared" : "answer a few more to find out"));
+  if (T.friends.length) { const b = T.friends[0]; tiles.append(tile("Best match", b.name, pct(b.v) + " in sync over " + b.n + (b.n === 1 ? " question" : " questions"))); }
+  if (T.friends.length > 1) { const w = T.friends[T.friends.length - 1]; tiles.append(tile("Opposite", w.name, pct(w.v) + " in sync")); }
+  if (T.favCat) tiles.append(tile("Favorite topic", String(T.favCat[0]).replace(/^./, c => c.toUpperCase()), T.favCat[1] + " answered"));
+  if (T.titles) tiles.append(tile("Superlatives won", String(T.titles), "“most likely to” questions the group gave you"));
+  wrap.appendChild(tiles);
+  if (st) {
+    const c = el("div", "sumcard"); c.appendChild(el("h3", null, "Last two weeks"));
+    const grid = el("div", "stdays"); st.last14.forEach(x => { const s = el("span", (x.on ? "on" : "") + (x.today ? " today" : "")); if (x.off) s.style.visibility = "hidden"; s.title = idxISO(x.d) + (x.on ? ": answered on the day" : ""); grid.appendChild(s); });
+    c.append(grid, el("p", "note", "Filled squares are days you answered that day's question on the day. The outlined one is today."));
+    wrap.appendChild(c);
+  }
+  if (T.friends.length) {
+    const c = el("div", "sumcard"); c.appendChild(el("h3", null, "You vs each friend")); const bars = el("div", "stbars");
+    T.friends.forEach(f => { const r = el("div", "stbar"); const tr = el("div", "tr"), fl = el("div", "fl"); fl.style.width = Math.round(f.v * 100) + "%"; fl.style.background = colorOf(f.k).c; tr.appendChild(fl);
+      r.append(el("span", "nm", f.name), tr, el("span", "pc", pct(f.v))); bars.appendChild(r); });
+    c.append(bars, el("p", "note", "How alike your answers are to each person's, across every question you've both done.")); wrap.appendChild(c);
+  }
+  if (T.takes.length && T.together >= 2) {
+    const c = el("div", "sumcard"); c.appendChild(el("h3", null, "Your hottest takes")); const rows = el("div", "sumtiles"); rows.style.gridTemplateColumns = "minmax(0, 1fr)";
+    T.takes.forEach(t => rows.appendChild(tile(t.q.title, pct(t.v) + " in sync with everyone", "Tap to open", jumpTo(t.q))));
+    rows.querySelectorAll(".sumtile").forEach(t => { const k = t.querySelector(".k"), v = t.querySelector(".v"); k.style.cssText = "text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink)"; v.style.fontSize = "13px"; v.style.fontWeight = "600"; v.style.color = "var(--ink-2)"; });
+    c.append(rows, el("p", "note", "The questions where you were furthest from everyone else.")); wrap.appendChild(c);
+  }
+  if (!T.together) wrap.appendChild(el("p", "note", "Most stats need a few questions that you and someone else in " + g.name + " have both answered. Check back after a couple of days."));
+  wrap.appendChild(el("p", "note", "Only questions you've answered yourself count, and these stats are only for " + g.name + "."));
+  body.appendChild(wrap);
+}
 
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
