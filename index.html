@@ -64,11 +64,16 @@ button { cursor: pointer; }
 :root[data-theme="sunset"] { --paper:#fbf3ee; --sheet:#ffffff; --grid:#f1e1d8; --grid-major:#e5cbbd; --ink:#2e1d17; --ink-2:#6a4c40; --ink-3:#a68a7e; --pen:#c4462a; --pen-soft:rgba(196,70,42,.10); --hl:#ffd9a0; --line:rgba(46,29,23,.12); --band:rgba(196,70,42,.05); --danger:#a51d24; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948; }
 :root[data-theme="grape"] { --paper:#15121f; --sheet:#1d1930; --grid:#29233f; --grid-major:#352e52; --ink:#f1eefb; --ink-2:#c3bcd9; --ink-3:#8a82a6; --pen:#b49cff; --pen-soft:rgba(180,156,255,.15); --hl:#5a3f8c; --line:rgba(255,255,255,.12); --band:rgba(180,156,255,.06); --danger:#ff8a8f; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; color-scheme: dark; }
 :root[data-theme="terminal"] { --paper:#0c1410; --sheet:#111c17; --grid:#1a2a22; --grid-major:#24382e; --ink:#e3f5ea; --ink-2:#a9c9b6; --ink-3:#6f8f7c; --pen:#5be39a; --pen-soft:rgba(91,227,154,.14); --hl:#2c5a3f; --line:rgba(255,255,255,.12); --band:rgba(91,227,154,.06); --danger:#ff8a8f; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; color-scheme: dark; }
-.cphint { margin: 0 0 8px; font-size: 13px; color: var(--ink-2); }
-.cpick { display: flex; flex-wrap: wrap; gap: 8px; }
-.cpsw { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--sheet); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
-.cpsw.auto { width: auto; border-radius: 99px; padding: 0 12px; background: var(--paper); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; }
-.cpsw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+.cphint { margin: 4px 0 10px; font-size: 13px; color: var(--ink-2); }
+.cprow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cpwheel { position: relative; width: 44px; height: 44px; border-radius: 50%; flex: none; cursor: pointer; background: conic-gradient(#e34948, #eda100, #1baf7a, #2a78d6, #6250d6, #e87ba4, #e34948); padding: 4px; box-sizing: border-box; }
+.cpwheel input { width: 100%; height: 100%; border: 2px solid var(--sheet); border-radius: 50%; padding: 0; background: none; cursor: pointer; -webkit-appearance: none; appearance: none; box-sizing: border-box; }
+.cpwheel input::-webkit-color-swatch-wrapper { padding: 0; }
+.cpwheel input::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.cpwheel input::-moz-color-swatch { border: 0; border-radius: 50%; }
+.cphex { width: 7.5em; font-family: var(--f-mono); font-size: 16px; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; text-transform: lowercase; }
+.cpprev { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--ink-2); }
+.cpprev svg { width: 120px; height: 24px; flex: none; }
 .pulse { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; margin-top: 10px; }
 .pulse[hidden] { display: none; }
 .streak { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); background: var(--sheet); border-radius: 12px; padding: 10px 14px; }
@@ -133,7 +138,7 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 h1.prompt { font-family: var(--f-hand); font-weight: 800; font-size: clamp(26px, 4.6vw, 38px); line-height: 1.12; letter-spacing: -.025em; margin: 0; text-wrap: balance; }
 .sub { color: var(--ink-2); margin: 0; max-width: 62ch; }
 
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tabs { display: flex; justify-content: center; gap: 4px; border-bottom: 1px solid var(--line); }
 .tab { border: 0; background: none; padding: 10px 14px; font-weight: 700; color: var(--ink-3); border-bottom: 3px solid transparent; margin-bottom: -1px; display: flex; gap: 8px; align-items: center; }
 .tab[aria-selected="true"] { color: var(--ink); border-color: var(--pen); }
 .tab .count { font-family: var(--f-mono); font-size: 12px; font-weight: 600; background: var(--pen-soft); color: var(--pen); border-radius: 99px; padding: 1px 8px; }
@@ -435,7 +440,7 @@ svg text { font-family: var(--f-body); }
     <div class="sumtop"><div><div class="k">GroupGraphs</div><h2>Feedback</h2></div><button id="fbClose" type="button">Close</button></div>
     <form class="sumcard idform" id="fbForm" autocomplete="off">
       <h3>Tell us what you think</h3>
-      <p class="note" style="margin:0">Found a bug, want a feature, or have a complaint about a question? It goes to your group's host.</p>
+      <p class="note" style="margin:0">Found a bug, want a feature, or have a complaint about a question? It goes straight to the app owner.</p>
       <div class="sumseg" id="fbKinds"><button type="button" data-k="bug" aria-pressed="false">Bug</button><button type="button" data-k="idea" aria-pressed="true">Idea</button><button type="button" data-k="other" aria-pressed="false">Something else</button></div>
       <label>Your feedback<textarea id="fbBody" maxlength="1000" placeholder="The back arrow should go to last Tuesday. Also Emily cheated."></textarea></label>
       <div class="idmsg" id="fbMsg" role="status"></div>
@@ -514,8 +519,14 @@ svg text { font-family: var(--f-body); }
     </div>
     <div>
       <h3>Your color</h3>
-      <p class="cphint">You'll be this color on every chart. If someone in a group picked it first, you get a free color in that group.</p>
-      <div class="cpick" id="colorPick" role="group" aria-label="Your color"></div>
+      <p class="cphint">You'll be this color on every chart. Tap the circle for the color wheel, or type a hex code.</p>
+      <div class="cprow">
+        <label class="cpwheel" title="Color wheel"><input type="color" id="colorIn" value="#2a78d6"><span class="sr-only">Color wheel</span></label>
+        <input id="colorHex" class="cphex" maxlength="7" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="#2a78d6" aria-label="Hex code">
+        <button class="btn primary" id="colorSave" type="button">Save</button>
+        <button class="btn ghost" id="colorAuto" type="button">Auto</button>
+      </div>
+      <div class="cpprev" id="colorPrev"><svg viewBox="0 0 120 24" aria-hidden="true"><path d="M2 20 C 30 20, 40 4, 64 8 S 100 18, 118 4" fill="none" stroke-width="3" stroke-linecap="round"/></svg><span id="colorNote"></span></div>
       <div class="err" id="colorErr" role="alert"></div>
     </div>
     <div class="divider"></div>
@@ -910,11 +921,13 @@ function colorOf(key){ return colorIn(group(), key); }
 function colorIn(g, key){
   if (!g) return { c: "var(--s1)", dash: null };
   if (!g._slots) { const out = {}, used = new Set();
-    g.members.forEach(m => { const c = +m.color; if (c >= 1 && c <= 8 && !used.has(c)) { out[m.username] = { n: c, dash: false }; used.add(c); } });
+    g.members.forEach(m => { if (/^#[0-9a-f]{6}$/i.test(m.color_hex || "")) out[m.username] = { hex: m.color_hex }; });
+    g.members.forEach(m => { const c = +m.color; if (!out[m.username] && c >= 1 && c <= 8 && !used.has(c)) { out[m.username] = { n: c, dash: false }; used.add(c); } });
     const free = [1, 2, 3, 4, 5, 6, 7, 8].filter(c => !used.has(c)); let i = 0;
     g.members.forEach(m => { if (out[m.username]) return; out[m.username] = i < free.length ? { n: free[i], dash: false } : { n: ((i - free.length) % 8) + 1, dash: true }; i++; });
     g._slots = out; }
   const s = g._slots[key] || { n: 1, dash: false };
+  if (s.hex) return { c: s.hex, dash: null, n: 0 };
   return { c: `var(--s${s.n})`, dash: s.dash ? "6 4" : null, n: s.n };
 }
 
@@ -956,7 +969,7 @@ async function rpcOnce(fn, args){
   if (!res.ok) { const m = (body && (body.message || body.hint)) || "server_error"; throw new Error(m); }
   return body;
 }
-const errText = (e) => ERRS[e && e.message] || (e && e.message === "offline" ? "Couldn't reach the server. Check your connection and try again." : e && e.message === "not_configured" ? "This copy of the app isn't connected to a database yet." : "Something went wrong. Try again.");
+const errText = (e) => (e && /Could not find the function|PGRST202|schema cache/i.test(e.message || "") ? "This part of the app needs a database update. Whoever runs GroupGraphs needs to run the latest SQL files in Supabase." : null) || ERRS[e && e.message] || (e && e.message === "offline" ? "Couldn't reach the server. Check your connection and try again." : e && e.message === "not_configured" ? "This copy of the app isn't connected to a database yet." : "Something went wrong. Try again.");
 
 async function refreshMe(){
   const d = await rpc("my_groups", { p_secret: S.secret });
@@ -1372,7 +1385,7 @@ function renderFeedback(){
   if (D.err === "offline") box.appendChild(mk("p", "note", "Couldn't connect. Check your connection and try again."));
   else if (D.err) box.appendChild(mk("p", "note", "Couldn't load feedback. If you're the host, run supabase/feedback.sql in Supabase once, then refresh."));
   else if (D.host) {
-    box.appendChild(mk("h3", null, "Inbox (you're a host)"));
+    box.appendChild(mk("h3", null, D.owner ? "Inbox: everyone's feedback" : "Inbox (you're a host)"));
     if (!D.inbox.length) box.appendChild(mk("p", "note", "Nothing yet. Either the app is perfect or nobody's talking."));
     const list = mk("div", "idlist");
     D.inbox.forEach(f => { const r = mk("div", "idea"); r.style.gridTemplateColumns = "minmax(0, 1fr) auto"; const b = mk("div"); const t = mk("div", "t"); t.appendChild(mk("span", "badge", label[f.kind] || "Other")); t.appendChild(document.createTextNode(f.body)); t.style.whiteSpace = "pre-wrap"; b.append(t, mk("div", "m", f.name + " (@" + f.username + ") · " + f.group + " · " + when(f.at)));
@@ -1389,8 +1402,8 @@ $("fbForm").addEventListener("submit", async (ev) => {
   if (!S.gid) { msg.textContent = "Join or start a group first, so your feedback has somewhere to go."; return; }
   if (!body) { msg.textContent = "Write something first."; return; }
   $("fbSend").disabled = true;
-  try { await rpc("send_feedback", { p_secret: S.secret, p_group: S.gid, p_kind: fbKind, p_body: body }); $("fbBody").value = ""; msg.className = "idmsg ok"; msg.textContent = "Sent. Thanks! Your host has been notified (in spirit)."; loadFeedback(); }
-  catch (e) { msg.textContent = e.message === "slow_down" ? "That's a lot of feedback for one day. Try again tomorrow." : "Couldn't send that. Try again in a bit."; }
+  try { await rpc("send_feedback", { p_secret: S.secret, p_group: S.gid, p_kind: fbKind, p_body: body }); $("fbBody").value = ""; msg.className = "idmsg ok"; msg.textContent = (fbData && fbData.owner === false ? "Sent. Thanks! It went to your group's host." : "Sent. Thanks! It went to the app owner."); loadFeedback(); }
+  catch (e) { msg.textContent = e.message === "slow_down" ? "That's a lot of feedback for one day. Try again tomorrow." : errText(e); }
   $("fbSend").disabled = false;
 });
 
@@ -1432,7 +1445,7 @@ applyTheme(curTheme());
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme(curTheme()));
 
 /* ---------------- group streak + who's answered today ---------------- */
-Object.assign(ERRS, { bad_color: "Pick one of the colors shown.", already_answered: "They just answered. No nudge needed.", already_nudged: "You already nudged them today.",
+Object.assign(ERRS, { bad_color: "That isn't a valid hex code. Try something like #e87ba4.", already_answered: "They just answered. No nudge needed.", already_nudged: "You already nudged them today.",
   too_many_nudges: "That's a lot of nudging for one day. Try again tomorrow.", cant_nudge_self: "You can't nudge yourself." });
 const idxISO = (d) => new Date(ROT_START + d * 864e5).toISOString().slice(0, 10);
 const isoIdx = (iso) => Math.round((Date.parse(String(iso).slice(0, 10) + "T00:00:00Z") - ROT_START) / 864e5);
@@ -1547,18 +1560,38 @@ function renderGroupbar(){
   $("meLabel").textContent = S.me ? "@" + S.me.username : "";
   const one = S.groups.length === 1; sel.hidden = one; $("groupName").hidden = !one; if (one) $("groupName").textContent = S.groups[0].name;
 }
-const COLOR_NAMES = ["Blue", "Orange", "Green", "Gold", "Pink", "Leaf", "Purple", "Red"];
-function renderColorPick(){
-  const box = $("colorPick"); if (!box || !S.me) return; box.innerHTML = "";
-  const cur = +S.me.color || 0;
-  const mk = (n, label) => { const b = document.createElement("button"); b.type = "button"; b.className = "cpsw" + (n ? "" : " auto"); b.setAttribute("aria-pressed", String(cur === n)); b.setAttribute("aria-label", label); b.title = label;
-    if (n) b.style.background = `var(--s${n})`; else b.textContent = "Auto";
-    b.addEventListener("click", async () => { if (cur === n) return; $("colorErr").textContent = "";
-      try { S.me = await rpc("set_color", { p_secret: S.secret, p_color: n || null }); await refreshMe(); renderColorPick(); renderGroupsPanel(); renderAll(false); renderPulse(); }
-      catch (e) { $("colorErr").textContent = e.message === "offline" ? errText(e) : (ERRS[e.message] || "Couldn't save your color. If you're the host, run supabase/social.sql in Supabase once."); } });
-    box.appendChild(b); };
-  mk(0, "Auto: pick one for me"); for (let n = 1; n <= 8; n++) mk(n, COLOR_NAMES[n - 1]);
+const HEX_RE = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/i;
+function normHex(v){ const m = String(v || "").trim().match(HEX_RE); if (!m) return null; let h = m[1].toLowerCase(); if (h.length === 3) h = h.split("").map(c => c + c).join(""); return "#" + h; }
+function lum(hex){ const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4)); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
+function contrast(a, b){ const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+function cssHex(v){ const m = String(v || "").match(/[0-9]+/g); return m && m.length >= 3 ? "#" + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, "0")).join("") : null; }
+function previewColor(){
+  const h = normHex($("colorHex").value), path = document.querySelector("#colorPrev path"), note = $("colorNote");
+  const cur = S.me && S.me.color_hex ? S.me.color_hex : null;
+  $("colorSave").disabled = !h || h === cur;
+  if (!h) { path.style.stroke = "var(--ink-3)"; note.textContent = $("colorHex").value.trim() ? "That isn't a hex code yet. Try something like #e87ba4." : (cur ? "" : "Auto: you get a color nobody else in the group has."); return; }
+  path.style.stroke = h; $("colorIn").value = h;
+  const bg = cssHex(getComputedStyle($("groupsPanel")).backgroundColor) || "#ffffff";
+  note.textContent = contrast(h, bg) < 1.8 ? "Hard to see on this theme. Try a darker or brighter color." : h === cur ? "This is your color." : "Looks good. Tap Save.";
 }
+async function saveColor(hex){
+  $("colorErr").textContent = "";
+  try { S.me = await rpc("set_color_hex", { p_secret: S.secret, p_hex: hex }); await refreshMe(); renderGroupsPanel(); renderAll(false); renderPulse(); }
+  catch (e) { $("colorErr").textContent = e.message === "offline" ? errText(e) : (ERRS[e.message] || "Couldn't save your color. If you're the host, run supabase/social.sql in Supabase again."); }
+}
+function renderColorPick(){
+  if (!S.me) return;
+  const cur = S.me.color_hex || (S.me.color ? normHex(getComputedStyle(document.documentElement).getPropertyValue("--s" + S.me.color)) : null);
+  $("colorHex").value = S.me.color_hex || ""; if (cur) $("colorIn").value = cur;
+  $("colorAuto").disabled = !S.me.color_hex && !S.me.color;
+  previewColor();
+}
+$("colorIn").addEventListener("input", () => { $("colorHex").value = $("colorIn").value; previewColor(); });
+$("colorIn").addEventListener("change", () => { $("colorHex").value = $("colorIn").value; previewColor(); });
+$("colorHex").addEventListener("input", previewColor);
+$("colorHex").addEventListener("keydown", (e) => { if (e.key === "Enter" && !$("colorSave").disabled) $("colorSave").click(); });
+$("colorSave").addEventListener("click", () => { const h = normHex($("colorHex").value); if (h) saveColor(h); });
+$("colorAuto").addEventListener("click", () => saveColor(null));
 function renderGroupsPanel(){
   renderColorPick();
   $("myUser").textContent = "@" + S.me.username; $("myCode").textContent = "••••••"; $("revealCode").textContent = "Show";

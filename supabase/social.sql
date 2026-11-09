@@ -4,10 +4,12 @@
 -- ---------- profile color ----------
 -- 1 to 8 picks one of the app's 8 chart colors; null means "pick one for me".
 alter table people add column if not exists color int check (color between 1 and 8);
+-- Or any color at all, picked on a color wheel or typed as a hex code like #2a78d6. Wins over the numbered color.
+alter table people add column if not exists color_hex text check (color_hex ~ '^#[0-9a-f]{6}$');
 
 create or replace function gg_session(p people) returns jsonb language sql stable as $$
   select jsonb_build_object('secret', p.secret, 'id', p.id, 'username', p.username,
-                            'display_name', p.display_name, 'personal_code', p.personal_code, 'color', p.color);
+                            'display_name', p.display_name, 'personal_code', p.personal_code, 'color', p.color, 'color_hex', p.color_hex);
 $$;
 
 create or replace function set_color(p_secret uuid, p_color int) returns jsonb
@@ -16,6 +18,16 @@ declare p people := gg_me(p_secret);
 begin
   if p_color is not null and (p_color < 1 or p_color > 8) then raise exception 'bad_color'; end if;
   update people set color = p_color where id = p.id returning * into p;
+  return gg_session(p);
+end $$;
+
+-- Any color as a hex code (null goes back to "pick one for me").
+create or replace function set_color_hex(p_secret uuid, p_hex text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare p people := gg_me(p_secret); h text := lower(trim(coalesce(p_hex, '')));
+begin
+  if h = '' then h := null; elsif h !~ '^#[0-9a-f]{6}$' then raise exception 'bad_color'; end if;
+  update people set color_hex = h, color = null where id = p.id returning * into p;
   return gg_session(p);
 end $$;
 
@@ -127,7 +139,7 @@ begin
       select jsonb_build_object(
         'id', gr.id, 'name', gr.name, 'created_at', gr.created_at,
         'host', (select username from people where id = gr.host_id),
-        'members', (select jsonb_agg(jsonb_build_object('username', pp.username, 'display_name', pp.display_name, 'color', pp.color) order by gm2.added_at)
+        'members', (select jsonb_agg(jsonb_build_object('username', pp.username, 'display_name', pp.display_name, 'color', pp.color, 'color_hex', pp.color_hex) order by gm2.added_at)
                     from group_members gm2 join people pp on pp.id = gm2.person_id where gm2.group_id = gr.id),
         'counts', (select coalesce(jsonb_object_agg(qid, n), '{}'::jsonb) from (
                     select a.qid, count(*) n from answers a join group_members gm3 on gm3.person_id = a.person_id
@@ -137,7 +149,7 @@ begin
   );
 end $$;
 
-revoke all on function set_color(uuid, int), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
+revoke all on function set_color(uuid, int), set_color_hex(uuid, text), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
   nudges_due(text), nudges_done(text, jsonb), group_activity(uuid, uuid, text[]) from public, anon, authenticated;
-grant execute on function set_color(uuid, int), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
+grant execute on function set_color(uuid, int), set_color_hex(uuid, text), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
   nudges_due(text), nudges_done(text, jsonb), group_activity(uuid, uuid, text[]) to anon, authenticated;
