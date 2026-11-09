@@ -211,6 +211,30 @@ td.num { font-family: var(--f-mono); font-size: 13px; }
 .pill:hover { border-color: var(--pen); }
 .sumback { position: fixed; inset: 0; z-index: 70; background: var(--paper); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .sumback[hidden] { display: none; }
+.idform { display: flex; flex-direction: column; gap: 10px; }
+.idform label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.idform input, .idform textarea { font: inherit; font-size: 15px; font-weight: 400; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; width: 100%; box-sizing: border-box; }
+.idform textarea { resize: vertical; min-height: 120px; }
+.idform .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.idform .idhint { font-size: 12px; font-weight: 400; color: var(--ink-2); }
+.idkinds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.idkinds button { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 10px; padding: 9px 10px; text-align: left; font: inherit; font-size: 14px; font-weight: 700; }
+.idkinds button span { display: block; font-size: 12px; font-weight: 400; color: var(--ink-2); }
+.idkinds button[aria-pressed="true"] { border-color: var(--pen); background: var(--pen-soft); box-shadow: inset 0 0 0 1px var(--pen); }
+.idmsg { font-size: 13px; color: var(--danger, #c62828); }
+.idmsg.ok { color: #1baf7a; }
+.idlist { display: flex; flex-direction: column; gap: 8px; }
+.idea { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.idea:last-child { border-bottom: 0; }
+.idea .vote { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 10px; padding: 6px 0; font: inherit; font-weight: 800; font-size: 14px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.idea .vote[aria-pressed="true"] { background: var(--pen); color: #fff; border-color: var(--pen); }
+.idea .t { font-weight: 700; font-size: 15px; overflow-wrap: anywhere; }
+.idea .m { font-size: 12px; color: var(--ink-2); margin-top: 2px; overflow-wrap: anywhere; }
+.idea .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--pen); background: var(--pen-soft); border-radius: 99px; padding: 1px 8px; margin-right: 6px; }
+.idea .xdel2 { border: 0; background: none; color: var(--ink-2); font-size: 18px; padding: 2px 6px; }
+.sumseg { display: inline-flex; border: 1px solid var(--line); border-radius: 99px; padding: 3px; background: var(--sheet); align-self: flex-start; }
+.sumseg button { border: 0; background: none; color: var(--ink-2); font: inherit; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 99px; }
+.sumseg button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
 .sumwrap { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; display: flex; flex-direction: column; gap: 14px; }
 .sumtop { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .sumtop .k { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
@@ -302,8 +326,49 @@ svg text { font-family: var(--f-body); }
       <button id="nextDay" aria-label="Next day's question">&#8250;</button>
     </nav>
   </header>
+  <div class="sumback" id="ideaBack" hidden role="dialog" aria-label="Question ideas"><div class="sumwrap">
+    <div class="sumtop"><div><div class="k" id="ideaGroup"></div><h2>Question ideas</h2></div><button id="ideaClose" type="button">Close</button></div>
+    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight, the idea with the most votes becomes the next day's question, just for this group.</p>
+    <div class="sumcard" id="ideaNext" hidden></div>
+    <div class="sumcard"><h3>Vote</h3><div class="idlist" id="ideaList"></div></div>
+    <form class="sumcard idform" id="ideaForm" autocomplete="off">
+      <h3>Suggest a question</h3>
+      <div class="idkinds" id="ideaKinds">
+        <button type="button" data-k="curve" aria-pressed="true">📈 Curve<span>Draw a line across a range</span></button>
+        <button type="button" data-k="rank" aria-pressed="false">🏆 Ranking<span>Put a list in order</span></button>
+        <button type="button" data-k="map" aria-pressed="false">🗺️ Map<span>Drop a dot on two axes</span></button>
+        <button type="button" data-k="people" aria-pressed="false">👀 Most likely to<span>Rank the people in the group</span></button>
+      </div>
+      <label data-for="curve rank map">Question<input id="idTitle" maxlength="120" placeholder="How hungry are you through the day?"></label>
+      <label data-for="people">Who's most likely to…<input id="idLikely" maxlength="80" placeholder="forget their own birthday"></label>
+      <label data-for="curve rank map people">Extra details <span class="idhint">(optional)</span><input id="idSub" maxlength="200" placeholder="A normal Tuesday. Be honest."></label>
+      <div data-for="curve" class="two">
+        <label>Along the bottom<input id="idXLabel" maxlength="40" placeholder="hours since breakfast"></label>
+        <label>Up the side<input id="idYLabel" maxlength="40" placeholder="hunger"></label>
+        <label>Bottom starts at<input id="idXMin" type="number" inputmode="decimal" value="0"></label>
+        <label>Bottom ends at<input id="idXMax" type="number" inputmode="decimal" value="10"></label>
+        <label>Low end of the side<input id="idYLo" maxlength="30" placeholder="stuffed"></label>
+        <label>High end of the side<input id="idYHi" maxlength="30" placeholder="hangry"></label>
+      </div>
+      <label data-for="rank">Things to rank <span class="idhint">(one per line, 3 to 12)</span><textarea id="idItems" maxlength="600" placeholder="Pizza&#10;Tacos&#10;Sushi&#10;Cereal at midnight"></textarea></label>
+      <div data-for="rank" class="two">
+        <label>Top of the list means<input id="idBest" maxlength="24" placeholder="best"></label>
+        <label>Bottom means<input id="idWorst" maxlength="24" placeholder="worst"></label>
+      </div>
+      <div data-for="map" class="two">
+        <label>Left side<input id="idMXLo" maxlength="30" placeholder="Saver"></label>
+        <label>Right side<input id="idMXHi" maxlength="30" placeholder="Spender"></label>
+        <label>Bottom<input id="idMYLo" maxlength="30" placeholder="Homebody"></label>
+        <label>Top<input id="idMYHi" maxlength="30" placeholder="Always out"></label>
+      </div>
+      <div class="idmsg" id="ideaMsg" role="status"></div>
+      <button class="btn primary" id="ideaSend" type="submit">Suggest it</button>
+    </form>
+    <div class="sumcard" id="ideaPast" hidden></div>
+  </div></div>
   <div class="sumback" id="sumBack" hidden role="dialog" aria-label="Group summary"><div class="sumwrap">
-    <div class="sumtop"><div><div class="k" id="sumGroup"></div><h2>The all-time group summary</h2></div><button id="sumClose" type="button">Close</button></div>
+    <div class="sumtop"><div><div class="k" id="sumGroup"></div><h2 id="sumTitle">The all-time group summary</h2></div><button id="sumClose" type="button">Close</button></div>
+    <div class="sumseg" id="sumSeg"><button type="button" data-m="all" aria-pressed="true">All time</button><button type="button" data-m="week" aria-pressed="false">This week</button></div>
     <div id="sumBody"><p class="note">Loading…</p></div>
   </div></div>
   <div class="calback" id="calBack" hidden><div class="cal" role="dialog" aria-label="Pick a day">
@@ -395,7 +460,8 @@ svg text { font-family: var(--f-body); }
     <div class="qactions" id="qActions" hidden>
       <button class="pill" id="chatJump" type="button">💬 Group chat <span class="count" id="chatCount" hidden>0</span></button>
       <button class="pill" id="notifJump" type="button">🔔 <span id="notifLabel">Get reminders</span></button>
-      <button class="pill" id="sumJump" type="button">📊 Group summary</button>
+      <button class="pill" id="sumJump" type="button">📊 <span id="sumLabel">Group summary</span></button>
+      <button class="pill" id="ideaJump" type="button">💡 Question ideas <span class="count" id="ideaCount" hidden>0</span></button>
     </div>
   </section>
 
@@ -703,8 +769,9 @@ const S = {
   secret: null, me: null, groups: [], gid: null, mine: {}, results: {}, store: null,
 };
 const todayIndex = () => { const now = new Date(); const d = Math.floor((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - ROT_START) / 864e5); return d; };
-const qForDay = (d) => Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
-function baseQ(){ if (S.qid) return Q.find(q=>q.id===S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
+const qForDay = (d) => (S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
+const qById = (id) => Q.find(q => q.id === id) || (S.ideas && S.ideas.gid === S.gid ? Object.values(S.ideas.byDay).find(q => q.id === id) : null) || null;
+function baseQ(){ if (S.qid) return qById(S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
 /* "most likely to" questions rank the current group's members, so each group gets its own copy of the question */
 function withPeople(q){
   if (!q || !q.people) return q; const g = group(); if (!g) return q;
@@ -908,9 +975,19 @@ $("installBtn").addEventListener("click", async () => { if (!installEvt) return;
 $("installX").addEventListener("click", () => { ls.set("gg-install-x", true); renderInstall(); });
 
 /* ---------------- all-time group summary ---------------- */
-function openSummary(){ const g = group(); if (!g) return; $("sumGroup").textContent = g.name + " · " + g.members.length + " people"; $("sumBody").innerHTML = '<p class="note">Crunching every answer so far…</p>'; $("sumBack").hidden = false; document.body.style.overflow = "hidden"; loadSummary(g); }
+let sumMode = "all", sumData = null;
+const isWrapDay = () => new Date().getDay() === 0;
+function openSummary(mode){ const g = group(); if (!g) return; sumMode = typeof mode === "string" ? mode : isWrapDay() ? "week" : "all"; sumData = null; $("sumGroup").textContent = g.name + " · " + g.members.length + " people"; setSumMode(sumMode); $("sumBody").innerHTML = '<p class="note">Crunching every answer so far…</p>'; $("sumBack").hidden = false; document.body.style.overflow = "hidden"; loadSummary(g); }
+function weekRange(){ const ti = todayIndex(); return [Math.max(0, ti - 6), ti]; }
+function setSumMode(m){ sumMode = m; document.querySelectorAll("#sumSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === m)));
+  const [a, b] = weekRange(), f = (d) => new Date(ROT_START + d * 864e5).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+  $("sumTitle").textContent = m === "week" ? "The weekly wrap · " + f(a) + " – " + f(b) : "The all-time group summary";
+  const g = group(); if (sumData && g) renderSummary(g, buildSummary(g, sumData, m)); }
+document.querySelectorAll("#sumSeg button").forEach(b => b.addEventListener("click", () => setSumMode(b.dataset.m)));
+function syncSumLabel(){ const l = $("sumLabel"); if (l) l.textContent = isWrapDay() ? "Weekly wrap is out" : "Group summary"; }
 function closeSummary(){ $("sumBack").hidden = true; document.body.style.overflow = ""; }
-$("sumJump").addEventListener("click", openSummary);
+$("sumJump").addEventListener("click", () => openSummary());
+syncSumLabel();
 $("sumClose").addEventListener("click", closeSummary);
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("sumBack").hidden) closeSummary(); });
 async function loadSummary(g){
@@ -918,7 +995,7 @@ async function loadSummary(g){
   try { d = await rpc("get_summary", { p_secret: S.secret, p_group: g.id }); }
   catch (e) { if (e.message === "not_signed_in") return signOut(); $("sumBody").innerHTML = '<p class="note">Couldn\'t load the summary. If you\'re the host, run <b>supabase/summary.sql</b> in Supabase once, then try again.</p>'; return; }
   if (S.gid !== g.id || $("sumBack").hidden) return;
-  renderSummary(g, buildSummary(g, d));
+  sumData = d; renderSummary(g, buildSummary(g, d, sumMode));
 }
 /* how alike two answers to one question are, 0 (opposites) to 1 (identical) */
 function sumSim(q, a, b){
@@ -936,11 +1013,12 @@ function sumSim(q, a, b){
   for (let i = 0; i < Math.min(a.ys.length, b.ys.length); i++) if (a.ys[i] != null && b.ys[i] != null) { s += Math.abs(a.ys[i] - b.ys[i]) / span; n++; }
   return n >= 5 ? 1 - s / n : null;
 }
-function buildSummary(g, d){
+function buildSummary(g, d, mode){
   const members = (d.members || []).filter(m => g.members.some(x => x.username === m.username));
   const names = {}; members.forEach(m => { names[m.username] = m.name; });
   const suffix = "@" + g.id.slice(0, 8), byQ = {};
-  (d.answers || []).forEach(a => { if (!(a.username in names)) return; const [base, sfx] = a.qid.split("@"); if (sfx && "@" + sfx !== suffix) return; const q = Q.find(x => x.id === base); if (!q) return; (byQ[a.qid] = byQ[a.qid] || { q, list: [] }).list.push({ key: a.username, ...a.payload }); });
+  let inWeek = null; if (mode === "week") { const [a, b] = weekRange(); inWeek = new Set(); for (let x = a; x <= b; x++) inWeek.add(qForDay(x).id); }
+  (d.answers || []).forEach(a => { if (!(a.username in names)) return; const [base, sfx] = a.qid.split("@"); if (sfx && "@" + sfx !== suffix) return; if (inWeek && !inWeek.has(base)) return; const q = qById(base); if (!q) return; (byQ[a.qid] = byQ[a.qid] || { q, list: [] }).list.push({ key: a.username, ...a.payload }); });
   const qs = Object.values(byQ), played = qs.filter(x => x.list.length >= 2);
   const answers = {}; members.forEach(m => { answers[m.username] = 0; }); qs.forEach(x => x.list.forEach(e => { answers[e.key]++; }));
   const pair = {}, pk = (a, b) => a < b ? a + "|" + b : b + "|" + a, outl = {}; members.forEach(m => { outl[m.username] = 0; });
@@ -970,14 +1048,15 @@ function buildSummary(g, d){
     if (top) { titles[top[0]] = (titles[top[0]] || 0) + 1; supers.push({ likely: q.likely, who: top[0] }); }
   });
   const sortedQ = qAgree.slice().sort((a, b) => b.v - a.v);
-  return { g, members, names, qs, played, answers, pairs, solid, sync, ranked, byAns, outl, titles, supers, cats,
+  return { mode, g, members, names, qs, played, answers, pairs, solid, sync, ranked, byAns, outl, titles, supers, cats,
     soul: solid.slice().sort((a, b) => b.v - a.v)[0], rival: solid.slice().sort((a, b) => a.v - b.v)[0],
     agreeQ: sortedQ[0], fightQ: sortedQ.length > 1 ? sortedQ[sortedQ.length - 1] : null };
 }
 function sumQuips(R){
   const out = [], nm = (k) => R.names[k] || k, seed = hashStr(R.g.id + R.played.length + ":" + R.pairs.length), P = (arr, sh) => pick(arr, seed >>> (sh || 0));
   const pct = (v) => Math.round(v * 100) + "%";
-  if (!R.played.length) return ["Nothing to report yet. Answer a few questions together and the gossip writes itself."];
+  if (!R.played.length) return [R.mode === "week" ? "Quiet week. Nobody answered the same question as anyone else. Suspicious." : "Nothing to report yet. Answer a few questions together and the gossip writes itself."];
+  if (R.mode === "week") out.push(P([`Week in review: ${R.played.length} questions, ${R.qs.reduce((t, x) => t + x.list.length, 0)} answers, and a lot of opinions.`, `This week the group answered ${R.played.length} questions together. Science marches on.`, `${R.played.length} questions this week. Here's who embarrassed themselves.`], 14));
   if (R.sync != null) {
     if (R.sync >= 0.72) out.push(P([`Overall the group is ${pct(R.sync)} in sync. That's not a friend group, that's a hive mind.`, `${pct(R.sync)} group sync. Somebody check whether you all share one group chat brain.`, `The group agrees ${pct(R.sync)} of the time. Peer review has never been this friendly.`]));
     else if (R.sync >= 0.6) out.push(P([`Overall sync: ${pct(R.sync)}. Close enough to be friends, far enough apart to keep the group chat spicy.`, `The group is ${pct(R.sync)} in sync. Healthy disagreement, mostly.`, `${pct(R.sync)} in sync. You'd pass a vibe check, but not a reproducibility check.`]));
@@ -999,11 +1078,23 @@ function sumQuips(R){
   if ((R.cats.Lab || 0) >= 3) out.push(P([`${R.cats.Lab} lab questions answered as a group. Still more reproducible than your actual data.`, `${R.cats.Lab} lab questions in, and the group's error bars are still enormous.`], 12));
   return out;
 }
+function shareText(R){
+  const nm = (k) => R.names[k] || k, pct = (v) => Math.round(v * 100) + "%", L = [];
+  L.push((R.mode === "week" ? "📊 GroupGraphs weekly wrap" : "📊 GroupGraphs group summary") + " · " + R.g.name);
+  if (R.sync != null) L.push("Group sync: " + pct(R.sync));
+  if (R.soul && R.members.length >= 3) L.push("Soulmates: " + nm(R.soul.a) + " & " + nm(R.soul.b) + " (" + pct(R.soul.v) + ")");
+  if (R.rival && R.soul && R.rival !== R.soul) L.push("Do not seat together: " + nm(R.rival.a) + " & " + nm(R.rival.b) + " (" + pct(R.rival.v) + ")");
+  if (R.fightQ && R.agreeQ && R.fightQ.q !== R.agreeQ.q) L.push("Biggest fight: " + R.fightQ.q.title);
+  if (R.ranked.length >= 3) L.push("Wildcard: " + nm(R.ranked[R.ranked.length - 1][0]));
+  sumQuips(R).slice(R.mode === "week" ? 1 : 0).slice(0, 3).forEach(q => L.push("• " + q));
+  L.push(location.origin + location.pathname);
+  return L.join("\n");
+}
 function renderSummary(g, R){
   const body = $("sumBody"); body.innerHTML = ""; const nm = (k) => R.names[k] || k, pct = (v) => Math.round(v * 100) + "%";
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const tile = (k, v, dsc, onClick) => { const t = el("div", "sumtile" + (onClick ? " link qt" : "")); t.append(el("span", "k", k), el("span", "v", v), el("span", "d", dsc)); if (onClick) { t.setAttribute("role", "button"); t.tabIndex = 0; t.addEventListener("click", onClick); } return t; };
-  const jumpTo = (q) => () => { const i = Q.indexOf(q), ti = todayIndex(); closeSummary(); if (i >= 0 && i <= ti) { S.qid = null; S.dayOffset = i - ti; } else { S.qid = q.id; } go(); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const jumpTo = (q) => () => { const ti = todayIndex(); let i = -1; for (let x = ti; x >= 0; x--) if (qForDay(x).id === q.id) { i = x; break; } closeSummary(); if (i >= 0) { S.qid = null; S.dayOffset = i - ti; } else { S.qid = q.id; } go(); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:14px";
   const tiles = el("div", "sumtiles");
   tiles.append(tile("Questions together", String(R.played.length), "answered by at least two of you"));
@@ -1032,9 +1123,96 @@ function renderSummary(g, R){
     R.supers.forEach(s => { const r = el("div", "sumrow"); r.append(el("span", null, "Most likely to " + s.likely), el("span", null, nm(s.who))); rows.appendChild(r); }); sc.appendChild(rows); wrap.appendChild(sc); }
   if (R.byAns.length) { const ac = el("div", "sumcard"); ac.appendChild(el("h3", null, "Who shows up")); const rows = el("div", "sumrows");
     R.byAns.forEach(([k, n]) => { const r = el("div", "sumrow"); const c = R.outl[k] ? ` · odd one out ${R.outl[k]}×` : ""; r.append(el("span", null, nm(k)), el("span", null, n + " answered" + c)); rows.appendChild(r); }); ac.appendChild(rows); wrap.appendChild(ac); }
+  const sh = el("button", "btn primary", "📤 Share this to the group chat"); sh.type = "button"; sh.style.alignSelf = "flex-start";
+  sh.addEventListener("click", async () => { const t = shareText(R); try { if (navigator.share) { await navigator.share({ text: t }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(t); sh.textContent = "Copied! Paste it in the group chat"; } catch (e) { prompt("Copy this:", t); } setTimeout(() => { sh.textContent = "📤 Share this to the group chat"; }, 2500); });
+  wrap.appendChild(sh);
   wrap.appendChild(el("p", "note", "Only questions you've answered yourself count here, so the summary never spoils one you haven't done yet."));
   body.appendChild(wrap);
 }
+
+/* ---------------- question ideas ---------------- */
+const localISO = (dt) => dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+const isoDay = (s) => { const [y, m, d] = String(s).slice(0, 10).split("-").map(Number); return Math.round((Date.UTC(y, m - 1, d) - ROT_START) / 864e5); };
+const txt = (v, n) => String(v == null ? "" : v).trim().slice(0, n);
+function niceStep(span){ const raw = span / 6, p = Math.pow(10, Math.floor(Math.log10(raw))); return [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw) || raw; }
+function ideaQ(row){
+  const s = row.spec || {}, base = { id: "c" + row.id, cat: "Idea from " + txt(row.author, 24), title: txt(s.title, 120), sub: txt(s.sub, 200), custom: true };
+  if (s.kind === "people") { const likely = txt(s.likely, 80); return Object.assign(base, { kind: "rank", people: true, likely, title: "Who's most likely to " + likely.replace(/\?+$/, "") + "?", items: [], best: "most likely", worst: "least likely" }); }
+  if (s.kind === "rank") { const items = (Array.isArray(s.items) ? s.items : []).map(x => txt(x, 40)).filter(Boolean).slice(0, 12); return Object.assign(base, { kind: "rank", items: items.length >= 2 ? items : ["A", "B", "C"], best: txt(s.best, 24) || "best", worst: txt(s.worst, 24) || "worst" }); }
+  if (s.kind === "map") { const x = s.x || {}, y = s.y || {}; return Object.assign(base, { kind: "map", x: { lo: txt(x.lo, 30) || "Less", hi: txt(x.hi, 30) || "More" }, y: { lo: txt(y.lo, 30) || "Less", hi: txt(y.hi, 30) || "More" } }); }
+  const x = s.x || {}, y = s.y || {}; let min = Number(x.min), max = Number(x.max); if (!isFinite(min)) min = 0; if (!isFinite(max) || max <= min) max = min + 10;
+  return Object.assign(base, { x: { label: txt(x.label, 40) || "x", min, max, step: niceStep(max - min) }, y: { label: txt(y.label, 40) || "y", lo: txt(y.lo, 30) || "low", hi: txt(y.hi, 30) || "high" } });
+}
+let ideasBusy = false;
+function ensureIdeas(){ if (!S.secret || !S.gid || ideasBusy) return; if (S.ideas && S.ideas.gid === S.gid && Date.now() - S.ideas.at < 60000) return; loadIdeas(); }
+async function loadIdeas(){
+  const gid = S.gid; ideasBusy = true; let d;
+  try { d = await rpc("get_ideas", { p_secret: S.secret, p_group: gid, p_today: localISO(new Date()) }); }
+  catch (e) { ideasBusy = false; if (e.message === "not_signed_in") return signOut(); S.ideas = { gid, at: Date.now(), byDay: {}, pending: [], past: [], err: true }; $("ideaJump").hidden = !S.gid; return; }
+  ideasBusy = false;
+  const before = S.ideas && S.ideas.gid === gid ? Object.keys(S.ideas.byDay).join() : null, byDay = {};
+  (d.scheduled || []).forEach(r => { byDay[isoDay(r.day)] = ideaQ(r); });
+  S.ideas = { gid, at: Date.now(), byDay, pending: d.pending || [], past: (d.scheduled || []).slice().reverse() };
+  renderIdeaPill();
+  if (!$("ideaBack").hidden) renderIdeas();
+  if (S.gid === gid && before !== Object.keys(byDay).join()) go();
+}
+function renderIdeaPill(){ const n = S.ideas && S.ideas.gid === S.gid ? S.ideas.pending.length : 0; $("ideaCount").textContent = n; $("ideaCount").hidden = !n; }
+let ideaKind = "curve";
+function setIdeaKind(k){ ideaKind = k; document.querySelectorAll("#ideaKinds button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k))); document.querySelectorAll("#ideaForm [data-for]").forEach(e => { e.hidden = !e.dataset.for.split(" ").includes(k); }); $("ideaMsg").textContent = ""; }
+document.querySelectorAll("#ideaKinds button").forEach(b => b.addEventListener("click", () => setIdeaKind(b.dataset.k)));
+function openIdeas(){ const g = group(); if (!g) return; $("ideaGroup").textContent = g.name; setIdeaKind(ideaKind); renderIdeas(); $("ideaBack").hidden = false; document.body.style.overflow = "hidden"; loadIdeas(); }
+function closeIdeas(){ $("ideaBack").hidden = true; document.body.style.overflow = ""; }
+$("ideaJump").addEventListener("click", openIdeas);
+$("ideaClose").addEventListener("click", closeIdeas);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("ideaBack").hidden) closeIdeas(); });
+function ideaDesc(spec){
+  const s = spec || {};
+  if (s.kind === "rank") return "Ranking: " + (s.items || []).slice(0, 12).join(", ");
+  if (s.kind === "map") return "Map: " + [s.x && s.x.lo, s.x && s.x.hi].join(" ↔ ") + " · " + [s.y && s.y.lo, s.y && s.y.hi].join(" ↕ ");
+  if (s.kind === "people") return "Most likely to: ranks everyone in the group";
+  return "Curve: " + ((s.y && s.y.label) || "y") + " vs " + ((s.x && s.x.label) || "x") + " (" + (s.x && s.x.min) + " to " + (s.x && s.x.max) + ")";
+}
+const ideaTitle = (s) => s && s.kind === "people" ? "Who's most likely to " + txt(s.likely, 80).replace(/\?+$/, "") + "?" : txt(s && s.title, 120);
+function renderIdeas(){
+  const I = S.ideas && S.ideas.gid === S.gid ? S.ideas : { pending: [], past: [] }, g = group(), isHost = g && S.me && g.host === S.me.username;
+  const mk = (tag, cls, t) => { const e = document.createElement(tag); if (cls) e.className = cls; if (t != null) e.textContent = t; return e; };
+  const list = $("ideaList"); list.innerHTML = "";
+  const sorted = I.pending.slice().sort((a, b) => b.votes - a.votes || Date.parse(a.created_at) - Date.parse(b.created_at));
+  if (I.err) list.appendChild(mk("p", "note", "Couldn't load ideas. If you're the host, run supabase/ideas.sql in Supabase once, then refresh."));
+  else if (!sorted.length) list.appendChild(mk("p", "note", "No ideas yet. Be the first, the group is counting on you."));
+  sorted.forEach((it, i) => {
+    const row = mk("div", "idea"), v = mk("button", "vote"); v.type = "button"; v.setAttribute("aria-pressed", String(!!it.voted)); v.setAttribute("aria-label", (it.voted ? "Remove your vote for " : "Vote for ") + ideaTitle(it.spec));
+    v.append(mk("span", null, "▲"), mk("span", null, String(it.votes)));
+    v.addEventListener("click", async () => { v.disabled = true; try { await rpc("vote_question", { p_secret: S.secret, p_id: it.id, p_on: !it.voted }); } catch (e) {} await loadIdeas(); renderIdeas(); });
+    const body = mk("div"); const t = mk("div", "t"); if (i === 0 && it.votes > 0) t.appendChild(mk("span", "badge", "Up next")); t.appendChild(document.createTextNode(ideaTitle(it.spec)));
+    body.append(t, mk("div", "m", ideaDesc(it.spec)), mk("div", "m", "from " + it.author + " · " + it.votes + (it.votes === 1 ? " vote" : " votes")));
+    row.append(v, body);
+    if (it.mine_author || isHost) { const x = mk("button", "xdel2", "×"); x.type = "button"; x.setAttribute("aria-label", "Delete idea"); x.addEventListener("click", async () => { if (!confirm("Delete this idea?")) return; try { await rpc("delete_question", { p_secret: S.secret, p_id: it.id }); } catch (e) {} await loadIdeas(); renderIdeas(); }); row.appendChild(x); }
+    else row.appendChild(mk("span"));
+    list.appendChild(row);
+  });
+  const nx = $("ideaNext"); nx.innerHTML = ""; const top = sorted[0];
+  if (top && top.votes > 0) { nx.hidden = false; nx.append(mk("h3", null, "Tomorrow's question, if nothing overtakes it"), mk("div", "t", ideaTitle(top.spec)), mk("p", "note", "From " + top.author + " with " + top.votes + (top.votes === 1 ? " vote" : " votes") + ". Voting closes at midnight.")); nx.querySelector(".t").style.cssText = "font-weight:800;font-size:17px"; }
+  else nx.hidden = true;
+  const past = $("ideaPast"); past.innerHTML = ""; past.hidden = !I.past.length;
+  if (I.past.length) { past.appendChild(mk("h3", null, "Already played")); const rows = mk("div", "sumrows"); I.past.slice(0, 20).forEach(r => { const d = isoDay(r.day), rr = mk("div", "sumrow"); const dt = new Date(ROT_START + d * 864e5); rr.append(mk("span", null, dt.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }) + " · " + r.author), mk("span", null, ideaTitle(r.spec))); rows.appendChild(rr); }); past.appendChild(rows); }
+}
+$("ideaForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault(); const msg = $("ideaMsg"); msg.className = "idmsg"; msg.textContent = "";
+  const v = (id) => $(id).value.trim(), k = ideaKind, spec = { kind: k, title: v("idTitle"), sub: v("idSub") };
+  const bad = (m) => { msg.textContent = m; };
+  if (k === "people") { spec.likely = v("idLikely").replace(/^(who'?s )?most likely to /i, "").replace(/\?+$/, ""); delete spec.title; if (spec.likely.length < 2) return bad("Finish the sentence: who's most likely to…"); spec.title = "Who's most likely to " + spec.likely + "?"; }
+  else if (spec.title.length < 3) return bad("Give your question a title.");
+  if (k === "curve") { const mn = Number(v("idXMin")), mx = Number(v("idXMax")); if (!v("idXLabel") || !v("idYLabel")) return bad("Say what goes along the bottom and up the side."); if (!isFinite(mn) || !isFinite(mx) || mx <= mn) return bad("The bottom has to end at a bigger number than it starts."); spec.x = { label: v("idXLabel"), min: mn, max: mx }; spec.y = { label: v("idYLabel"), lo: v("idYLo") || "low", hi: v("idYHi") || "high" }; }
+  if (k === "rank") { const items = $("idItems").value.split("\n").map(x => x.trim()).filter(Boolean); const uniq = [...new Set(items.map(x => x.slice(0, 40)))]; if (uniq.length < 3 || uniq.length > 12) return bad("Add between 3 and 12 different things to rank, one per line."); spec.items = uniq; spec.best = v("idBest") || "best"; spec.worst = v("idWorst") || "worst"; }
+  if (k === "map") { if (!v("idMXLo") || !v("idMXHi") || !v("idMYLo") || !v("idMYHi")) return bad("Name all four sides of the map."); spec.x = { lo: v("idMXLo"), hi: v("idMXHi") }; spec.y = { lo: v("idMYLo"), hi: v("idMYHi") }; }
+  $("ideaSend").disabled = true;
+  try { await rpc("suggest_question", { p_secret: S.secret, p_group: S.gid, p_spec: spec }); $("ideaForm").reset(); msg.className = "idmsg ok"; msg.textContent = "Added, and you've voted for it. Now go campaign in the group chat."; await loadIdeas(); renderIdeas(); }
+  catch (e) { msg.textContent = e.message === "too_many_ideas" ? "You already have 5 ideas waiting. Let some of them win first." : e.message === "bad_question" ? "Something's missing from that question. Check the fields and try again." : "Couldn't save that idea. Try again in a bit."; }
+  $("ideaSend").disabled = false;
+});
 
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
@@ -1352,7 +1530,7 @@ function mad(a, b){ let s = 0, n = 0; for (let i=0;i<=N;i++){ if (a[i]!=null && 
 const escH = (s) => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const dotH = (e) => `<span class="dot" style="background:${colorOf(e.key).c}"></span>`;
 const pairH = (a, b) => `<span class="nw">${dotH(a)}${escH(a.name)}</span> &amp; <span class="nw">${dotH(b)}${escH(b.name)}</span>`;
-function statCard(k, v, d){ const c = document.createElement("div"); c.className = "stat"; c.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div>`; $("stats").appendChild(c); }
+function statCard(k, v, d){ const c = document.createElement("div"); c.className = "stat"; [["k", k], ["v", v], ["d", d]].forEach(([cl, t]) => { const x = document.createElement("div"); x.className = cl; x.textContent = t; c.appendChild(x); }); $("stats").appendChild(c); }
 function renderStats(q, list, avg){
   const box = $("stats"); box.innerHTML = ""; if (list.length < 2) { renderFun(q, list, {}); return; }
   const yr = yInfo(q).max - yInfo(q).min, F = {};
@@ -1780,6 +1958,7 @@ function renderBank(){
 }
 function setTab(t){ if (t === "res") loadResults(true); S.tab = t; $("tabDraw").setAttribute("aria-selected", String(t==="draw")); $("tabRes").setAttribute("aria-selected", String(t==="res")); $("panelDraw").hidden = t!=="draw"; $("panelRes").hidden = t!=="res"; if (t==="draw") renderDraw(); else renderResults(); }
 function renderAll(full){
+  ensureIdeas();
   loadPtsForQ();
   $("tabDraw").textContent = { rank: "Rank yours", map: "Place yours" }[currentQ().kind] || "Draw yours";
   renderHeader(); renderBank();
