@@ -179,6 +179,10 @@ td.num { font-family: var(--f-mono); font-size: 13px; }
 .found span small { color: var(--ink-3); margin-left: 6px; }
 .err { color: var(--danger); font-size: 14px; min-height: 20px; }
 .divider { border-top: 1px solid var(--line); }
+.qactions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 99px; padding: 7px 14px; font-weight: 700; font-size: 14px; cursor: pointer; }
+.pill:hover { border-color: var(--pen); }
+.pill .count { font-family: var(--f-mono); font-size: 12px; font-weight: 600; background: var(--pen-soft); color: var(--pen); border-radius: 99px; padding: 1px 8px; }
 .rules { border: 1px dashed var(--pen); background: var(--pen-soft); border-radius: 12px; padding: 10px 14px; }
 .rules-h { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; color: var(--pen); margin-bottom: 4px; }
 .rules ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
@@ -248,7 +252,6 @@ svg text { font-family: var(--f-body); }
     <label for="groupSel">Group</label>
     <select id="groupSel"></select>
     <button class="btn" id="manageBtn">Groups &amp; profile</button>
-    <button class="btn ghost" id="bellBtn" title="Daily reminder">🔔 Reminder</button>
     <span class="spacer"></span>
     <span class="me" id="meLabel"></span>
   </div>
@@ -314,6 +317,10 @@ svg text { font-family: var(--f-body); }
     <div class="eyebrow" id="eyebrow"></div>
     <h1 class="prompt" id="prompt">Loading question…</h1>
     <p class="sub" id="sub"></p>
+    <div class="qactions" id="qActions" hidden>
+      <button class="pill" id="chatJump" type="button">💬 Group chat <span class="count" id="chatCount" hidden>0</span></button>
+      <button class="pill" id="notifJump" type="button">🔔 <span id="notifLabel">Get reminders</span></button>
+    </div>
   </section>
 
   <div class="rules" id="rulesBox" hidden><div class="rules-h">Group rules for this one</div><ul id="rulesList"></ul></div>
@@ -670,8 +677,9 @@ function delBtn(c){ const b = document.createElement("button"); b.type = "button
   b.addEventListener("click", async () => { if (!confirm("Delete this " + (c.kind === "rule" ? "rule" : "comment") + "?")) return; try { await rpc("delete_comment", { p_secret: S.secret, p_id: c.id }); } catch (e) {} loadComments(true); }); return b; }
 function renderComments(){
   const on = !!(S.secret && S.gid && S.me);
-  $("chatBox").hidden = !on; if (!on) { $("rulesBox").hidden = true; return; }
+  $("chatBox").hidden = !on; $("qActions").hidden = !S.me; if (!on) { $("rulesBox").hidden = true; $("chatJump").hidden = true; return; }
   const c = S.comments[rkey(currentQ().id)], list = c ? c.list : [];
+  $("chatJump").hidden = false; $("chatCount").textContent = list.length; $("chatCount").hidden = !list.length;
   const rules = list.filter(x => x.kind === "rule"), rl = $("rulesList"); rl.innerHTML = "";
   rules.forEach(r => { const li = document.createElement("li"); const t = document.createElement("span"); t.textContent = r.body; const by = document.createElement("span"); by.className = "by"; by.textContent = "from " + r.name; li.append(t, by); if (r.can_delete) li.appendChild(delBtn(r)); rl.appendChild(li); });
   $("rulesBox").hidden = !rules.length;
@@ -731,7 +739,7 @@ async function renderRemind(){
   if (isIOS && !isStandalone()) { help.hidden = false; help.textContent = "On iPhone, notifications only work from the home screen app: tap Share, then Add to Home Screen, open GroupGraphs from there, and turn them on here."; return; }
   if (!pushOK) { st.textContent = "This browser can't do notifications. Use a calendar reminder instead."; return; }
   if (Notification.permission === "denied") { st.textContent = "Notifications are blocked for this site in your browser settings."; return; }
-  const sub = await currentSub(); btn.hidden = false;
+  const sub = await currentSub(); btn.hidden = false; $("notifLabel").textContent = sub ? "Reminders on" : "Get reminders";
   btn.textContent = sub ? "Turn off notifications" : "Turn on notifications"; btn.className = "btn" + (sub ? " ghost" : " primary");
   st.textContent = sub ? "On for this device, daily at " + hourLabel(remindHour()) : "";
 }
@@ -749,7 +757,9 @@ $("pushBtn").addEventListener("click", async () => {
   btn.disabled = false; renderRemind();
 });
 $("remindHour").addEventListener("change", async () => { ls.set("gg-remind-hour", remindHour()); const sub = await currentSub(); if (sub) { try { await savePush(sub); } catch (e) {} } renderRemind(); });
-$("bellBtn").addEventListener("click", () => { showScreen("groups"); setTimeout(() => $("remindBox").scrollIntoView({ behavior: "smooth", block: "start" }), 50); });
+$("notifJump").addEventListener("click", () => { showScreen("groups"); setTimeout(() => $("remindBox").scrollIntoView({ behavior: "smooth", block: "start" }), 50); });
+
+$("chatJump").addEventListener("click", () => { $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }); setTimeout(() => $("chatInput").focus({ preventScroll: true }), 400); });
 
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
