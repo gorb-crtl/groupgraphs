@@ -49,6 +49,8 @@ button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; }
 
+.themebtn { font-family: var(--f-body); font-size: 12px; font-weight: 700; letter-spacing: 0; border: 1px solid var(--line); background: var(--sheet); color: var(--ink-2); border-radius: 8px; padding: 5px 9px; align-self: center; transform: translateY(-2px); cursor: pointer; }
+.themebtn:hover { border-color: var(--pen); color: var(--ink); }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .brand { font-family: var(--f-hand); font-weight: 800; font-size: 24px; line-height: 1; letter-spacing: -.03em; display: flex; align-items: baseline; gap: 8px; }
 .brand .mark { display: inline-block; width: 26px; height: 22px; flex: none; transform: translateY(3px); }
@@ -308,6 +310,7 @@ svg text { font-family: var(--f-body); }
   @keyframes draw { to { stroke-dashoffset: 0; } }
 }
 </style>
+<script>try{var t=localStorage.getItem("gg-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -323,6 +326,7 @@ svg text { font-family: var(--f-body); }
     <div class="brand">
       <svg class="mark" viewBox="0 0 26 22" aria-hidden="true"><path d="M2 2v18h22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4 18c5-1 7-10 11-12s5 1 8-3" fill="none" stroke="var(--pen)" stroke-width="2.4" stroke-linecap="round"/></svg>
       GroupGraphs
+      <button class="themebtn" id="themeBtn" type="button" aria-label="Switch light or dark mode">Dark mode</button>
     </div>
     <nav class="daynav" aria-label="Choose day">
       <button id="prevDay" aria-label="Previous day's question">&#8249;</button>
@@ -1277,6 +1281,15 @@ $("fbForm").addEventListener("submit", async (ev) => {
   $("fbSend").disabled = false;
 });
 
+/* ---------------- light / dark toggle ---------------- */
+function isDark(){ const t = document.documentElement.dataset.theme; return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; }
+function applyTheme(t){ if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  $("themeBtn").textContent = isDark() ? "Light mode" : "Dark mode";
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = isDark() ? "#11151b" : "#2348b8"; }
+$("themeBtn").addEventListener("click", () => { const t = isDark() ? "light" : "dark"; try { localStorage.setItem("gg-theme", t); } catch (e) {} applyTheme(t); renderAll(true); });
+try { applyTheme(localStorage.getItem("gg-theme")); } catch (e) { applyTheme(null); }
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { let t = null; try { t = localStorage.getItem("gg-theme"); } catch (e) {} if (!t) applyTheme(null); });
+
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
   $("authPanel").hidden = name !== "auth"; $("codePanel").hidden = name !== "code"; $("groupsPanel").hidden = name !== "groups";
@@ -1582,7 +1595,7 @@ function renderResults(){
 
   // legend
   const lg = $("legend"); lg.innerHTML = "";
-  const mkChip = (key, label, swStyle, isAvg, isMe) => { const b = document.createElement("button"); b.className = "chip" + (S.hidden.has(key) ? " off" : "") + (isMe ? " me" : ""); b.setAttribute("aria-pressed", String(!S.hidden.has(key))); b.title = "Show or hide"; const sw = document.createElement("span"); sw.className = "sw" + (isAvg ? " avg" : ""); if (swStyle) sw.style.cssText = swStyle; const t = document.createElement("span"); t.textContent = label; b.append(sw, t); b.addEventListener("click", ()=>{ S.hidden.has(key) ? S.hidden.delete(key) : S.hidden.add(key); renderResults(); }); b.addEventListener("mouseenter", ()=>{ Object.entries(paths).forEach(([k,g])=>{ if (!S.hidden.has(k)) g.setAttribute("opacity", k===key ? 1 : .15); }); }); b.addEventListener("mouseleave", ()=>{ Object.entries(paths).forEach(([k,g])=> g.setAttribute("opacity", S.hidden.has(k) ? .08 : 1)); }); lg.appendChild(b); };
+  const mkChip = (key, label, swStyle, isAvg, isMe) => { const b = document.createElement("button"); b.className = "chip" + (S.hidden.has(key) ? " off" : "") + (isMe ? " me" : ""); b.setAttribute("aria-pressed", String(!S.hidden.has(key))); b.title = "Show or hide"; const sw = document.createElement("span"); sw.className = "sw" + (isAvg ? " avg" : ""); if (swStyle) sw.style.cssText = swStyle; const t = document.createElement("span"); t.textContent = label; b.append(sw, t); b.addEventListener("click", ()=>{ S.hidden.has(key) ? S.hidden.delete(key) : S.hidden.add(key); renderResults(); }); b.addEventListener("pointerenter", (ev)=>{ if (ev.pointerType !== "mouse") return; Object.entries(paths).forEach(([k,g])=>{ if (!S.hidden.has(k)) g.setAttribute("opacity", k===key ? 1 : .15); }); }); b.addEventListener("pointerleave", (ev)=>{ if (ev.pointerType !== "mouse") return; Object.entries(paths).forEach(([k,g])=> g.setAttribute("opacity", S.hidden.has(k) ? .08 : 1)); }); lg.appendChild(b); };
   if (avg) mkChip("__avg", "Group average", null, true, false);
   list.forEach(e => { const col = colorOf(e.key); mkChip(e.key, e.name + (mine && e.key===mine.key ? " (you)" : ""), `background:${col.c}` + (col.dash ? `;background:repeating-linear-gradient(90deg,${col.c} 0 5px,transparent 5px 8px)` : ""), false, mine && e.key===mine.key); });
 
@@ -1593,7 +1606,7 @@ function mad(a, b){ let s = 0, n = 0; for (let i=0;i<=N;i++){ if (a[i]!=null && 
 const escH = (s) => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const dotH = (e) => `<span class="dot" style="background:${colorOf(e.key).c}"></span>`;
 const pairH = (a, b) => `<span class="nw">${dotH(a)}${escH(a.name)}</span> &amp; <span class="nw">${dotH(b)}${escH(b.name)}</span>`;
-function statCard(k, v, d){ const c = document.createElement("div"); c.className = "stat"; [["k", k], ["v", v], ["d", d]].forEach(([cl, t]) => { const x = document.createElement("div"); x.className = cl; x.textContent = t; c.appendChild(x); }); $("stats").appendChild(c); }
+function statCard(k, v, d){ const c = document.createElement("div"); c.className = "stat"; c.innerHTML = `<div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div>`; $("stats").appendChild(c); } // callers escape user text with escH
 function renderStats(q, list, avg){
   const box = $("stats"); box.innerHTML = ""; if (list.length < 2) { renderFun(q, list, {}); return; }
   const yr = yInfo(q).max - yInfo(q).min, F = {};
@@ -1709,8 +1722,8 @@ function renderRankResults(q, list, mine){
   const lg = $("legend"); lg.innerHTML = "";
   const chip = (key, label, sw, isMe) => { const b = document.createElement("button"); b.className = "chip" + (S.hidden.has(key) ? " off" : "") + (isMe ? " me" : ""); b.setAttribute("aria-pressed", String(!S.hidden.has(key))); const s = document.createElement("span"); s.className = "sw"; s.style.cssText = sw; const t = document.createElement("span"); t.textContent = label; b.append(s, t);
     b.addEventListener("click", () => { S.hidden.has(key) ? S.hidden.delete(key) : S.hidden.add(key); renderResults(); });
-    b.addEventListener("mouseenter", () => Object.entries(dotsByKey).forEach(([k, cs]) => cs.forEach(c => c.setAttribute("opacity", S.hidden.has(k) ? .08 : k === key ? 1 : .15))));
-    b.addEventListener("mouseleave", () => Object.entries(dotsByKey).forEach(([k, cs]) => cs.forEach(c => c.setAttribute("opacity", S.hidden.has(k) ? .08 : 1))));
+    b.addEventListener("pointerenter", (ev) => ev.pointerType === "mouse" && Object.entries(dotsByKey).forEach(([k, cs]) => cs.forEach(c => c.setAttribute("opacity", S.hidden.has(k) ? .08 : k === key ? 1 : .15))));
+    b.addEventListener("pointerleave", (ev) => ev.pointerType === "mouse" && Object.entries(dotsByKey).forEach(([k, cs]) => cs.forEach(c => c.setAttribute("opacity", S.hidden.has(k) ? .08 : 1))));
     lg.appendChild(b); };
   if (list.length > 1) chip("__avg", "Group average", "width:4px;height:14px;border-radius:2px;background:var(--ink)");
   list.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(e => chip(e.key, e.name + (mine && e.key === mine.key ? " (you)" : ""), `width:10px;height:10px;border-radius:50%;background:${colorOf(e.key).c}`, mine && e.key === mine.key));
