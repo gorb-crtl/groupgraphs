@@ -179,6 +179,12 @@ td.num { font-family: var(--f-mono); font-size: 13px; }
 .found span small { color: var(--ink-3); margin-left: 6px; }
 .err { color: var(--danger); font-size: 14px; min-height: 20px; }
 .divider { border-top: 1px solid var(--line); }
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.install { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); background: var(--sheet); border-radius: 12px; padding: 10px 12px; }
+.install img { width: 40px; height: 40px; border-radius: 10px; flex: none; }
+.install .txt { flex: 1; min-width: 0; font-size: 14px; color: var(--ink-2); line-height: 1.4; }
+.install .txt b { color: var(--ink); display: block; font-size: 15px; }
+.groupname { font-weight: 800; font-size: 16px; }
 .qactions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 99px; padding: 7px 14px; font-weight: 700; font-size: 14px; cursor: pointer; }
 .pill:hover { border-color: var(--pen); }
@@ -250,7 +256,7 @@ svg text { font-family: var(--f-body); }
 
   <div class="groupbar" id="groupbar" hidden>
     <label for="groupSel">Group</label>
-    <select id="groupSel"></select>
+    <select id="groupSel"></select><span class="groupname" id="groupName" hidden></span>
     <button class="btn" id="manageBtn">Groups &amp; profile</button>
     <span class="spacer"></span>
     <span class="me" id="meLabel"></span>
@@ -267,7 +273,7 @@ svg text { font-family: var(--f-body); }
     </form>
     <form id="backForm" class="row" hidden>
       <div class="field"><label for="siUser">Username</label><input id="siUser" maxlength="21" autocapitalize="none" autocomplete="username"></div>
-      <div class="field"><label for="siCode">Personal code</label><input id="siCode" maxlength="6" autocapitalize="characters" autocomplete="one-time-code" placeholder="K7PQ2M"></div>
+      <div class="field"><label for="siCode">Personal code</label><input id="siCode" name="password" type="password" maxlength="6" autocapitalize="characters" autocomplete="current-password" placeholder="K7PQ2M"></div>
       <button class="btn primary" id="siBtn" type="submit">Sign in</button>
     </form>
     <div class="err" id="authErr" role="alert"></div>
@@ -278,7 +284,12 @@ svg text { font-family: var(--f-body); }
     <p>You'll need your username and this code to sign in on another phone or browser. Screenshot it or put it in your notes.</p>
     <div class="codebox" id="codeShow"></div>
     <p id="codeUser"></p>
-    <button class="btn primary" id="codeDone">I saved it</button>
+    <form id="codeForm" style="display:flex;flex-direction:column;gap:8px">
+      <input class="sr-only" id="cfUser" name="username" autocomplete="username" tabindex="-1" aria-hidden="true">
+      <input class="sr-only" id="cfCode" name="password" type="password" autocomplete="new-password" tabindex="-1" aria-hidden="true">
+      <p style="font-size:14px">Tip: when your phone offers to save a password, say yes. It'll fill in your code for you next time.</p>
+      <button class="btn primary" id="codeDone" type="submit">Save &amp; continue</button>
+    </form>
   </section>
 
   <section class="panel" id="groupsPanel" hidden>
@@ -313,6 +324,12 @@ svg text { font-family: var(--f-body); }
   </section>
 
   <div id="appMain">
+  <div class="install" id="installTip" hidden>
+    <img src="apple-touch-icon.png" alt="">
+    <div class="txt"><b>Put GroupGraphs on your home screen</b><span id="installHow"></span></div>
+    <button class="btn primary" id="installBtn" hidden>Install</button>
+    <button class="xdel" id="installX" aria-label="Dismiss">×</button>
+  </div>
   <section class="q-head">
     <div class="eyebrow" id="eyebrow"></div>
     <h1 class="prompt" id="prompt">Loading question…</h1>
@@ -761,18 +778,43 @@ $("notifJump").addEventListener("click", () => { showScreen("groups"); setTimeou
 
 $("chatJump").addEventListener("click", () => { $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }); setTimeout(() => $("chatInput").focus({ preventScroll: true }), 400); });
 
+/* ---------------- saved logins + home screen tip ---------------- */
+async function storeLogin(user, code){ try { if (window.PasswordCredential && navigator.credentials) await navigator.credentials.store(new PasswordCredential({ id: user, password: code, name: user })); } catch (e) {} }
+async function trySavedLogin(){
+  try { if (!(window.PasswordCredential && navigator.credentials)) return false;
+    const c = await navigator.credentials.get({ password: true, mediation: "optional" }); if (!c || !c.password) return false;
+    afterSignIn(await rpc("sign_in", { p_username: c.id, p_personal_code: c.password }), false); return true;
+  } catch (e) { return false; }
+}
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEvt = e; renderInstall(); });
+window.addEventListener("appinstalled", () => { ls.set("gg-install-x", true); renderInstall(); });
+function renderInstall(){
+  const tip = $("installTip"), isAndroid = /Android/i.test(navigator.userAgent);
+  const show = !!S.me && !isStandalone() && !ls.get("gg-install-x", false) && (isIOS || isAndroid || !!installEvt);
+  tip.hidden = !show; if (!show) return;
+  $("installBtn").hidden = !installEvt;
+  $("installHow").textContent = installEvt ? "Opens full screen with its own icon." :
+    isIOS ? "In Safari, tap Share, then “Add to Home Screen”. You'll sign in once in the app." :
+    "In Chrome, tap ⋮, then “Add to Home screen”. You'll sign in once in the app.";
+}
+$("installBtn").addEventListener("click", async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; renderInstall(); });
+$("installX").addEventListener("click", () => { ls.set("gg-install-x", true); renderInstall(); });
+
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
   $("authPanel").hidden = name !== "auth"; $("codePanel").hidden = name !== "code"; $("groupsPanel").hidden = name !== "groups";
   $("appMain").hidden = name === "auth" || name === "code"; $("bankBox").hidden = true;
   $("groupbar").hidden = name === "auth" || name === "code" || !S.me;
   if (name === "groups") { renderGroupsPanel(); renderRemind(); }
+  renderInstall();
 }
 function renderGroupbar(){
   const sel = $("groupSel"); sel.innerHTML = "";
   if (!S.groups.length) { const o = document.createElement("option"); o.textContent = "No group yet"; o.value = ""; sel.appendChild(o); sel.disabled = true; }
   else { sel.disabled = false; S.groups.forEach(g => { const o = document.createElement("option"); o.value = g.id; o.textContent = g.name + " (" + g.members.length + ")"; if (g.id === S.gid) o.selected = true; sel.appendChild(o); }); }
   $("meLabel").textContent = S.me ? "@" + S.me.username : "";
+  const one = S.groups.length === 1; sel.hidden = one; $("groupName").hidden = !one; if (one) $("groupName").textContent = S.groups[0].name;
 }
 function renderGroupsPanel(){
   $("myUser").textContent = "@" + S.me.username; $("myCode").textContent = "••••••"; $("revealCode").textContent = "Show";
@@ -834,14 +876,14 @@ function signOut(){ S.secret = null; S.me = null; S.groups = []; S.mine = {}; S.
 async function boot(){
   if (!CFG.url || !CFG.key) { $("localNote").hidden = false; S.canWrite = false; S.loaded = true; renderAll(false); return; }
   S.secret = ls.get("gg-secret", null); S.gid = ls.get("gg-group", null);
-  if (!S.secret) { showScreen("auth"); return; }
+  if (!S.secret) { if (await trySavedLogin()) return; showScreen("auth"); return; }
   try { await refreshMe(); } catch (e) { if (e.message === "not_signed_in") return signOut(); setStatus(errText(e), true); }
   S.loaded = true; showScreen("app"); renderGroupbar(); go();
   if (!S.groups.length) showScreen("groups");
 }
 function afterSignIn(sess, fresh){
   S.secret = sess.secret; ls.set("gg-secret", sess.secret); S.me = sess;
-  if (fresh) { $("codeShow").textContent = sess.personal_code; $("codeUser").textContent = "Username: @" + sess.username; showScreen("code"); }
+  if (fresh) { $("codeShow").textContent = sess.personal_code; $("codeUser").textContent = "Username: @" + sess.username; $("cfUser").value = sess.username; $("cfCode").value = sess.personal_code; showScreen("code"); }
   else boot();
 }
 
@@ -1460,8 +1502,8 @@ $("modeBack").addEventListener("click", () => { $("modeBack").setAttribute("aria
 $("newForm").addEventListener("submit", async (ev) => { ev.preventDefault(); $("authErr").textContent = ""; $("suBtn").disabled = true;
   try { afterSignIn(await rpc("sign_up", { p_username: $("suUser").value, p_display_name: $("suName").value }), true); } catch (e) { $("authErr").textContent = errText(e); } $("suBtn").disabled = false; });
 $("backForm").addEventListener("submit", async (ev) => { ev.preventDefault(); $("authErr").textContent = ""; $("siBtn").disabled = true;
-  try { afterSignIn(await rpc("sign_in", { p_username: $("siUser").value, p_personal_code: $("siCode").value }), false); } catch (e) { $("authErr").textContent = errText(e); } $("siBtn").disabled = false; });
-$("codeDone").addEventListener("click", () => boot());
+  try { const sess = await rpc("sign_in", { p_username: $("siUser").value, p_personal_code: $("siCode").value }); storeLogin(sess.username, sess.personal_code); afterSignIn(sess, false); } catch (e) { $("authErr").textContent = errText(e); } $("siBtn").disabled = false; });
+$("codeForm").addEventListener("submit", (ev) => { ev.preventDefault(); storeLogin($("cfUser").value, $("cfCode").value); boot(); });
 $("manageBtn").addEventListener("click", () => showScreen("groups"));
 $("openGroups2").addEventListener("click", () => { showScreen("groups"); window.scrollTo({ top: 0, behavior: "smooth" }); });
 $("closeGroups").addEventListener("click", () => { showScreen("app"); go(); });
