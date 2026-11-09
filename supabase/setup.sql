@@ -1,4 +1,4 @@
--- Great Graphs: Supabase database setup
+-- GroupGraphs: Supabase database setup
 -- Paste this whole file into Supabase > SQL Editor > New query, then press Run.
 --
 -- How it works

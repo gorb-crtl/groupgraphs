@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="A daily graph question for your friend group.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 22'%3E%3Cpath d='M2 2v18h22' fill='none' stroke='%231b2430' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M4 18c5-1 7-10 11-12s5 1 8-3' fill='none' stroke='%232348b8' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
-<title>Great Graphs</title>
+<title>GroupGraphs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
@@ -207,7 +207,7 @@ svg text { font-family: var(--f-body); }
   <header class="top">
     <div class="brand">
       <svg class="mark" viewBox="0 0 26 22" aria-hidden="true"><path d="M2 2v18h22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4 18c5-1 7-10 11-12s5 1 8-3" fill="none" stroke="var(--pen)" stroke-width="2.4" stroke-linecap="round"/></svg>
-      Great Graphs
+      GroupGraphs
     </div>
     <nav class="daynav" aria-label="Choose day">
       <button id="prevDay" aria-label="Previous day's question">&#8249;</button>
@@ -225,7 +225,7 @@ svg text { font-family: var(--f-body); }
   </div>
 
   <section class="panel" id="authPanel" hidden>
-    <h2>Join Great Graphs</h2>
+    <h2>Join GroupGraphs</h2>
     <p>One new graph a day. Make a profile, then ask a friend who hosts a group to add your username.</p>
     <div class="seg" role="group" aria-label="Choose"><button id="modeNew" aria-pressed="true">I'm new</button><button id="modeBack" aria-pressed="false">I have a code</button></div>
     <form id="newForm" class="row">
@@ -1221,7 +1221,7 @@ function renderHeader(){
   const c = document.createElement("span"); c.textContent = q.cat; eb.appendChild(c);
   const n = document.createElement("span"); n.textContent = `No. ${qi} of ${Q.length}`; eb.appendChild(n);
   $("prompt").textContent = q.title; $("sub").textContent = q.sub || "";
-  document.title = "Great Graphs";
+  document.title = "GroupGraphs";
 }
 function renderBank(){
   $("bankN").textContent = Q.length;

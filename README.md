@@ -1,4 +1,4 @@
-# Great Graphs
+# GroupGraphs
 
 A daily question for a friend group. Each day everyone draws a curve (energy through the day, how drunk after each drink…), ranks a list (numbers 1–10 by vibes, pizza toppings…), or drops themselves on a 2D map (chaos vs order, night owl vs early bird…). Once you've answered, you see your group's answers combined: everyone's curves, the group average, stats like most agreed and most divisive, and some jokes.
 
