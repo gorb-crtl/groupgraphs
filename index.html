@@ -206,7 +206,11 @@ td.num { font-family: var(--f-mono); font-size: 13px; }
 .install .txt { flex: 1; min-width: 0; font-size: 14px; color: var(--ink-2); line-height: 1.4; }
 .install .txt b { color: var(--ink); display: block; font-size: 15px; }
 .groupname { font-weight: 800; font-size: 16px; }
-.qactions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.qactions { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+.qbox { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 10px; padding: 11px 12px; font: inherit; font-weight: 700; font-size: 14px; text-align: left; cursor: pointer; min-height: 44px; }
+.qbox:hover { border-color: var(--pen); }
+.qbox[hidden] { display: none; }
+.qbox .count { font-family: var(--f-mono); font-size: 12px; font-weight: 600; background: var(--pen-soft); color: var(--pen); border-radius: 99px; padding: 1px 8px; }
 .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 99px; padding: 7px 14px; font-weight: 700; font-size: 14px; cursor: pointer; }
 .pill:hover { border-color: var(--pen); }
 .sumback { position: fixed; inset: 0; z-index: 70; background: var(--paper); overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -334,10 +338,10 @@ svg text { font-family: var(--f-body); }
     <form class="sumcard idform" id="ideaForm" autocomplete="off">
       <h3>Suggest a question</h3>
       <div class="idkinds" id="ideaKinds">
-        <button type="button" data-k="curve" aria-pressed="true">📈 Curve<span>Draw a line across a range</span></button>
-        <button type="button" data-k="rank" aria-pressed="false">🏆 Ranking<span>Put a list in order</span></button>
-        <button type="button" data-k="map" aria-pressed="false">🗺️ Map<span>Drop a dot on two axes</span></button>
-        <button type="button" data-k="people" aria-pressed="false">👀 Most likely to<span>Rank the people in the group</span></button>
+        <button type="button" data-k="curve" aria-pressed="true">Curve<span>Draw a line across a range</span></button>
+        <button type="button" data-k="rank" aria-pressed="false">Ranking<span>Put a list in order</span></button>
+        <button type="button" data-k="map" aria-pressed="false">Map<span>Drop a dot on two axes</span></button>
+        <button type="button" data-k="people" aria-pressed="false">Most likely to<span>Rank the people in the group</span></button>
       </div>
       <label data-for="curve rank map">Question<input id="idTitle" maxlength="120" placeholder="How hungry are you through the day?"></label>
       <label data-for="people">Who's most likely to…<input id="idLikely" maxlength="80" placeholder="forget their own birthday"></label>
@@ -365,6 +369,19 @@ svg text { font-family: var(--f-body); }
       <button class="btn primary" id="ideaSend" type="submit">Suggest it</button>
     </form>
     <div class="sumcard" id="ideaPast" hidden></div>
+  </div></div>
+  <div class="sumback" id="fbBack" hidden role="dialog" aria-label="Feedback"><div class="sumwrap">
+    <div class="sumtop"><div><div class="k">GroupGraphs</div><h2>Feedback</h2></div><button id="fbClose" type="button">Close</button></div>
+    <form class="sumcard idform" id="fbForm" autocomplete="off">
+      <h3>Tell us what you think</h3>
+      <p class="note" style="margin:0">Found a bug, want a feature, or have a complaint about a question? It goes to your group's host.</p>
+      <div class="sumseg" id="fbKinds"><button type="button" data-k="bug" aria-pressed="false">Bug</button><button type="button" data-k="idea" aria-pressed="true">Idea</button><button type="button" data-k="other" aria-pressed="false">Something else</button></div>
+      <label>Your feedback<textarea id="fbBody" maxlength="1000" placeholder="The back arrow should go to last Tuesday. Also Emily cheated."></textarea></label>
+      <div class="idmsg" id="fbMsg" role="status"></div>
+      <button class="btn primary" id="fbSend" type="submit">Send feedback</button>
+    </form>
+    <div class="sumcard" id="fbInbox" hidden></div>
+    <div class="sumcard" id="fbMine" hidden></div>
   </div></div>
   <div class="sumback" id="sumBack" hidden role="dialog" aria-label="Group summary"><div class="sumwrap">
     <div class="sumtop"><div><div class="k" id="sumGroup"></div><h2 id="sumTitle">The all-time group summary</h2></div><button id="sumClose" type="button">Close</button></div>
@@ -458,10 +475,11 @@ svg text { font-family: var(--f-body); }
     <h1 class="prompt" id="prompt">Loading question…</h1>
     <p class="sub" id="sub"></p>
     <div class="qactions" id="qActions" hidden>
-      <button class="pill" id="chatJump" type="button">💬 Group chat <span class="count" id="chatCount" hidden>0</span></button>
-      <button class="pill" id="notifJump" type="button">🔔 <span id="notifLabel">Get reminders</span></button>
-      <button class="pill" id="sumJump" type="button">📊 <span id="sumLabel">Group summary</span></button>
-      <button class="pill" id="ideaJump" type="button">💡 Question ideas <span class="count" id="ideaCount" hidden>0</span></button>
+      <button class="qbox" id="chatJump" type="button"><span>Group chat</span><span class="count" id="chatCount" hidden>0</span></button>
+      <button class="qbox" id="sumJump" type="button"><span id="sumLabel">Group summary</span></button>
+      <button class="qbox" id="ideaJump" type="button"><span>Question ideas</span><span class="count" id="ideaCount" hidden>0</span></button>
+      <button class="qbox" id="notifJump" type="button"><span id="notifLabel">Get reminders</span></button>
+      <button class="qbox" id="fbJump" type="button"><span>Feedback</span><span class="count" id="fbCount" hidden>0</span></button>
     </div>
   </section>
 
@@ -828,7 +846,7 @@ const errText = (e) => ERRS[e && e.message] || (e && e.message === "offline" ? "
 
 async function refreshMe(){
   const d = await rpc("my_groups", { p_secret: S.secret });
-  S.me = d.me; S.groups = d.groups || []; S.mine = d.mine || {};
+  S.me = d.me; S.groups = d.groups || []; S.mine = d.mine || {}; if (!fbData) { fbData = { inbox: [], mine: [] }; loadFeedback(); }
   if (!S.groups.some(g => g.id === S.gid)) S.gid = S.groups.length ? S.groups[0].id : null;
   ls.set("gg-group", S.gid);
 }
@@ -1080,7 +1098,7 @@ function sumQuips(R){
 }
 function shareText(R){
   const nm = (k) => R.names[k] || k, pct = (v) => Math.round(v * 100) + "%", L = [];
-  L.push((R.mode === "week" ? "📊 GroupGraphs weekly wrap" : "📊 GroupGraphs group summary") + " · " + R.g.name);
+  L.push((R.mode === "week" ? "GroupGraphs weekly wrap" : "GroupGraphs group summary") + " · " + R.g.name);
   if (R.sync != null) L.push("Group sync: " + pct(R.sync));
   if (R.soul && R.members.length >= 3) L.push("Soulmates: " + nm(R.soul.a) + " & " + nm(R.soul.b) + " (" + pct(R.soul.v) + ")");
   if (R.rival && R.soul && R.rival !== R.soul) L.push("Do not seat together: " + nm(R.rival.a) + " & " + nm(R.rival.b) + " (" + pct(R.rival.v) + ")");
@@ -1123,9 +1141,9 @@ function renderSummary(g, R){
     R.supers.forEach(s => { const r = el("div", "sumrow"); r.append(el("span", null, "Most likely to " + s.likely), el("span", null, nm(s.who))); rows.appendChild(r); }); sc.appendChild(rows); wrap.appendChild(sc); }
   if (R.byAns.length) { const ac = el("div", "sumcard"); ac.appendChild(el("h3", null, "Who shows up")); const rows = el("div", "sumrows");
     R.byAns.forEach(([k, n]) => { const r = el("div", "sumrow"); const c = R.outl[k] ? ` · odd one out ${R.outl[k]}×` : ""; r.append(el("span", null, nm(k)), el("span", null, n + " answered" + c)); rows.appendChild(r); }); ac.appendChild(rows); wrap.appendChild(ac); }
-  const sh = el("button", "btn primary", "📤 Share this to the group chat"); sh.type = "button"; sh.style.alignSelf = "flex-start";
+  const sh = el("button", "btn primary", "Share this to the group chat"); sh.type = "button"; sh.style.alignSelf = "flex-start";
   sh.addEventListener("click", async () => { const t = shareText(R); try { if (navigator.share) { await navigator.share({ text: t }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
-    try { await navigator.clipboard.writeText(t); sh.textContent = "Copied! Paste it in the group chat"; } catch (e) { prompt("Copy this:", t); } setTimeout(() => { sh.textContent = "📤 Share this to the group chat"; }, 2500); });
+    try { await navigator.clipboard.writeText(t); sh.textContent = "Copied! Paste it in the group chat"; } catch (e) { prompt("Copy this:", t); } setTimeout(() => { sh.textContent = "Share this to the group chat"; }, 2500); });
   wrap.appendChild(sh);
   wrap.appendChild(el("p", "note", "Only questions you've answered yourself count here, so the summary never spoils one you haven't done yet."));
   body.appendChild(wrap);
@@ -1212,6 +1230,51 @@ $("ideaForm").addEventListener("submit", async (ev) => {
   try { await rpc("suggest_question", { p_secret: S.secret, p_group: S.gid, p_spec: spec }); $("ideaForm").reset(); msg.className = "idmsg ok"; msg.textContent = "Added, and you've voted for it. Now go campaign in the group chat."; await loadIdeas(); renderIdeas(); }
   catch (e) { msg.textContent = e.message === "too_many_ideas" ? "You already have 5 ideas waiting. Let some of them win first." : e.message === "bad_question" ? "Something's missing from that question. Check the fields and try again." : "Couldn't save that idea. Try again in a bit."; }
   $("ideaSend").disabled = false;
+});
+
+/* ---------------- feedback ---------------- */
+let fbKind = "idea", fbData = null;
+document.querySelectorAll("#fbKinds button").forEach(b => b.addEventListener("click", () => { fbKind = b.dataset.k; document.querySelectorAll("#fbKinds button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); }));
+function openFeedback(){ $("fbMsg").textContent = ""; $("fbBack").hidden = false; document.body.style.overflow = "hidden"; loadFeedback(); }
+function closeFeedback(){ $("fbBack").hidden = true; document.body.style.overflow = ""; }
+$("fbJump").addEventListener("click", openFeedback);
+$("fbClose").addEventListener("click", closeFeedback);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("fbBack").hidden) closeFeedback(); });
+async function loadFeedback(){
+  try { fbData = await rpc("get_feedback", { p_secret: S.secret }); }
+  catch (e) { if (e.message === "not_signed_in") return signOut(); fbData = { err: true, inbox: [], mine: [] }; }
+  renderFeedback();
+}
+function fbSeen(){ try { return Number(localStorage.getItem("gg-fb-seen") || 0); } catch (e) { return 0; } }
+function renderFeedbackCount(){ const n = fbData && fbData.inbox ? fbData.inbox.filter(f => Date.parse(f.at) > fbSeen()).length : 0; $("fbCount").textContent = n; $("fbCount").hidden = !n; }
+function renderFeedback(){
+  const mk = (tag, cls, t) => { const e = document.createElement(tag); if (cls) e.className = cls; if (t != null) e.textContent = t; return e; };
+  const label = { bug: "Bug", idea: "Idea", other: "Other" }, when = (a) => new Date(a).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const D = fbData || { inbox: [], mine: [] };
+  if (!$("fbBack").hidden && D.host) { try { localStorage.setItem("gg-fb-seen", String(Date.now())); } catch (e) {} }
+  const box = $("fbInbox"); box.innerHTML = ""; box.hidden = !D.host && !D.err;
+  if (D.err) box.appendChild(mk("p", "note", "Couldn't load feedback. If you're the host, run supabase/feedback.sql in Supabase once, then refresh."));
+  else if (D.host) {
+    box.appendChild(mk("h3", null, "Inbox (you're a host)"));
+    if (!D.inbox.length) box.appendChild(mk("p", "note", "Nothing yet. Either the app is perfect or nobody's talking."));
+    const list = mk("div", "idlist");
+    D.inbox.forEach(f => { const r = mk("div", "idea"); r.style.gridTemplateColumns = "minmax(0, 1fr) auto"; const b = mk("div"); const t = mk("div", "t"); t.appendChild(mk("span", "badge", label[f.kind] || "Other")); t.appendChild(document.createTextNode(f.body)); t.style.whiteSpace = "pre-wrap"; b.append(t, mk("div", "m", f.name + " (@" + f.username + ") · " + f.group + " · " + when(f.at)));
+      const x = mk("button", "xdel2", "×"); x.type = "button"; x.setAttribute("aria-label", "Delete feedback"); x.addEventListener("click", async () => { if (!confirm("Delete this feedback?")) return; try { await rpc("delete_feedback", { p_secret: S.secret, p_id: f.id }); } catch (e) {} loadFeedback(); });
+      r.append(b, x); list.appendChild(r); });
+    box.appendChild(list);
+  }
+  const mine = $("fbMine"); mine.innerHTML = ""; mine.hidden = !D.mine || !D.mine.length;
+  if (D.mine && D.mine.length) { mine.appendChild(mk("h3", null, "What you've sent")); const rows = mk("div", "sumrows"); D.mine.slice(0, 20).forEach(f => { const r = mk("div", "sumrow"); r.append(mk("span", null, (label[f.kind] || "Other") + " · " + when(f.at)), mk("span", null, f.body.length > 80 ? f.body.slice(0, 80) + "…" : f.body)); rows.appendChild(r); }); mine.appendChild(rows); }
+  renderFeedbackCount();
+}
+$("fbForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault(); const msg = $("fbMsg"), body = $("fbBody").value.trim(); msg.className = "idmsg";
+  if (!S.gid) { msg.textContent = "Join or start a group first, so your feedback has somewhere to go."; return; }
+  if (!body) { msg.textContent = "Write something first."; return; }
+  $("fbSend").disabled = true;
+  try { await rpc("send_feedback", { p_secret: S.secret, p_group: S.gid, p_kind: fbKind, p_body: body }); $("fbBody").value = ""; msg.className = "idmsg ok"; msg.textContent = "Sent. Thanks! Your host has been notified (in spirit)."; loadFeedback(); }
+  catch (e) { msg.textContent = e.message === "slow_down" ? "That's a lot of feedback for one day. Try again tomorrow." : "Couldn't send that. Try again in a bit."; }
+  $("fbSend").disabled = false;
 });
 
 /* ---------------- screens: sign in, groups ---------------- */
