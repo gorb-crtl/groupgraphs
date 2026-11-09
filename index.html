@@ -669,7 +669,7 @@ async function loadComments(force){
   const k = rkey(q.id), my = ++commentsReq;
   if (!force && S.comments[k] && Date.now() - S.comments[k].at < 15000) { renderComments(); return; }
   try { const list = await rpc("get_comments", { p_secret: S.secret, p_group: S.gid, p_qid: q.id }); S.comments[k] = { list: list || [], at: Date.now() }; }
-  catch (e) { if (e.message === "not_signed_in") return signOut(); }
+  catch (e) { if (e.message === "not_signed_in") return signOut(); if (!S.comments[k]) S.comments[k] = { list: [], at: 0, err: true }; }
   if (my === commentsReq && rkey(currentQ().id) === k) renderComments();
 }
 function agoText(t){ const s = (Date.now() - Date.parse(t)) / 1000; if (!(s >= 0)) return ""; if (s < 60) return "just now"; if (s < 3600) return Math.floor(s/60) + "m ago"; if (s < 86400) return Math.floor(s/3600) + "h ago"; return Math.floor(s/86400) + "d ago"; }
@@ -684,7 +684,7 @@ function renderComments(){
   rules.forEach(r => { const li = document.createElement("li"); const t = document.createElement("span"); t.textContent = r.body; const by = document.createElement("span"); by.className = "by"; by.textContent = "from " + r.name; li.append(t, by); if (r.can_delete) li.appendChild(delBtn(r)); rl.appendChild(li); });
   $("rulesBox").hidden = !rules.length;
   const ul = $("chatList"), atBottom = ul.scrollHeight - ul.scrollTop - ul.clientHeight < 40; ul.innerHTML = "";
-  if (!list.length) { const p = document.createElement("li"); p.className = "chat-empty"; p.textContent = c ? "Nothing yet. Add a rule (\"assume it's a Friday\") or start the trash talk." : "Loading…"; ul.appendChild(p); }
+  if (!list.length) { const p = document.createElement("li"); p.className = "chat-empty"; p.textContent = c && c.err ? "Couldn't load the chat. Try refreshing in a bit." : c ? "Nothing yet. Add a rule (\"assume it's a Friday\") or start the trash talk." : "Loading…"; ul.appendChild(p); }
   list.forEach(m => {
     const li = document.createElement("li"); li.className = "chat-msg" + (m.kind === "rule" ? " rule" : "");
     const dot = document.createElement("span"); dot.className = "dot"; dot.style.background = colorOf(m.username).c;
@@ -701,7 +701,7 @@ $("chatForm").addEventListener("submit", async (ev) => {
   ev.preventDefault(); const inp = $("chatInput"), body = inp.value.trim(); if (!body || !S.gid) return;
   const q = currentQ(), k = rkey(q.id); $("chatSend").disabled = true;
   try { const list = await rpc("post_comment", { p_secret: S.secret, p_group: S.gid, p_qid: q.id, p_body: body, p_kind: S.chatKind }); S.comments[k] = { list: list || [], at: Date.now() }; inp.value = ""; setChatKind("comment"); $("chatList").scrollTop = 1e9; renderComments(); $("chatList").scrollTop = 1e9; }
-  catch (e) { setStatus(errText(e), true); if (e.message === "not_signed_in") signOut(); }
+  catch (e) { if (e.message === "not_signed_in") signOut(); else alert("Couldn't send: " + errText(e)); }
   $("chatSend").disabled = false;
 });
 $("chatInput").addEventListener("keydown", (ev) => { if (ev.key === "Enter" && !ev.shiftKey && !ev.isComposing) { ev.preventDefault(); $("chatForm").requestSubmit(); } });
