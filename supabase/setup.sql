@@ -359,11 +359,32 @@ revoke all on function save_push(uuid, jsonb, text, int), delete_push(uuid, text
 grant execute on function save_push(uuid, jsonb, text, int), delete_push(uuid, text),
   push_due(text), push_done(text, jsonb, jsonb), push_public_key() to anon, authenticated;
 
+-- ---------- all-time group summary ----------
+-- Every answer from the group's members, but only for questions the caller has answered
+-- themselves, so the summary can't be used to peek at a question you haven't done yet.
+create or replace function get_summary(p_secret uuid, p_group uuid) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare p people := gg_me(p_secret);
+begin
+  if not gg_member_of(p.id, p_group) then raise exception 'not_in_group'; end if;
+  return jsonb_build_object(
+    'members', (select coalesce(jsonb_agg(jsonb_build_object('username', pp.username, 'name', pp.display_name) order by gm.added_at), '[]'::jsonb)
+                from group_members gm join people pp on pp.id = gm.person_id where gm.group_id = p_group),
+    'answers', (select coalesce(jsonb_agg(jsonb_build_object('qid', a.qid, 'username', pp.username, 'payload', a.payload)), '[]'::jsonb)
+                from answers a join group_members gm on gm.person_id = a.person_id join people pp on pp.id = a.person_id
+                where gm.group_id = p_group
+                  and a.qid in (select qid from answers where person_id = p.id))
+  );
+end $$;
+
+revoke all on function get_summary(uuid, uuid) from public, anon, authenticated;
+grant execute on function get_summary(uuid, uuid) to anon, authenticated;
+
 -- Only the public functions are callable from the app.
 revoke all on all functions in schema public from public, anon, authenticated;
 grant execute on function sign_up(text, text), sign_in(text, text), rename_me(uuid, text),
   create_group(uuid, text), find_people(uuid, text), add_member(uuid, uuid, text), remove_member(uuid, uuid, text),
   my_groups(uuid), submit_answer(uuid, text, jsonb), get_results(uuid, uuid, text), save_roast(uuid, uuid, text, jsonb, int),
   get_comments(uuid, uuid, text), post_comment(uuid, uuid, text, text, text), delete_comment(uuid, bigint),
-  save_push(uuid, jsonb, text, int), delete_push(uuid, text), push_due(text), push_done(text, jsonb, jsonb), push_public_key()
+  save_push(uuid, jsonb, text, int), delete_push(uuid, text), push_due(text), push_done(text, jsonb, jsonb), push_public_key(), get_summary(uuid, uuid)
   to anon, authenticated;

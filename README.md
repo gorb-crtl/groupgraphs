@@ -15,7 +15,7 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - `index.html`: the whole app (no build step).
 - `config.js`: your Supabase project URL and anon key.
 - `supabase/setup.sql`: run once in Supabase's SQL Editor to create the tables and functions.
-- `supabase/comments.sql`, `supabase/reminders.sql`: the same additions on their own, for a database set up before they existed.
+- `supabase/comments.sql`, `supabase/reminders.sql`, `supabase/summary.sql`: the same additions on their own, for a database set up before they existed.
 - `keys.html`: one-time page that makes the notification key pair in your browser.
 - `sw.js`, `manifest.webmanifest`, icons: let the site install to a home screen and receive notifications.
 - `scripts/send-reminders.mjs` + `.github/workflows/reminders.yml`: an hourly GitHub Action that sends the reminders.
