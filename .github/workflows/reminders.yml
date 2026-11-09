@@ -1,7 +1,7 @@
-name: Daily reminders
+name: Reminders and nudges
 on:
   schedule:
-    - cron: "5 * * * *" # every hour; each person gets at most one reminder a day, at the hour they picked
+    - cron: "*/10 * * * *" # every 10 minutes: nudges go out quickly; each person still gets at most one reminder a day, at the hour they picked
   workflow_dispatch:
 permissions:
   contents: read

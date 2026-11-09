@@ -64,6 +64,39 @@ button { cursor: pointer; }
 :root[data-theme="sunset"] { --paper:#fbf3ee; --sheet:#ffffff; --grid:#f1e1d8; --grid-major:#e5cbbd; --ink:#2e1d17; --ink-2:#6a4c40; --ink-3:#a68a7e; --pen:#c4462a; --pen-soft:rgba(196,70,42,.10); --hl:#ffd9a0; --line:rgba(46,29,23,.12); --band:rgba(196,70,42,.05); --danger:#a51d24; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948; }
 :root[data-theme="grape"] { --paper:#15121f; --sheet:#1d1930; --grid:#29233f; --grid-major:#352e52; --ink:#f1eefb; --ink-2:#c3bcd9; --ink-3:#8a82a6; --pen:#b49cff; --pen-soft:rgba(180,156,255,.15); --hl:#5a3f8c; --line:rgba(255,255,255,.12); --band:rgba(180,156,255,.06); --danger:#ff8a8f; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; color-scheme: dark; }
 :root[data-theme="terminal"] { --paper:#0c1410; --sheet:#111c17; --grid:#1a2a22; --grid-major:#24382e; --ink:#e3f5ea; --ink-2:#a9c9b6; --ink-3:#6f8f7c; --pen:#5be39a; --pen-soft:rgba(91,227,154,.14); --hl:#2c5a3f; --line:rgba(255,255,255,.12); --band:rgba(91,227,154,.06); --danger:#ff8a8f; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; color-scheme: dark; }
+.cphint { margin: 0 0 8px; font-size: 13px; color: var(--ink-2); }
+.cpick { display: flex; flex-wrap: wrap; gap: 8px; }
+.cpsw { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--sheet); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+.cpsw.auto { width: auto; border-radius: 99px; padding: 0 12px; background: var(--paper); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; }
+.cpsw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+.pulse { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; margin-top: 10px; }
+.pulse[hidden] { display: none; }
+.streak { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); background: var(--sheet); border-radius: 12px; padding: 10px 14px; }
+.streak b { font-family: var(--f-mono); font-size: 28px; line-height: 1; color: var(--pen); font-variant-numeric: tabular-nums; }
+.streak > span { display: flex; flex-direction: column; font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.25; }
+.streak small { font-size: 12px; font-weight: 400; color: var(--ink-2); max-width: 170px; }
+.streak.hot b { color: var(--s2); }
+.pwho { border: 1px solid var(--line); background: var(--sheet); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.ptitle { font-size: 13px; font-weight: 700; color: var(--ink-2); margin-bottom: 6px; }
+.plist { display: flex; flex-wrap: wrap; gap: 6px; }
+.pch { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 99px; padding: 3px 4px 3px 9px; font-size: 13px; font-weight: 600; color: var(--ink); background: var(--paper); min-height: 30px; box-sizing: border-box; }
+.pch.done { color: var(--ink-2); padding-right: 10px; }
+.pch.done::after { content: "answered"; font-size: 11px; font-weight: 500; color: var(--ink-3); }
+.pch.me:not(.done) { padding-right: 10px; }
+.pch .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.pch button { border: 0; border-radius: 99px; background: var(--pen); color: var(--sheet); font: inherit; font-size: 12px; font-weight: 700; padding: 4px 10px; cursor: pointer; }
+.pch button:disabled { background: var(--line); color: var(--ink-2); cursor: default; }
+@media (max-width: 560px) { .pulse { grid-template-columns: minmax(0, 1fr); } .streak small { max-width: none; } }
+.nhint { margin: 0 0 10px; font-size: 13px; color: var(--ink-2); }
+.nmsg { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.npicks { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 10px; }
+.npicks button { border: 1px solid var(--line); background: var(--sheet); color: var(--ink-2); border-radius: 99px; padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; }
+#nudgeSend { width: 100%; margin-top: 4px; }
+.nudgebar { display: flex; align-items: center; gap: 10px; border: 1px solid var(--pen); background: var(--pen-soft); border-radius: 12px; padding: 10px 10px 10px 14px; margin-bottom: 12px; }
+.nudgebar[hidden] { display: none; }
+.nbtxt { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 14px; }
+.nbtxt b { font-weight: 800; }
+.nbtxt span { color: var(--ink-2); overflow-wrap: anywhere; }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .brand { font-family: var(--f-hand); font-weight: 800; font-size: 24px; line-height: 1; letter-spacing: -.03em; display: flex; align-items: baseline; gap: 8px; }
 .brand .mark { display: inline-block; width: 26px; height: 22px; flex: none; transform: translateY(3px); }
@@ -416,6 +449,15 @@ svg text { font-family: var(--f-body); }
     <div class="sumseg" id="sumSeg"><button type="button" data-m="all" aria-pressed="true">All time</button><button type="button" data-m="week" aria-pressed="false">This week</button></div>
     <div id="sumBody"><p class="note">Loading…</p></div>
   </div></div>
+  <div class="calback" id="nudgeBack" hidden><div class="cal" role="dialog" aria-labelledby="nudgeTitle">
+    <div class="calhead"><b id="nudgeTitle">Nudge</b><button id="nudgeClose" type="button" aria-label="Close">&times;</button></div>
+    <p class="nhint">They'll see it next time they open the app, and as a notification if they turned on reminders.</p>
+    <label class="sr-only" for="nudgeMsg">Message</label>
+    <input id="nudgeMsg" class="nmsg" maxlength="80" placeholder="Add a message (optional)">
+    <div class="npicks" id="nudgePicks"></div>
+    <div class="err" id="nudgeErr" role="alert"></div>
+    <button class="btn primary" id="nudgeSend" type="button">Send nudge</button>
+  </div></div>
   <div class="calback" id="themeBack" hidden><div class="cal" role="dialog" aria-label="Pick a theme">
     <div class="calhead"><b>Pick a theme</b><button id="themeClose" type="button" aria-label="Close">&times;</button></div>
     <div class="thgrid" id="themeGrid"></div>
@@ -470,6 +512,12 @@ svg text { font-family: var(--f-body); }
       <h3>Your username</h3>
       <p>Send <b id="myUser"></b> to a group's host so they can add you.</p>
     </div>
+    <div>
+      <h3>Your color</h3>
+      <p class="cphint">You'll be this color on every chart. If someone in a group picked it first, you get a free color in that group.</p>
+      <div class="cpick" id="colorPick" role="group" aria-label="Your color"></div>
+      <div class="err" id="colorErr" role="alert"></div>
+    </div>
     <div class="divider"></div>
     <div class="remind" id="remindBox" style="display:flex;flex-direction:column;gap:10px">
       <h3>Daily reminder</h3>
@@ -502,6 +550,11 @@ svg text { font-family: var(--f-body); }
     <button class="btn primary" id="installBtn" hidden>Install</button>
     <button class="xdel" id="installX" aria-label="Dismiss">×</button>
   </div>
+  <div class="nudgebar" id="nudgeBar" hidden role="status">
+    <div class="nbtxt"><b id="nbFrom"></b><span id="nbMsg"></span></div>
+    <button class="btn primary" id="nbGo" type="button">Answer now</button>
+    <button class="xdel" id="nbX" type="button" aria-label="Dismiss">×</button>
+  </div>
   <section class="q-head">
     <div class="eyebrow" id="eyebrow"></div>
     <h1 class="prompt" id="prompt">Loading question…</h1>
@@ -512,6 +565,10 @@ svg text { font-family: var(--f-body); }
       <button class="qbox" id="ideaJump" type="button"><span>Question ideas</span><span class="count" id="ideaCount" hidden>0</span></button>
       <button class="qbox" id="notifJump" type="button"><span id="notifLabel">Get reminders</span></button>
       <button class="qbox" id="fbJump" type="button"><span>Feedback</span><span class="count" id="fbCount" hidden>0</span></button>
+    </div>
+    <div class="pulse" id="pulse" hidden>
+      <div class="streak" id="streakBox"><b id="streakN">0</b><span><span id="streakLbl">day group streak</span><small id="streakSub"></small></span></div>
+      <div class="pwho"><div class="ptitle" id="pTitle"></div><div class="plist" id="pList"></div></div>
     </div>
   </section>
 
@@ -848,9 +905,17 @@ const groupCount = (qid) => { const r = S.results[rkey(qid)]; if (r) return r.co
 const myEntry = (qid) => S.me && S.mine[qid] ? { key: S.me.username, name: S.me.display_name, ...remapPeople(S.mine[qid], qFor(qid)) } : null;
 
 /* stable colour per person: the order they were added to the current group */
-function colorOf(key){
-  const g = group(); const i = Math.max(0, g ? g.members.findIndex(m => m.username === key) : 0);
-  return { c: `var(--s${(i%8)+1})`, dash: i >= 8 ? "6 4" : null };
+function colorOf(key){ return colorIn(group(), key); }
+/* people who picked a color keep it (first come, first served inside a group); everyone else gets the free colors in join order */
+function colorIn(g, key){
+  if (!g) return { c: "var(--s1)", dash: null };
+  if (!g._slots) { const out = {}, used = new Set();
+    g.members.forEach(m => { const c = +m.color; if (c >= 1 && c <= 8 && !used.has(c)) { out[m.username] = { n: c, dash: false }; used.add(c); } });
+    const free = [1, 2, 3, 4, 5, 6, 7, 8].filter(c => !used.has(c)); let i = 0;
+    g.members.forEach(m => { if (out[m.username]) return; out[m.username] = i < free.length ? { n: free[i], dash: false } : { n: ((i - free.length) % 8) + 1, dash: true }; i++; });
+    g._slots = out; }
+  const s = g._slots[key] || { n: 1, dash: false };
+  return { c: `var(--s${s.n})`, dash: s.dash ? "6 4" : null, n: s.n };
 }
 
 /* ---------------- database (Supabase functions) ---------------- */
@@ -913,6 +978,7 @@ S.store = { save: async (entry) => {
   const payload = entry.order ? (cq && cq.keys ? { order: entry.order, keys: cq.keys } : { order: entry.order }) : entry.pt ? { pt: entry.pt } : { ys: entry.ys };
   await rpc("submit_answer", { p_secret: S.secret, p_qid: entry.qid, p_payload: payload });
   S.mine[entry.qid] = payload; delete S.results[rkey(entry.qid)];
+  loadActivity(true); if ((S.nudges.list || []).some(n => n.qid === entry.qid)) dismissNudges(); else renderNudges();
   refreshMe().then(() => { renderGroupbar(); renderBank(); }).catch(() => {});
   await loadResults(true);
 } };
@@ -1365,6 +1431,107 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("them
 applyTheme(curTheme());
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme(curTheme()));
 
+/* ---------------- group streak + who's answered today ---------------- */
+Object.assign(ERRS, { bad_color: "Pick one of the colors shown.", already_answered: "They just answered. No nudge needed.", already_nudged: "You already nudged them today.",
+  too_many_nudges: "That's a lot of nudging for one day. Try again tomorrow.", cant_nudge_self: "You can't nudge yourself." });
+const idxISO = (d) => new Date(ROT_START + d * 864e5).toISOString().slice(0, 10);
+const isoIdx = (iso) => Math.round((Date.parse(String(iso).slice(0, 10) + "T00:00:00Z") - ROT_START) / 864e5);
+let actReq = 0;
+async function loadActivity(force){
+  const g = group(); if (!S.secret || !g) { S.act = null; renderPulse(); return; }
+  const t = todayIndex(), from = Math.max(0, t - 59), qids = {};
+  for (let d = from; d <= t; d++) { const q = withPeople(qForDay(d)); if (q) qids[d] = q.id; }
+  if (!force && S.act && S.act.gid === g.id && !S.act.err && JSON.stringify(S.act.qids) === JSON.stringify(qids) && Date.now() - S.act.at < 30000) { renderPulse(); return; }
+  const my = ++actReq, gid = g.id;
+  try { const data = await rpc("group_activity", { p_secret: S.secret, p_group: gid, p_qids: [...new Set(Object.values(qids))] });
+    if (my !== actReq) return; S.act = { gid, at: Date.now(), from, t, qids, data }; }
+  catch (e) { if (my !== actReq) return; if (e.message === "not_signed_in") return signOut(); S.act = { gid, at: Date.now(), err: true }; }
+  renderPulse();
+}
+function streakInfo(){
+  const A = S.act; if (!A || A.err || A.gid !== S.gid) return null;
+  const byQ = {}; (A.data.answers || []).forEach(a => { (byQ[a.qid] = byQ[a.qid] || {})[a.username] = String(a.day).slice(0, 10); });
+  const mem = A.data.members || [], start = Math.max(A.from, isoIdx(A.data.created || idxISO(A.from)));
+  const complete = (d) => { const iso = idxISO(d), q = A.qids[d]; if (!q) return false; const el = mem.filter(m => String(m.since).slice(0, 10) <= iso); const got = byQ[q] || {}; return el.length > 0 && el.every(m => got[m.username] && got[m.username] <= iso); };
+  const t = A.t, todayDone = complete(t);
+  let cur = 0; for (let d = todayDone ? t : t - 1; d >= start; d--) { if (complete(d)) cur++; else break; }
+  let best = 0, run = 0; for (let d = start; d <= t; d++) { if (complete(d)) { run++; best = Math.max(best, run); } else if (d < t) run = 0; }
+  const todayQ = A.qids[t], got = byQ[todayQ] || {};
+  return { cur, best, todayDone, todayQ, answered: (u) => !!got[u], nudged: new Set(A.data.nudged || []) };
+}
+function renderPulse(){
+  const box = $("pulse"); if (!box) return;
+  const g = group(), info = streakInfo();
+  if (!g || !info || S.qid || S.dayOffset !== 0) { box.hidden = true; return; }
+  if (todayIndex() !== S.act.t) { S.act.at = 0; box.hidden = true; loadActivity(true); return; }
+  box.hidden = false;
+  const left = g.members.filter(m => !info.answered(m.username));
+  $("streakN").textContent = info.cur;
+  $("streakBox").classList.toggle("hot", info.cur >= 3);
+  $("streakSub").textContent = info.todayDone ? "Everyone answered today." + (info.best > info.cur ? " Best: " + info.best + "." : "")
+    : info.cur > 0 ? `Keep it going: ${left.length} still to answer today.` + (info.best > info.cur ? " Best: " + info.best + "." : "")
+    : `Starts when all ${g.members.length} of you answer on the same day.` + (info.best ? " Best: " + info.best + "." : "");
+  $("pTitle").textContent = left.length ? `${g.members.length - left.length} of ${g.members.length} answered today` : `All ${g.members.length} answered today`;
+  const list = $("pList"); list.innerHTML = "";
+  const order = g.members.slice().sort((a, b) => (info.answered(a.username) - info.answered(b.username)) || a.display_name.localeCompare(b.display_name));
+  order.forEach(m => {
+    const done = info.answered(m.username), isMe = S.me && m.username === S.me.username;
+    const c = document.createElement("span"); c.className = "pch" + (done ? " done" : "") + (isMe ? " me" : "");
+    const d = document.createElement("span"); d.className = "dot"; d.style.background = colorIn(g, m.username).c;
+    const n = document.createElement("span"); n.textContent = isMe ? "You" : m.display_name;
+    c.append(d, n);
+    if (!done && !isMe) { const b = document.createElement("button"); b.type = "button"; const was = info.nudged.has(m.username);
+      b.textContent = was ? "Nudged" : "Nudge"; b.disabled = was; b.setAttribute("aria-label", (was ? "Already nudged " : "Nudge ") + m.display_name);
+      b.addEventListener("click", () => openNudge(m)); c.appendChild(b); }
+    list.appendChild(c);
+  });
+}
+
+/* ---------------- nudges ---------------- */
+let nudgeTo = null;
+const NUDGE_PICKS = (n) => [`Draw your graph, ${n}`, "The group average misses you", "Reviewer 2 is waiting", "We can't see the results until you answer", "Streak's on the line"];
+function openNudge(m){
+  nudgeTo = m; $("nudgeTitle").textContent = "Nudge " + m.display_name; $("nudgeMsg").value = ""; $("nudgeErr").textContent = ""; $("nudgeSend").disabled = false;
+  const p = $("nudgePicks"); p.innerHTML = "";
+  NUDGE_PICKS(m.display_name).forEach(t => { const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.addEventListener("click", () => { $("nudgeMsg").value = t; $("nudgeMsg").focus(); }); p.appendChild(b); });
+  $("nudgeBack").hidden = false;
+}
+const closeNudge = () => { $("nudgeBack").hidden = true; nudgeTo = null; };
+$("nudgeClose").addEventListener("click", closeNudge);
+$("nudgeBack").addEventListener("click", (e) => { if (e.target === $("nudgeBack")) closeNudge(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("nudgeBack").hidden) closeNudge(); });
+$("nudgeSend").addEventListener("click", async () => {
+  const info = streakInfo(); if (!nudgeTo || !info) return; const m = nudgeTo; $("nudgeErr").textContent = ""; $("nudgeSend").disabled = true;
+  try { await rpc("send_nudge", { p_secret: S.secret, p_group: S.gid, p_username: m.username, p_qid: info.todayQ, p_msg: $("nudgeMsg").value.trim() });
+    (S.act.data.nudged = S.act.data.nudged || []).push(m.username); closeNudge(); renderPulse(); setStatus("Nudge sent to " + m.display_name + "."); }
+  catch (e) { $("nudgeSend").disabled = false;
+    if (e.message === "already_nudged" || e.message === "already_answered") { closeNudge(); loadActivity(true); setStatus(ERRS[e.message], true); return; }
+    $("nudgeErr").textContent = e.message === "offline" ? errText(e) : (ERRS[e.message] || "Couldn't send the nudge. If you're the host, run supabase/social.sql in Supabase once."); }
+});
+
+/* nudges other people sent me */
+S.nudges = { at: 0, list: [] };
+async function loadNudges(force){
+  if (!S.secret || (!force && Date.now() - S.nudges.at < 60000)) { renderNudges(); return; }
+  try { S.nudges = { at: Date.now(), list: await rpc("my_nudges", { p_secret: S.secret }) || [] }; } catch (e) { S.nudges.at = Date.now(); }
+  renderNudges();
+}
+function renderNudges(){
+  const L = (S.nudges.list || []).filter(n => !S.mine[n.qid]), bar = $("nudgeBar");
+  if (!L.length) { bar.hidden = true; return; }
+  const n = L[0], multiGroup = S.groups.length > 1;
+  $("nbFrom").textContent = n.from + " nudged you" + (L.length > 1 ? ` (and ${L.length - 1} more)` : "") + (multiGroup ? " in " + n.group : "");
+  $("nbMsg").textContent = n.msg ? "“" + n.msg + "”" : "Today's graph is waiting for you.";
+  bar.hidden = false;
+}
+function dismissNudges(){ const had = (S.nudges.list || []).length; S.nudges.list = []; renderNudges(); if (had && S.secret) rpc("seen_nudges", { p_secret: S.secret }).catch(() => {}); }
+$("nbX").addEventListener("click", dismissNudges);
+$("nbGo").addEventListener("click", () => {
+  const n = (S.nudges.list || [])[0]; dismissNudges();
+  if (n && n.group_id && n.group_id !== S.gid && S.groups.some(g => g.id === n.group_id)) { S.gid = n.group_id; ls.set("gg-group", S.gid); renderGroupbar(); }
+  S.dayOffset = 0; S.qid = null; setTab("draw"); go(); $("panelDraw").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
   $("authPanel").hidden = name !== "auth"; $("codePanel").hidden = name !== "code"; $("groupsPanel").hidden = name !== "groups";
@@ -1380,7 +1547,20 @@ function renderGroupbar(){
   $("meLabel").textContent = S.me ? "@" + S.me.username : "";
   const one = S.groups.length === 1; sel.hidden = one; $("groupName").hidden = !one; if (one) $("groupName").textContent = S.groups[0].name;
 }
+const COLOR_NAMES = ["Blue", "Orange", "Green", "Gold", "Pink", "Leaf", "Purple", "Red"];
+function renderColorPick(){
+  const box = $("colorPick"); if (!box || !S.me) return; box.innerHTML = "";
+  const cur = +S.me.color || 0;
+  const mk = (n, label) => { const b = document.createElement("button"); b.type = "button"; b.className = "cpsw" + (n ? "" : " auto"); b.setAttribute("aria-pressed", String(cur === n)); b.setAttribute("aria-label", label); b.title = label;
+    if (n) b.style.background = `var(--s${n})`; else b.textContent = "Auto";
+    b.addEventListener("click", async () => { if (cur === n) return; $("colorErr").textContent = "";
+      try { S.me = await rpc("set_color", { p_secret: S.secret, p_color: n || null }); await refreshMe(); renderColorPick(); renderGroupsPanel(); renderAll(false); renderPulse(); }
+      catch (e) { $("colorErr").textContent = e.message === "offline" ? errText(e) : (ERRS[e.message] || "Couldn't save your color. If you're the host, run supabase/social.sql in Supabase once."); } });
+    box.appendChild(b); };
+  mk(0, "Auto: pick one for me"); for (let n = 1; n <= 8; n++) mk(n, COLOR_NAMES[n - 1]);
+}
 function renderGroupsPanel(){
+  renderColorPick();
   $("myUser").textContent = "@" + S.me.username; $("myCode").textContent = "••••••"; $("revealCode").textContent = "Show";
   const box = $("groupDetail"); box.innerHTML = "";
   const h = document.createElement("h3"); h.textContent = S.groups.length ? "Your groups" : "You're not in a group yet"; box.appendChild(h);
@@ -1396,7 +1576,7 @@ function renderGroupsPanel(){
     const mem = document.createElement("div"); mem.className = "members";
     g.members.forEach((m, i) => {
       const c = document.createElement("span"); c.className = "member";
-      const d = document.createElement("span"); d.className = "dot"; d.style.background = `var(--s${(i%8)+1})`;
+      const d = document.createElement("span"); d.className = "dot"; d.style.background = colorIn(g, m.username).c;
       const t = document.createElement("span"); t.textContent = m.display_name + " "; const u = document.createElement("small"); u.style.color = "var(--ink-3)"; u.textContent = "@" + m.username; t.appendChild(u);
       c.append(d, t);
       if (m.username === g.host) { const hb = document.createElement("span"); hb.className = "host"; hb.textContent = "host"; c.appendChild(hb); }
@@ -2138,7 +2318,7 @@ function renderAll(full){
   syncControls();
 }
 function setStatus(msg, err){ S.status = msg; const s = $("status"); s.textContent = msg; s.className = "status" + (err ? " err" : ""); }
-function go(){ S.drawnFor = null; S.peeked = false; S.hidden.clear(); setStatus(""); renderAll(true); loadResults(false); loadComments(false); }
+function go(){ S.drawnFor = null; S.peeked = false; S.hidden.clear(); setStatus(""); renderAll(true); loadResults(false); loadComments(false); loadActivity(false); loadNudges(false); }
 
 /* ---------------- events ---------------- */
 $("prevDay").addEventListener("click", ()=>{ if (S.qid) { S.qid = null; history.replaceState(null, "", location.pathname + location.search); } S.dayOffset--; go(); });

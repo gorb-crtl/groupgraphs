@@ -4,7 +4,7 @@ self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener("push", (e) => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch (_) { d = { body: e.data && e.data.text() }; }
   e.waitUntil(self.registration.showNotification(d.title || "GroupGraphs", {
-    body: d.body || "Today's question is up.", icon: "icon-192.png", badge: "icon-192.png", tag: "gg-daily", data: { url: d.url || "./" },
+    body: d.body || "Today's question is up.", icon: "icon-192.png", badge: "icon-192.png", tag: d.tag || "gg-daily", data: { url: d.url || "./" },
   }));
 });
 self.addEventListener("notificationclick", (e) => {

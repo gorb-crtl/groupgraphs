@@ -1,4 +1,4 @@
-// Sends today's reminder pushes. Run hourly by .github/workflows/reminders.yml.
+// Sends today's reminder pushes and friends' nudges. Run every 10 minutes by .github/workflows/reminders.yml.
 // Needs VAPID_PRIVATE_KEY (a GitHub secret). The Supabase URL and publishable key are read from config.js,
 // and the matching public key from the database (both set up with keys.html).
 import fs from "node:fs";
@@ -38,5 +38,18 @@ for (const d of due) {
   try { await webpush.sendNotification(d.sub, JSON.stringify({ title: "GroupGraphs", body, url: "./" }), { TTL: 6 * 3600 }); sent.push(d.id); }
   catch (e) { if (e.statusCode === 404 || e.statusCode === 410) gone.push(d.id); else console.error("push failed", d.id, e.statusCode || e.message); }
 }
-if (sent.length || gone.length) await rpc("push_done", { p_key: PRIV, p_sent: sent, p_gone: gone });
-console.log(`due ${due.length}, sent ${sent.length}, removed ${gone.length}`);
+// Nudges: a friend poked someone who hasn't answered yet. Older databases without nudges.sql just skip this.
+let nudges = [];
+try { nudges = await rpc("nudges_due", { p_key: PRIV }); } catch (e) { console.log("no nudges:", e.message.slice(0, 80)); }
+const pushedNudges = [];
+for (const n of nudges) {
+  const body = n.msg ? `${n.from}: "${n.msg}"` : `${n.from} nudged you. Today's graph is waiting.`;
+  for (const s of n.subs || []) {
+    try { await webpush.sendNotification(s.sub, JSON.stringify({ title: "Nudge from " + n.from, body, url: "./", tag: "gg-nudge-" + n.id }), { TTL: 6 * 3600 }); }
+    catch (e) { if (e.statusCode === 404 || e.statusCode === 410) gone.push(s.id); else console.error("nudge push failed", n.id, e.statusCode || e.message); }
+  }
+  pushedNudges.push(n.id);
+}
+if (pushedNudges.length) await rpc("nudges_done", { p_key: PRIV, p_ids: pushedNudges });
+if (sent.length || gone.length) await rpc("push_done", { p_key: PRIV, p_sent: sent, p_gone: [...new Set(gone)] });
+console.log(`due ${due.length}, sent ${sent.length}, nudges ${pushedNudges.length}, removed ${gone.length}`);
