@@ -1754,6 +1754,14 @@ function renderMyStats(g, T){
 /* ---------------- what's new ----------------
    Newest first. Add an entry at the top whenever an update goes live; "id" must be new each time. */
 const CHANGES = [
+  { id: "2026-11-10b", date: "Nov 10, later", items: [
+    ["Two new games", "This or that and Rate it 1–10, next to the daily graph. Both share one theme a day."],
+    ["Play solo", "the games and the graph work without a group. Your answers count in every group you join."],
+    ["Group bonus", "a group's winning question idea is now an extra Bonus question, and the daily graph stays the same for everyone."],
+    ["Answers lock", "once you submit. Tap Unlock or Change my answers to redo it."],
+    ["One Menu", "group chat, summary, ideas, reminders, stats and feedback are now under Menu."],
+    ["Smaller fixes", "Sign in is easier to find, example text is darker, and a slow start no longer opens Groups & profile."],
+  ] },
   { id: "2026-11-10", date: "Nov 10", items: [
     ["Your stats", "a personal page with your streak, best match, how often you're the odd one out, and your hottest takes."],
     ["Results are in", "a notification when the last person in your group answers."],
@@ -1856,6 +1864,10 @@ const GTHEMES = [
     rate: ["Self-checkout", "Smart speakers", "Autocorrect", "Software updates", "Printers"] },
   { name: "Life skills", tot: [["Plan everything", "Wing it"], ["Early", "Fashionably late"], ["Lose your phone", "Lose your keys"], ["Make the bed", "Leave it"], ["Budget", "Vibes"]],
     rate: ["Your parallel parking", "Your sense of direction", "Your cooking", "Your handwriting", "Your patience"] },
+  { name: "Childhood", tot: [["Recess", "Lunch"], ["Lunchables", "Packed lunch"], ["Bunk bed: top", "Bunk bed: bottom"], ["Cartoons", "Video games"], ["Sleepover host", "Sleepover guest"]],
+    rate: ["Gushers", "Book fairs", "Field trips", "Bedtime", "Pokémon cards"] },
+  { name: "Sports", tot: [["Play", "Watch"], ["Basketball", "Football"], ["Gym", "Run outside"], ["Team sport", "Solo sport"], ["Game day snacks", "Game day itself"]],
+    rate: ["Golf", "Pickleball", "Fantasy football", "The wave", "Overtime"] },
 ];
 const TOT = GTHEMES.flatMap(t => t.tot), RATE = GTHEMES.flatMap(t => t.rate);
 const GAMES = { tot: { name: "This or that", list: TOT }, rate: { name: "Rate it", list: RATE } }, GN = 5;
