@@ -112,6 +112,18 @@ button { cursor: pointer; }
 .stdays span { aspect-ratio: 1; border-radius: 4px; background: var(--line); }
 .stdays span.on { background: var(--pen); }
 .stdays span.today { box-shadow: inset 0 0 0 2px var(--ink); }
+.newslink { border: 0; background: none; color: var(--pen); font: inherit; font-size: 12px; font-weight: 700; padding: 0 0 0 4px; cursor: pointer; position: relative; }
+.newsdot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); margin-left: 4px; vertical-align: 2px; }
+.newsdot[hidden] { display: none; }
+.newsbar { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); background: var(--sheet); border-radius: 12px; padding: 8px 8px 8px 14px; margin-bottom: 12px; font-size: 14px; }
+.newsbar[hidden] { display: none; }
+.newsbar > span { flex: 1; min-width: 0; color: var(--ink-2); }
+.newsbar > span b { color: var(--ink); }
+.cal.news { max-width: 420px; max-height: calc(100vh - 110px); overflow-y: auto; }
+.newslist { display: flex; flex-direction: column; gap: 14px; }
+.newslist h4 { margin: 0 0 4px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.newslist ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 14px; line-height: 1.45; }
+.newslist li b { font-weight: 700; }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .brand { font-family: var(--f-hand); font-weight: 800; font-size: 24px; line-height: 1; letter-spacing: -.03em; display: flex; align-items: baseline; gap: 8px; }
 .brand .mark { display: inline-block; width: 26px; height: 22px; flex: none; transform: translateY(3px); }
@@ -473,6 +485,10 @@ svg text { font-family: var(--f-body); }
     <div class="err" id="nudgeErr" role="alert"></div>
     <button class="btn primary" id="nudgeSend" type="button">Send nudge</button>
   </div></div>
+  <div class="calback" id="newsBack" hidden><div class="cal news" role="dialog" aria-labelledby="newsTitle">
+    <div class="calhead"><b id="newsTitle">What's new</b><button id="newsClose" type="button" aria-label="Close">&times;</button></div>
+    <div class="newslist" id="newsList"></div>
+  </div></div>
   <div class="calback" id="themeBack" hidden><div class="cal" role="dialog" aria-label="Pick a theme">
     <div class="calhead"><b>Pick a theme</b><button id="themeClose" type="button" aria-label="Close">&times;</button></div>
     <div class="thgrid" id="themeGrid"></div>
@@ -580,6 +596,11 @@ svg text { font-family: var(--f-body); }
     <button class="btn primary" id="nbGo" type="button">Answer now</button>
     <button class="xdel" id="nbX" type="button" aria-label="Dismiss">×</button>
   </div>
+  <div class="newsbar" id="newsBar" hidden role="status">
+    <span id="newsText"></span>
+    <button class="btn" id="newsOpen" type="button">See what's new</button>
+    <button class="xdel" id="newsX" type="button" aria-label="Dismiss">×</button>
+  </div>
   <section class="q-head">
     <div class="eyebrow" id="eyebrow"></div>
     <h1 class="prompt" id="prompt">Loading question…</h1>
@@ -672,7 +693,7 @@ svg text { font-family: var(--f-body); }
     <div class="filters" id="filters"></div>
     <div class="bank" id="bank"></div>
   </details>
-  <footer>A new graph every day. Results unlock once you've answered.</footer>
+  <footer>A new graph every day. Results unlock once you've answered. <button type="button" class="newslink" id="newsLink">What's new<span class="newsdot" id="newsDot" hidden></span></button></footer>
 </div>
 
 <script>
@@ -1645,6 +1666,47 @@ function renderMyStats(g, T){
   wrap.appendChild(el("p", "note", "Only questions you've answered yourself count, and these stats are only for " + g.name + "."));
   body.appendChild(wrap);
 }
+
+/* ---------------- what's new ----------------
+   Newest first. Add an entry at the top whenever an update goes live; "id" must be new each time. */
+const CHANGES = [
+  { id: "2026-11-10", date: "Nov 10", items: [
+    ["Your stats", "a personal page with your streak, best match, how often you're the odd one out, and your hottest takes."],
+    ["Results are in", "a notification when the last person in your group answers."],
+    ["Pick any color", "use the color wheel or a hex code under Groups & profile."],
+    ["Feedback", "now goes straight to Garrett."],
+    ["Group streak", "how many days in a row everyone answered."],
+    ["Nudge", "poke a friend who hasn't answered yet, with your own message."],
+    ["Themes", "Notebook, Lab, Sunset, Grape, Terminal and more, under Theme."],
+    ["New question at midnight Central", "for everyone, wherever you are."],
+    ["Calendar", "tap the date to jump to any day."],
+    ["Group summary and weekly wrap", "plus question ideas you can vote on."],
+  ] },
+];
+function newsSeen(){ try { return localStorage.getItem("gg-news") || ""; } catch (e) { return ""; } }
+function markNews(){ try { localStorage.setItem("gg-news", CHANGES[0].id); } catch (e) {} renderNews(); }
+function renderNews(){
+  /* brand-new people don't need a changelog; people who already used the app (signed in before) see the latest one */
+  let had = false; try { had = !!localStorage.getItem("gg-secret"); } catch (e) {}
+  const seen = newsSeen(), fresh = seen ? seen !== CHANGES[0].id : had;
+  if (!seen && !had) { try { localStorage.setItem("gg-news", CHANGES[0].id); } catch (e) {} }
+  $("newsDot").hidden = !fresh; $("newsBar").hidden = !fresh;
+  if (fresh) { const t = $("newsText"); t.innerHTML = ""; const b = document.createElement("b"); b.textContent = "Updated: "; t.append(b, CHANGES[0].items.map(i => i[0]).join(", ")); }
+}
+function openNews(){
+  const L = $("newsList"); L.innerHTML = "";
+  CHANGES.forEach(c => { const s = document.createElement("section"); const h = document.createElement("h4"); h.textContent = c.date; const ul = document.createElement("ul");
+    c.items.forEach(([t, d]) => { const li = document.createElement("li"); const b = document.createElement("b"); b.textContent = t; li.append(b, ": " + d); ul.appendChild(li); });
+    s.append(h, ul); L.appendChild(s); });
+  $("newsBack").hidden = false; markNews();
+}
+$("newsLink").addEventListener("click", openNews);
+$("newsOpen").addEventListener("click", openNews);
+$("newsX").addEventListener("click", markNews);
+$("newsClose").addEventListener("click", () => { $("newsBack").hidden = true; });
+$("newsBack").addEventListener("click", (e) => { if (e.target === $("newsBack")) $("newsBack").hidden = true; });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("newsBack").hidden) $("newsBack").hidden = true; });
+renderNews();
 
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){

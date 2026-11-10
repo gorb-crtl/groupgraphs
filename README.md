@@ -21,6 +21,7 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - `config.js`: your Supabase project URL and anon key.
 - `supabase/setup.sql`: run once in Supabase's SQL Editor to create the tables and functions.
 - `supabase/comments.sql`, `supabase/reminders.sql`, `supabase/summary.sql`, `supabase/ideas.sql`, `supabase/feedback.sql`, `supabase/groups-extra.sql`, `supabase/social.sql`, `supabase/results-alert.sql`: the same additions on their own, for a database set up before they existed.
+- `beta/index.html` + `scripts/make-beta.py`: the test version (see below).
 - `keys.html`: one-time page that makes the notification key pair in your browser.
 - `sw.js`, `manifest.webmanifest`, icons: let the site install to a home screen and receive notifications.
 - `scripts/send-reminders.mjs` + `.github/workflows/reminders.yml`: a GitHub Action that runs every 10 minutes and sends the reminders and nudges.
@@ -31,6 +32,16 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 2. Put the project URL and anon (publishable) key into `config.js`. The anon key is meant to be public; the tables are locked and only the functions in `setup.sql` can be called.
 3. In GitHub: **Settings → Pages → Deploy from a branch → `main` / root**. The site appears at `https://<user>.github.io/groupgraphs/`.
 4. For notifications (optional): open `keys.html` on the live site, save the private key it shows as the GitHub Actions secret `VAPID_PRIVATE_KEY`, and run the SQL it shows in Supabase. The hourly workflow does the rest.
+
+## Test version
+
+`beta/index.html` is a test copy of the app at `https://gorb-crtl.github.io/groupgraphs/beta/`. It uses the same database and sign-in, and shows a red "Test version" badge.
+
+1. A new feature goes into `beta/` first (`python3 scripts/make-beta.py path/to/new-index.html`). Merge that PR and try it at `/beta/`.
+2. When it looks good, ship it to everyone: `python3 scripts/make-beta.py --promote` copies the test version over `index.html`.
+3. Add a line to `CHANGES` (the "What's new" list near the end of the script) so people see what changed.
+
+Database changes are only ever additions (new tables and functions), so the live app keeps working while the test version uses them.
 
 ## Adding questions
 
