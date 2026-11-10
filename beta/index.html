@@ -124,6 +124,17 @@ button { cursor: pointer; }
 .newslist h4 { margin: 0 0 4px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
 .newslist ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 14px; line-height: 1.45; }
 .newslist li b { font-weight: 700; }
+.qmenu { position: relative; margin-top: 12px; align-self: flex-start; }
+.qmenu[hidden] { display: none; }
+.qmenubtn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 10px; padding: 10px 14px; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; min-height: 44px; }
+.qmenubtn:hover, .qmenubtn[aria-expanded="true"] { border-color: var(--pen); }
+.qmenubtn .chev { width: 12px; height: 8px; transition: transform .15s; }
+.qmenubtn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.qmenubtn .count { font-family: var(--f-mono); font-size: 12px; font-weight: 600; background: var(--pen); color: var(--sheet); border-radius: 99px; padding: 1px 7px; }
+.qmenu .qactions { position: absolute; left: 0; top: calc(100% + 6px); z-index: 40; width: min(280px, calc(100vw - 32px)); margin: 0; display: flex; flex-direction: column; gap: 2px; background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 6px; box-shadow: 0 12px 32px rgba(0,0,0,.16); }
+.qmenu .qactions[hidden] { display: none; }
+.qmenu .qbox { border: 0; border-radius: 8px; min-height: 44px; padding: 10px 12px; background: none; }
+.qmenu .qbox:hover, .qmenu .qbox:focus-visible { background: var(--pen-soft); }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .brand { font-family: var(--f-hand); font-weight: 800; font-size: 24px; line-height: 1; letter-spacing: -.03em; display: flex; align-items: baseline; gap: 8px; }
 .brand .mark { display: inline-block; width: 26px; height: 22px; flex: none; transform: translateY(3px); }
@@ -395,15 +406,15 @@ svg text { font-family: var(--f-body); }
 </style>
 <script>try{var t=localStorage.getItem("gg-theme");if(/^(light|dark|notebook|lab|sunset|grape|terminal)$/.test(t||""))document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
-<link rel="manifest" href="../manifest.webmanifest">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
-<meta name="theme-color" content="#2348b8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#e34948">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="GroupGraphs">
+<meta name="apple-mobile-web-app-title" content="GG Beta">
 <script src="../config.js"></script>
 </head>
 <body>
-<div class="betabadge" style="position:fixed;left:50%;top:0;transform:translateX(-50%);z-index:95;background:#e34948;color:#fff;font:700 11px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:0 0 8px 8px">Test version · <a href="../" style="color:#fff">open the live app</a></div>
+<div class="betabadge" style="background:#e34948;color:#fff;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;text-align:center;padding:calc(6px + env(safe-area-inset-top, 0px)) 12px 6px">Test version · <a href="../" style="color:#fff">open the live app</a></div>
 
 <div class="wrap">
   <header class="top">
@@ -606,13 +617,16 @@ svg text { font-family: var(--f-body); }
     <div class="eyebrow" id="eyebrow"></div>
     <h1 class="prompt" id="prompt">Loading question…</h1>
     <p class="sub" id="sub"></p>
-    <div class="qactions" id="qActions" hidden>
+    <div class="qmenu" id="qMenu" hidden>
+    <button class="qmenubtn" id="qMenuBtn" type="button" aria-expanded="false" aria-controls="qActions"><span>Menu</span><span class="count" id="qMenuCount" hidden>0</span><svg class="chev" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="qactions" id="qActions" hidden role="menu">
       <button class="qbox" id="chatJump" type="button"><span>Group chat</span><span class="count" id="chatCount" hidden>0</span></button>
       <button class="qbox" id="sumJump" type="button"><span id="sumLabel">Group summary</span></button>
       <button class="qbox" id="ideaJump" type="button"><span>Question ideas</span><span class="count" id="ideaCount" hidden>0</span></button>
       <button class="qbox" id="notifJump" type="button"><span id="notifLabel">Get reminders</span></button>
       <button class="qbox" id="statsJump" type="button"><span>Your stats</span></button>
       <button class="qbox" id="fbJump" type="button"><span>Feedback</span><span class="count" id="fbCount" hidden>0</span></button>
+    </div>
     </div>
     <div class="pulse" id="pulse" hidden>
       <div class="streak" id="streakBox"><b id="streakN">0</b><span><span id="streakLbl">day group streak</span><small id="streakSub"></small></span></div>
@@ -1051,7 +1065,7 @@ function delBtn(c){ const b = document.createElement("button"); b.type = "button
   b.addEventListener("click", async () => { if (!confirm("Delete this " + (c.kind === "rule" ? "rule" : "comment") + "?")) return; try { await rpc("delete_comment", { p_secret: S.secret, p_id: c.id }); } catch (e) {} loadComments(true); }); return b; }
 function renderComments(){
   const on = !!(S.secret && S.gid && S.me);
-  $("chatBox").hidden = !on; $("qActions").hidden = !S.me; if (!on) { $("rulesBox").hidden = true; $("chatJump").hidden = true; return; }
+  $("chatBox").hidden = !on; $("qMenu").hidden = !S.me; if (!on) { $("rulesBox").hidden = true; $("chatJump").hidden = true; return; }
   const c = S.comments[rkey(currentQ().id)], list = c ? c.list : [];
   $("chatJump").hidden = false; $("chatCount").textContent = list.length; $("chatCount").hidden = !list.length;
   const rules = list.filter(x => x.kind === "rule"), rl = $("rulesList"); rl.innerHTML = "";
@@ -1708,6 +1722,17 @@ $("newsClose").addEventListener("click", () => { $("newsBack").hidden = true; })
 $("newsBack").addEventListener("click", (e) => { if (e.target === $("newsBack")) $("newsBack").hidden = true; });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("newsBack").hidden) $("newsBack").hidden = true; });
 renderNews();
+
+/* ---------------- menu dropdown ---------------- */
+function setMenu(open){ $("qActions").hidden = !open; $("qMenuBtn").setAttribute("aria-expanded", String(open)); if (open) { const f = $("qActions").querySelector(".qbox:not([hidden])"); if (f) f.focus({ preventScroll: true }); } }
+$("qMenuBtn").addEventListener("click", (e) => { e.stopPropagation(); setMenu($("qActions").hidden); });
+$("qActions").addEventListener("click", (e) => { if (e.target.closest(".qbox")) setMenu(false); });
+document.addEventListener("click", (e) => { if (!$("qActions").hidden && !e.target.closest("#qMenu")) setMenu(false); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("qActions").hidden) { setMenu(false); $("qMenuBtn").focus(); } });
+/* the Menu button shows the total of the unread counts inside it */
+function syncMenuCount(){ let n = 0; $("qActions").querySelectorAll(".count").forEach(c => { if (!c.hidden && !(c.closest(".qbox") || {}).hidden) n += +c.textContent || 0; }); $("qMenuCount").textContent = n; $("qMenuCount").hidden = !n; }
+new MutationObserver(syncMenuCount).observe($("qActions"), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["hidden"] });
+syncMenuCount();
 
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
