@@ -180,6 +180,12 @@ h1.prompt { font-family: var(--f-hand); font-weight: 800; font-size: clamp(26px,
 .plot { position: relative; width: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
 .plot svg { display: block; width: 100%; height: auto; overflow: visible; }
 .plot.drawable svg { cursor: crosshair; }
+.sheet.locked .plot.drawable svg, .sheet.locked .rank-item { cursor: default; }
+.sheet.locked .plot { touch-action: auto; }
+.sheet.locked .rank-item .grip { visibility: hidden; }
+@media (max-width: 420px) { .sheet .controls { gap: 4px; } }
+.lockbar { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 2px 4px 8px; }
+.lockbar svg { width: 13px; height: 15px; color: var(--pen); flex: none; }
 .hint { position: absolute; left: 50%; top: 42%; transform: translate(-50%,-50%); pointer-events: none; font-family: var(--f-hand); font-size: 16px; font-weight: 600; color: var(--pen); background: var(--sheet); padding: 8px 14px; border-radius: 8px; border: 1px dashed var(--pen); text-align: center; line-height: 1.25; max-width: 80%; }
 .tip { position: absolute; pointer-events: none; background: var(--sheet); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; box-shadow: 0 8px 24px -10px rgba(0,0,0,.35); min-width: 160px; z-index: 3; }
 .tip .tx { font-weight: 700; margin-bottom: 4px; }
@@ -647,6 +653,7 @@ svg text { font-family: var(--f-body); }
 
   <section id="panelDraw" role="tabpanel" aria-labelledby="tabDraw">
     <div class="sheet">
+      <div class="lockbar" id="lockBar" hidden><svg viewBox="0 0 16 18" aria-hidden="true"><rect x="2" y="8" width="12" height="9" rx="2" fill="currentColor"/><path d="M5 8V5.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="2"/></svg><span id="lockText">Your answer is locked in.</span></div>
       <div class="rank-wrap" id="rankBox" hidden></div>
       <div class="plot drawable" id="mapPlot" hidden></div>
       <div class="plot drawable" id="drawPlot"><div class="hint" id="hint">Drag to draw your curve<br><small>or tap to drop points</small></div></div>
@@ -655,6 +662,7 @@ svg text { font-family: var(--f-body); }
         <button class="btn ghost" id="clear" disabled>Clear</button>
         <span class="spacer"></span>
         <input id="who" type="hidden">
+        <button class="btn" id="unlock" type="button" hidden>Unlock to redraw</button>
         <button class="btn primary" id="submit" disabled>Submit</button>
       </div>
     </div>
@@ -1963,7 +1971,7 @@ function renderDraw(){
   paintDraw();
   // pointer handling
   const toData = (ev) => { const r = drawSvg.getBoundingClientRect(), sx = drawG.W / r.width; const px = (ev.clientX - r.left)*sx, py = (ev.clientY - r.top)*sx; return { px, py, t: drawG.Tinv(px), y: drawG.Yinv(py) }; };
-  drawSvg.addEventListener("pointerdown", ev => { if (ev.button !== 0) return; if (!S.canWrite) return; ev.preventDefault(); drawSvg.setPointerCapture(ev.pointerId); stroke = [toData(ev)]; paintDraw(); });
+  drawSvg.addEventListener("pointerdown", ev => { if (ev.button !== 0) return; if (!canEdit()) return; ev.preventDefault(); drawSvg.setPointerCapture(ev.pointerId); stroke = [toData(ev)]; paintDraw(); });
   drawSvg.addEventListener("pointermove", ev => { if (!stroke) return; const evs = ev.getCoalescedEvents ? ev.getCoalescedEvents() : [ev]; evs.forEach(e => stroke.push(toData(e))); paintDraw(); });
   const end = () => { if (!stroke) return; S.undo.push(S.pts); S.pts = mergeStroke(S.pts, stroke); stroke = null; persistDraft(); paintDraw(); syncControls(); };
   drawSvg.addEventListener("pointerup", end); drawSvg.addEventListener("pointercancel", end);
@@ -1979,21 +1987,33 @@ function paintDraw(){
   }
   if (pts.length && pts.length <= 24) pts.forEach(p => el("circle", { cx: drawG.X(p.t), cy: drawG.Y(p.y), r: 4.5, fill: c, stroke:"var(--sheet)", "stroke-width":2 }, L));
   if (stroke && stroke.length > 1) { let d = ""; stroke.forEach((p,i)=> d += (i?"L":"M") + p.px.toFixed(1)+","+p.py.toFixed(1)); el("path", { d, fill:"none", stroke:c, "stroke-width":1.5, opacity:.35, "stroke-linecap":"round" }, L); }
-  $("hint").hidden = pts.length > 0 || !!stroke || !S.canWrite;
+  $("hint").hidden = pts.length > 0 || !!stroke || !canEdit();
+}
+/* a submitted answer stays locked until you tap Unlock; leaving the page, switching days or tabs, or closing the app locks it again */
+const isLocked = () => { const q = currentQ(); return !!(S.me && S.mine[q.id] && S.unlocked !== q.id); };
+const canEdit = () => S.canWrite && !isLocked();
+function relock(){
+  if (!S.unlocked) return; const was = S.unlocked; S.unlocked = null;
+  try { localStorage.removeItem("gg-draft-" + was); } catch (e) {}
+  if (currentQ().id === was) { S.drawnFor = null; loadPtsForQ(); if (S.tab === "draw") renderDraw(); syncControls(); }
 }
 function syncControls(){
   const q = currentQ(), has = q.kind === "rank" ? S.order.length > 0 : q.kind === "map" ? !!S.pt : S.pts.length >= 2, name = myName();
   $("undo").disabled = !S.undo.length; $("clear").disabled = q.kind === "rank" ? !S.undo.length : q.kind === "map" ? !S.pt : !S.pts.length; $("clear").textContent = q.kind === "rank" ? "Reset" : "Clear";
-  $("submit").disabled = !has || !S.me || !S.canWrite;
-  const mine = myEntry(q.id);
-  $("submit").textContent = mine ? "Update my answer" : "Submit";
+  const mine = myEntry(q.id), locked = isLocked();
+  $("submit").disabled = !has || !S.me || !S.canWrite || locked;
+  $("submit").textContent = mine ? "Resubmit" : "Submit"; $("submit").hidden = locked;
+  if (locked) { $("undo").disabled = true; $("clear").disabled = true; }
+  $("unlock").hidden = !mine || !S.canWrite; $("unlock").textContent = locked ? "Unlock to redraw" : "Cancel"; $("unlock").classList.toggle("ghost", !locked);
+  $("lockBar").hidden = !locked; $("panelDraw").querySelector(".sheet").classList.toggle("locked", locked);
+  $("lockText").textContent = q.kind === "rank" ? "Your ranking is locked in." : q.kind === "map" ? "Your dot is locked in." : "Your curve is locked in.";
 }
 const draftKey = () => "gg-draft-" + currentQ().id;
 function persistDraft(){ const k = currentQ().kind; ls.set(draftKey(), k === "rank" ? S.order : k === "map" ? { pt: S.pt } : S.pts); }
 function loadPtsForQ(){
   const q = currentQ(); if (S.drawnFor === q.id) return; S.drawnFor = q.id; S.undo = [];
   const mine = myEntry(q.id);
-  const draft = ls.get(draftKey(), null);
+  const draft = isLocked() ? null : ls.get(draftKey(), null);
   if (q.kind === "map") { S.pt = draft && Array.isArray(draft.pt) ? draft.pt : mine && Array.isArray(mine.pt) ? mine.pt.slice() : null; return; }
   if (q.kind === "rank") {
     const ok = (a) => Array.isArray(a) && a.length === q.items.length && a.every(v => typeof v === "number");
@@ -2156,13 +2176,13 @@ function renderRank(){
     const rn = document.createElement("span"); rn.className = "rn"; rn.textContent = pos + 1;
     const rl = document.createElement("span"); rl.className = "rl"; rl.textContent = q.items[itemIdx];
     const mv = document.createElement("span"); mv.className = "mv";
-    const up = document.createElement("button"); up.className = "btn ghost"; up.textContent = "↑"; up.setAttribute("aria-label", "Move " + q.items[itemIdx] + " up"); up.disabled = pos === 0 || !S.canWrite;
-    const dn = document.createElement("button"); dn.className = "btn ghost"; dn.textContent = "↓"; dn.setAttribute("aria-label", "Move " + q.items[itemIdx] + " down"); dn.disabled = pos === S.order.length - 1 || !S.canWrite;
+    const up = document.createElement("button"); up.className = "btn ghost"; up.textContent = "↑"; up.setAttribute("aria-label", "Move " + q.items[itemIdx] + " up"); up.disabled = pos === 0 || !canEdit();
+    const dn = document.createElement("button"); dn.className = "btn ghost"; dn.textContent = "↓"; dn.setAttribute("aria-label", "Move " + q.items[itemIdx] + " down"); dn.disabled = pos === S.order.length - 1 || !canEdit();
     up.addEventListener("click", () => { if (moveRank(pos, pos - 1)) { renderRank(); syncControls(); const b = $("rankBox").querySelectorAll(".rank-item")[pos - 1]?.querySelector("button"); b && !b.disabled && b.focus(); } });
     dn.addEventListener("click", () => { if (moveRank(pos, pos + 1)) { renderRank(); syncControls(); const b = $("rankBox").querySelectorAll(".rank-item")[pos + 1]?.querySelectorAll("button")[1]; b && !b.disabled && b.focus(); } });
     mv.append(up, dn); li.append(grip, rn, rl, mv); ol.appendChild(li);
     li.addEventListener("pointerdown", (ev) => {
-      if (!S.canWrite || ev.target.closest("button") || (ev.button !== 0)) return;
+      if (!canEdit() || ev.target.closest("button") || (ev.button !== 0)) return;
       if (ev.pointerType !== "mouse" && ev.target !== grip) return; // on touch, drag by the grip so the page still scrolls
       ev.preventDefault();
       const items = [...ol.children], h = li.offsetHeight + 6, y0 = ev.clientY; let target = pos;
@@ -2285,7 +2305,7 @@ function renderMapInput(){
   paint();
   let dragging = false;
   const place = (ev) => { const r = svg.getBoundingClientRect(), sx = g.W / r.width; S.pt = g.inv((ev.clientX - r.left) * sx, (ev.clientY - r.top) * sx).map(v => Math.round(v * 1000) / 1000); paint(); };
-  svg.addEventListener("pointerdown", (ev) => { if (!S.canWrite || ev.button !== 0) return; ev.preventDefault(); svg.setPointerCapture(ev.pointerId); S.undo.push(S.pt); dragging = true; place(ev); });
+  svg.addEventListener("pointerdown", (ev) => { if (!canEdit() || ev.button !== 0) return; ev.preventDefault(); svg.setPointerCapture(ev.pointerId); S.undo.push(S.pt); dragging = true; place(ev); });
   svg.addEventListener("pointermove", (ev) => { if (dragging) place(ev); });
   const end = () => { if (!dragging) return; dragging = false; persistDraft(); syncControls(); };
   svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end);
@@ -2529,7 +2549,7 @@ function renderBank(){
     a.append(t, n); bank.appendChild(a);
   });
 }
-function setTab(t){ if (t === "res") loadResults(true); S.tab = t; $("tabDraw").setAttribute("aria-selected", String(t==="draw")); $("tabRes").setAttribute("aria-selected", String(t==="res")); $("panelDraw").hidden = t!=="draw"; $("panelRes").hidden = t!=="res"; if (t==="draw") renderDraw(); else renderResults(); }
+function setTab(t){ relock(); if (t === "res") loadResults(true); S.tab = t; $("tabDraw").setAttribute("aria-selected", String(t==="draw")); $("tabRes").setAttribute("aria-selected", String(t==="res")); $("panelDraw").hidden = t!=="draw"; $("panelRes").hidden = t!=="res"; if (t==="draw") renderDraw(); else renderResults(); }
 function renderAll(full){
   ensureIdeas();
   loadPtsForQ();
@@ -2540,7 +2560,7 @@ function renderAll(full){
   syncControls();
 }
 function setStatus(msg, err){ S.status = msg; const s = $("status"); s.textContent = msg; s.className = "status" + (err ? " err" : ""); }
-function go(){ S.drawnFor = null; S.peeked = false; S.hidden.clear(); setStatus(""); renderAll(true); loadResults(false); loadComments(false); loadActivity(false); loadNudges(false); }
+function go(){ S.unlocked = null; S.drawnFor = null; S.peeked = false; S.hidden.clear(); setStatus(""); renderAll(true); loadResults(false); loadComments(false); loadActivity(false); loadNudges(false); }
 
 /* ---------------- events ---------------- */
 $("prevDay").addEventListener("click", ()=>{ if (S.qid) { S.qid = null; history.replaceState(null, "", location.pathname + location.search); } S.dayOffset--; go(); });
@@ -2582,8 +2602,8 @@ $("tabRes").addEventListener("click", ()=>setTab("res"));
 $("goDraw").addEventListener("click", ()=>setTab("draw"));
 $("roastBtn").addEventListener("click", doRoast);
 
-$("undo").addEventListener("click", ()=>{ if (!S.undo.length) return; if (currentQ().kind === "map") { S.pt = S.undo.pop(); persistDraft(); renderMapInput(); } else if (currentQ().kind === "rank") { S.order = S.undo.pop(); persistDraft(); renderRank(); } else { S.pts = S.undo.pop(); persistDraft(); paintDraw(); } syncControls(); });
-$("clear").addEventListener("click", ()=>{ const q = currentQ(); if (q.kind === "map") { S.undo.push(S.pt); S.pt = null; persistDraft(); renderMapInput(); } else if (q.kind === "rank") { S.undo.push(S.order.slice()); S.order = q.items.map((_, i) => i); persistDraft(); renderRank(); } else { S.undo.push(S.pts); S.pts = []; persistDraft(); paintDraw(); } syncControls(); });
+$("undo").addEventListener("click", ()=>{ if (!S.undo.length || !canEdit()) return; if (currentQ().kind === "map") { S.pt = S.undo.pop(); persistDraft(); renderMapInput(); } else if (currentQ().kind === "rank") { S.order = S.undo.pop(); persistDraft(); renderRank(); } else { S.pts = S.undo.pop(); persistDraft(); paintDraw(); } syncControls(); });
+$("clear").addEventListener("click", ()=>{ const q = currentQ(); if (!canEdit()) return; if (q.kind === "map") { S.undo.push(S.pt); S.pt = null; persistDraft(); renderMapInput(); } else if (q.kind === "rank") { S.undo.push(S.order.slice()); S.order = q.items.map((_, i) => i); persistDraft(); renderRank(); } else { S.undo.push(S.pts); S.pts = []; persistDraft(); paintDraw(); } syncControls(); });
 const who = $("who");
 $("modeNew").addEventListener("click", () => { $("modeNew").setAttribute("aria-pressed","true"); $("modeBack").setAttribute("aria-pressed","false"); $("newForm").hidden = false; $("backForm").hidden = true; $("authErr").textContent = ""; });
 $("modeBack").addEventListener("click", () => { $("modeBack").setAttribute("aria-pressed","true"); $("modeNew").setAttribute("aria-pressed","false"); $("newForm").hidden = true; $("backForm").hidden = false; $("authErr").textContent = ""; });
@@ -2602,6 +2622,14 @@ $("revealCode").addEventListener("click", () => { const shown = $("myCode").text
 $("signOut").addEventListener("click", signOut);
 setInterval(() => { if (S.tab === "res" && !document.hidden && S.gid) loadResults(true); }, 30000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden && S.secret) refreshMe().then(() => { renderGroupbar(); renderBank(); loadResults(true); }).catch(() => {}); });
+$("unlock").addEventListener("click", () => {
+  const q = currentQ();
+  if (isLocked()) { S.unlocked = q.id; S.undo = []; renderDraw(); syncControls(); setStatus("Unlocked. Redraw and hit Resubmit, or Cancel to keep your answer."); }
+  else { relock(); setStatus(""); }
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden) relock(); });
+window.addEventListener("pagehide", relock);
+$("qActions").addEventListener("click", (e) => { if (e.target.closest(".qbox")) relock(); });
 $("submit").addEventListener("click", async ()=>{
   const q = currentQ(), name = myName(), key = nameKey(name);
   if (!S.me) { showScreen("auth"); return; }
@@ -2612,7 +2640,7 @@ $("submit").addEventListener("click", async ()=>{
   else { const ys = toGrid(S.pts, q); if (!ys) { setStatus("Draw at least a short stretch of curve first.", true); return; } payload = { ys }; }
   const entry = { qid: q.id, key, name, ...payload, createdAt: prev?.createdAt || Date.now(), updatedAt: Date.now() };
   $("submit").disabled = true; setStatus("Saving…");
-  try { await S.store.save(entry); ls.set(draftKey(), null); setStatus(prev ? "Updated. Here's how you compare." : "Saved. Here's how you compare."); S.peeked = true; setTab("res"); }
+  try { await S.store.save(entry); ls.set(draftKey(), null); S.unlocked = null; setStatus(prev ? "Updated. Here's how you compare." : "Saved. Here's how you compare."); S.peeked = true; setTab("res"); }
   catch (e) { setStatus(errText(e), true); if (e.message === "not_signed_in") signOut(); }
   syncControls();
 });
