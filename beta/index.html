@@ -136,8 +136,11 @@ button { cursor: pointer; }
 .qmenu .qbox { border: 0; border-radius: 8px; min-height: 44px; padding: 10px 12px; background: none; }
 .qmenu .qbox:hover, .qmenu .qbox:focus-visible { background: var(--pen-soft); }
 .gamenav { margin: 0 0 14px; align-self: center; }
-.gamenav { display: flex; width: fit-content; max-width: 100%; margin-left: auto; margin-right: auto; }
-.gamenav button { padding: 8px 14px; min-height: 40px; white-space: nowrap; }
+.gamenav { display: flex; flex-wrap: wrap; justify-content: center; width: fit-content; max-width: 100%; margin-left: auto; margin-right: auto; }
+.gamenav button[hidden] { display: none; }
+.gamenav { flex-wrap: nowrap !important; }
+.gamenav button { padding: 8px 12px; min-height: 40px; white-space: nowrap; font-size: 14px; }
+@media (max-width: 420px) { .gamenav button { padding: 8px 9px; font-size: 13.5px; } }
 body.gm .q-head:not(.gq), body.gm div:has(> #graphTabs), body.gm #panelDraw, body.gm #panelRes, body.gm #chatBox, body.gm #rulesBox { display: none !important; }
 .game { display: flex; flex-direction: column; gap: 14px; }
 .game .q-head { margin-bottom: 2px; }
@@ -487,7 +490,7 @@ svg text { font-family: var(--f-body); }
   </header>
   <div class="sumback" id="ideaBack" hidden role="dialog" aria-label="Question ideas"><div class="sumwrap">
     <div class="sumtop"><div><div class="k" id="ideaGroup"></div><h2>Question ideas</h2></div><button id="ideaClose" type="button">Close</button></div>
-    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight Central time, the idea with the most votes becomes the next day's question, just for this group.</p>
+    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight Central time, the idea with the most votes becomes the next day's bonus question, just for this group. The daily graph stays the same for everyone.</p>
     <div class="sumcard" id="ideaNext" hidden></div>
     <div class="sumcard"><h3>Vote</h3><div class="idlist" id="ideaList"></div></div>
     <form class="sumcard idform" id="ideaForm" autocomplete="off">
@@ -673,6 +676,7 @@ svg text { font-family: var(--f-body); }
     <button type="button" data-g="graph" aria-pressed="true">Graph</button>
     <button type="button" data-g="tot" aria-pressed="false">This or that</button>
     <button type="button" data-g="rate" aria-pressed="false">Rate it</button>
+    <button type="button" data-g="bonus" aria-pressed="false" hidden>Bonus</button>
   </nav>
   <section class="game" id="gameView" hidden></section>
   <section class="q-head">
@@ -1005,9 +1009,9 @@ const S = {
 const ctParts = () => { const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "numeric", day: "numeric", weekday: "short" }).formatToParts(new Date()); const g = (t) => (p.find(x => x.type === t) || {}).value; return { y: +g("year"), m: +g("month"), d: +g("day"), wd: g("weekday") }; };
 const todayIndex = () => { const c = ctParts(); return Math.round((Date.UTC(c.y, c.m - 1, c.d) - ROT_START) / 864e5); };
 const ctISO = () => { const c = ctParts(); return c.y + "-" + String(c.m).padStart(2, "0") + "-" + String(c.d).padStart(2, "0"); };
-const qForDay = (d) => (S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
+const qForDay = (d) => Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
 const qById = (id) => Q.find(q => q.id === id) || (S.ideas && S.ideas.gid === S.gid ? Object.values(S.ideas.byDay).find(q => q.id === id) : null) || null;
-function baseQ(){ if (S.qid) return qById(S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
+function baseQ(){ if (S.game === "bonus" && !S.qid && bonusQ(todayIndex() + S.dayOffset)) return bonusQ(todayIndex() + S.dayOffset); if (S.qid) return qById(S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
 /* "most likely to" questions rank the current group's members, so each group gets its own copy of the question */
 function withPeople(q){
   if (!q || !q.people) return q; const g = group(); if (!g) return q;
@@ -1458,7 +1462,7 @@ function renderIdeas(){
     list.appendChild(row);
   });
   const nx = $("ideaNext"); nx.innerHTML = ""; const top = sorted[0];
-  if (top && top.votes > 0) { nx.hidden = false; nx.append(mk("h3", null, "Tomorrow's question, if nothing overtakes it"), mk("div", "t", ideaTitle(top.spec)), mk("p", "note", "From " + top.author + " with " + top.votes + (top.votes === 1 ? " vote" : " votes") + ". Voting closes at midnight Central time.")); nx.querySelector(".t").style.cssText = "font-weight:800;font-size:17px"; }
+  if (top && top.votes > 0) { nx.hidden = false; nx.append(mk("h3", null, "Tomorrow's bonus question, if nothing overtakes it"), mk("div", "t", ideaTitle(top.spec)), mk("p", "note", "From " + top.author + " with " + top.votes + (top.votes === 1 ? " vote" : " votes") + ". Voting closes at midnight Central time.")); nx.querySelector(".t").style.cssText = "font-weight:800;font-size:17px"; }
   else nx.hidden = true;
   const past = $("ideaPast"); past.innerHTML = ""; past.hidden = !I.past.length;
   if (I.past.length) { past.appendChild(mk("h3", null, "Already played")); const rows = mk("div", "sumrows"); I.past.slice(0, 20).forEach(r => { const d = isoDay(r.day), rr = mk("div", "sumrow"); const dt = new Date(ROT_START + d * 864e5); rr.append(mk("span", null, dt.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }) + " · " + r.author), mk("span", null, ideaTitle(r.spec))); rows.appendChild(rr); }); past.appendChild(rows); }
@@ -1800,67 +1804,87 @@ new MutationObserver(syncMenuCount).observe($("qActions"), { subtree: true, chil
 syncMenuCount();
 
 /* ---------------- games: This or that, Rate it ----------------
-   Each game has one set of 5 a day. Answers are saved like graph answers, under ids
+   Each day has one theme; both games use it (5 pairs, 5 things to rate). Everyone plays the same set,
+   solo or in any number of groups, and one answer counts in every group you're in. Answers are saved like graph answers, under ids
    "tot-YYYY-MM-DD" and "rate-YYYY-MM-DD", so no new database tables are needed. */
-const TOT = [
-  ["Coffee", "Tea"], ["Beach", "Mountains"], ["Morning person", "Night owl"], ["Cats", "Dogs"], ["Text", "Call"],
-  ["Pipette", "Burette"], ["Fume hood", "Glovebox"], ["Organic", "Inorganic"], ["Theory", "Experiment"], ["NMR", "Mass spec"],
-  ["Pizza", "Tacos"], ["Sweet", "Salty"], ["Movie at home", "Movie in theaters"], ["Summer", "Winter"], ["Books", "Podcasts"],
-  ["Early to the airport", "Just in time"], ["Window seat", "Aisle seat"], ["Shower at night", "Shower in the morning"], ["Plan everything", "Wing it"], ["Big party", "Small dinner"],
-  ["Pen", "Pencil"], ["Lab notebook", "Electronic notebook"], ["Bench work", "Writing"], ["Group meeting", "Root canal"], ["Conference talk", "Poster session"],
-  ["Pancakes", "Waffles"], ["Fries", "Tots"], ["Cake", "Pie"], ["Ketchup", "Mustard"], ["Hot sauce on everything", "No spice ever"],
-  ["Be able to fly", "Be invisible"], ["Time travel to the past", "Time travel to the future"], ["Read minds", "See the future"], ["Never sleep again", "Never eat again"], ["Free coffee for life", "Free flights for life"],
-  ["Periodic table on a mug", "Periodic table on a shower curtain"], ["Benzene", "Buckyball"], ["Chlorine", "Fluorine"], ["Carbon", "Silicon"], ["Gold", "Platinum"],
-  ["Sneakers", "Sandals"], ["Hoodie", "Cardigan"], ["Spotify", "Apple Music"], ["iPhone", "Android"], ["Mac", "PC"],
-  ["Road trip", "Flight"], ["Camping", "Hotel"], ["City", "Countryside"], ["Museum", "Theme park"], ["Hike", "Brunch"],
-  ["Reply instantly", "Reply three days later"], ["Voice memo", "Long text"], ["Emoji", "No emoji"], ["Group chat", "Private chat"], ["Meme", "Gif"],
-  ["Ice cream", "Frozen yogurt"], ["Chocolate", "Vanilla"], ["Popcorn", "Candy"], ["Breakfast for dinner", "Dinner for breakfast"], ["Leftovers", "Takeout"],
-  ["Overleaf", "Word"], ["Excel", "Python"], ["Origin", "Matplotlib"], ["Reviewer 2", "Reviewer 3"], ["Nature", "Science"],
-  ["Sunrise", "Sunset"], ["Rain", "Snow"], ["Thunderstorm", "Heatwave"], ["Fall", "Spring"], ["Ocean", "Lake"],
-  ["Board games", "Video games"], ["Karaoke", "Trivia night"], ["Bowling", "Mini golf"], ["Escape room", "Murder mystery"], ["Concert", "Comedy show"],
-  ["Free lunch seminar", "No seminar"], ["Office", "Lab"], ["Work from home", "Work from a cafe"], ["4-day week", "6-hour days"], ["Cold lab", "Hot lab"],
-  ["Lasagna", "Mac and cheese"], ["Sushi", "Ramen"], ["Burrito", "Burger"], ["Bagel", "Croissant"], ["Wings", "Nachos"],
-  ["Superpower: undo button", "Superpower: pause button"], ["Live in a castle", "Live on a boat"], ["Talk to animals", "Speak every language"], ["Always 10 minutes late", "Always 20 minutes early"], ["Lose your phone", "Lose your keys"],
-  ["Safety goggles", "Lab coat"], ["Titration", "Recrystallization"], ["Column", "Distillation"], ["Grad school", "Industry"], ["Acid", "Base"],
-  ["Star Wars", "Star Trek"], ["Marvel", "DC"], ["The Office", "Parks and Rec"], ["Harry Potter", "Lord of the Rings"], ["Friends", "Seinfeld"],
+const GTHEMES = [
+  { name: "Breakfast", tot: [["Pancakes", "Waffles"], ["Coffee", "Tea"], ["Sweet breakfast", "Savory breakfast"], ["Bagel", "Croissant"], ["Cereal first", "Milk first"]],
+    rate: ["Avocado toast", "Cold pizza for breakfast", "Oatmeal", "Breakfast burritos", "Skipping breakfast"] },
+  { name: "The lab", tot: [["Pipette", "Burette"], ["Fume hood", "Glovebox"], ["Bench work", "Writing"], ["Lab notebook", "Electronic notebook"], ["Column", "Recrystallization"]],
+    rate: ["The smell of the lab", "Lab cleanup day", "Safety training", "Fume hood music", "Running a column overnight"] },
+  { name: "Travel", tot: [["Window seat", "Aisle seat"], ["Early to the airport", "Just in time"], ["Road trip", "Flight"], ["Beach", "Mountains"], ["Hotel", "Camping"]],
+    rate: ["Airport food", "Middle seats", "Hostels", "Packing", "Jet lag"] },
+  { name: "Movies & TV", tot: [["Movie at home", "Movie in theaters"], ["Star Wars", "Star Trek"], ["Marvel", "DC"], ["The Office", "Parks and Rec"], ["Binge it", "One episode a week"]],
+    rate: ["Musicals", "Horror movies", "Reality TV", "Movie sequels", "Spoilers"] },
+  { name: "Animals", tot: [["Cats", "Dogs"], ["Owls", "Penguins"], ["Otters", "Red pandas"], ["Sharks", "Octopuses"], ["Big dog", "Small dog"]],
+    rate: ["Geese", "Pigeons", "Spiders", "Raccoons", "Dogs in sweaters"] },
+  { name: "Weather", tot: [["Summer", "Winter"], ["Rain", "Snow"], ["Thunderstorm", "Heatwave"], ["Fall", "Spring"], ["Sunrise", "Sunset"]],
+    rate: ["Humidity", "Snow days", "Fog", "Thunderstorms at night", "Cold mornings"] },
+  { name: "Snacks", tot: [["Sweet", "Salty"], ["Fries", "Tots"], ["Popcorn", "Candy"], ["Chips", "Pretzels"], ["Ketchup", "Ranch"]],
+    rate: ["Black licorice", "Candy corn", "Trail mix raisins", "Gas station snacks", "Rice cakes"] },
+  { name: "Grad school", tot: [["Theory", "Experiment"], ["Conference talk", "Poster session"], ["Grad school", "Industry"], ["Overleaf", "Word"], ["Excel", "Python"]],
+    rate: ["Group meetings", "Reviewer comments", "Writing a thesis", "Free conference swag", "Seminar free lunch"] },
+  { name: "Weekends", tot: [["Hike", "Brunch"], ["Sleep in", "Up early"], ["Big party", "Small dinner"], ["Plans", "No plans"], ["Go out", "Stay in"]],
+    rate: ["Sunday scaries", "Running errands", "Farmers markets", "Saturday chores", "Day drinking"] },
+  { name: "Chemistry", tot: [["Organic", "Inorganic"], ["NMR", "Mass spec"], ["Acid", "Base"], ["Carbon", "Silicon"], ["Benzene", "Buckyball"]],
+    rate: ["Physical chemistry", "Organic chemistry", "Titrations", "The periodic table song", "Chemistry puns"] },
+  { name: "Music", tot: [["Spotify", "Apple Music"], ["Concert", "Festival"], ["Headphones", "Speakers"], ["Lyrics", "Instrumental"], ["Shuffle", "Album in order"]],
+    rate: ["Karaoke", "Country music", "Christmas music in November", "Vinyl records", "Musicians who talk between songs"] },
+  { name: "Superpowers", tot: [["Fly", "Be invisible"], ["Read minds", "See the future"], ["Undo button", "Pause button"], ["Talk to animals", "Speak every language"], ["Super strength", "Super speed"]],
+    rate: ["Immortality", "Teleporting", "Never needing sleep", "Time travel", "Photographic memory"] },
+  { name: "Desserts", tot: [["Cake", "Pie"], ["Chocolate", "Vanilla"], ["Ice cream", "Frozen yogurt"], ["Cookies", "Brownies"], ["Warm dessert", "Cold dessert"]],
+    rate: ["Fruitcake", "Pumpkin pie", "Cheesecake", "Raisins in cookies", "Tiramisu"] },
+  { name: "Texting", tot: [["Text", "Call"], ["Voice memo", "Long text"], ["Emoji", "No emoji"], ["Meme", "Gif"], ["Reply right away", "Reply later"]],
+    rate: ["Read receipts", "Group chats", "Voice memos", "Typing bubbles", "Lol at the end of every text"] },
+  { name: "Sleep", tot: [["Morning person", "Night owl"], ["Shower at night", "Shower in the morning"], ["Naps", "No naps"], ["Window open", "Window closed"], ["Socks on", "Socks off"]],
+    rate: ["Alarm snoozing", "Waking up at 6am", "Weighted blankets", "Sleeping in on weekdays", "Sharing a bed with a pet"] },
+  { name: "Dinner", tot: [["Pizza", "Tacos"], ["Sushi", "Ramen"], ["Burrito", "Burger"], ["Leftovers", "Takeout"], ["Cook", "Order in"]],
+    rate: ["Pineapple on pizza", "Cilantro", "Olives", "Brussels sprouts", "Tofu"] },
+  { name: "Games", tot: [["Board games", "Video games"], ["Trivia night", "Karaoke night"], ["Bowling", "Mini golf"], ["Escape room", "Murder mystery"], ["Cards", "Dice"]],
+    rate: ["Monopoly", "Charades", "Sore losers", "Crosswords", "Mario Kart"] },
+  { name: "Holidays", tot: [["Halloween", "Thanksgiving"], ["Real tree", "Fake tree"], ["Give gifts", "Get gifts"], ["New Year's party", "In bed by midnight"], ["Big family meal", "Friendsgiving"]],
+    rate: ["Secret Santa", "Gift cards as gifts", "Valentine's Day", "Birthdays", "Ugly sweaters"] },
+  { name: "Work", tot: [["Office", "Work from home"], ["4-day week", "6-hour days"], ["Meeting", "Email"], ["Cold office", "Hot office"], ["Standing desk", "Sitting desk"]],
+    rate: ["Zoom calls", "Reply-all emails", "Team building", "Open offices", "Mondays"] },
+  { name: "Drinks", tot: [["Hot coffee", "Iced coffee"], ["Soda", "Seltzer"], ["Beer", "Wine"], ["Lemonade", "Iced tea"], ["Smoothie", "Milkshake"]],
+    rate: ["Energy drinks", "Pumpkin spice lattes", "Kombucha", "Decaf", "Tap water"] },
+  { name: "Style", tot: [["Sneakers", "Sandals"], ["Hoodie", "Cardigan"], ["Jeans", "Sweatpants"], ["Gold", "Silver"], ["Dress up", "Dress down"]],
+    rate: ["Crocs", "Socks with sandals", "Cargo shorts", "Fanny packs", "Matching outfits"] },
+  { name: "Outdoors", tot: [["Ocean", "Lake"], ["City", "Countryside"], ["Tent", "Cabin"], ["Sunscreen", "Tan"], ["Trail run", "Long walk"]],
+    rate: ["Camping", "Mosquitoes", "Hiking uphill", "Campfire smoke", "Fishing"] },
+  { name: "Tech", tot: [["iPhone", "Android"], ["Mac", "PC"], ["Light mode", "Dark mode"], ["Tabs", "Bookmarks"], ["Paper books", "E-reader"]],
+    rate: ["Self-checkout", "Smart speakers", "Autocorrect", "Software updates", "Printers"] },
+  { name: "Life skills", tot: [["Plan everything", "Wing it"], ["Early", "Fashionably late"], ["Lose your phone", "Lose your keys"], ["Make the bed", "Leave it"], ["Budget", "Vibes"]],
+    rate: ["Your parallel parking", "Your sense of direction", "Your cooking", "Your handwriting", "Your patience"] },
 ];
-const RATE = [
-  "Pineapple on pizza", "Mondays", "Group meetings", "Cilantro", "Airport food", "Rain on a weekend", "Socks with sandals", "Daylight saving time",
-  "Your lab's coffee", "Running a column", "Reviewer comments", "Free conference swag", "Pumpkin spice", "Brussels sprouts", "Karaoke", "Camping",
-  "Ketchup on eggs", "Cold pizza for breakfast", "Voice memos", "Small talk", "Surprise parties", "Online dating", "Assembling IKEA furniture", "Road trips",
-  "Mayonnaise", "Black licorice", "Olives", "Sushi", "Crocs", "Cargo shorts", "Skinny jeans", "Fanny packs",
-  "Reply-all emails", "Zoom calls", "LinkedIn", "Being on hold", "Self-checkout", "Gas station sushi", "Waiting rooms", "Group projects",
-  "The smell of the lab", "Fume hood music", "Organic chemistry", "Physical chemistry", "Writing a thesis", "Poster sessions", "Lab cleanup day", "Safety training",
-  "Dogs in sweaters", "Cats", "Pigeons", "Geese", "Spiders", "Squirrels", "Raccoons", "Frogs",
-  "Cereal as dinner", "Hot dogs", "Candy corn", "Fruitcake", "Tofu", "Kale", "Avocado toast", "Energy drinks",
-  "Waking up at 6am", "Naps", "Alarm snoozing", "Sleeping with socks on", "Cold showers", "Hot yoga", "Running", "Leg day",
-  "Halloween", "Thanksgiving", "New Year's Eve", "Valentine's Day", "Birthdays", "Gift cards as gifts", "Secret Santa", "Holiday music in November",
-  "Musicals", "Horror movies", "Reality TV", "True crime podcasts", "Audiobooks", "Spoilers", "Rom-coms", "Movie sequels",
-  "Hot summers", "Snow days", "Humidity", "Wind", "Fog", "Thunderstorms at night", "Sunburns", "Cold mornings",
-  "Your handwriting", "Your cooking", "Your parallel parking", "Your sense of direction", "Your dance moves", "Your singing", "Your memory", "Your patience",
-];
+const TOT = GTHEMES.flatMap(t => t.tot), RATE = GTHEMES.flatMap(t => t.rate);
 const GAMES = { tot: { name: "This or that", list: TOT }, rate: { name: "Rate it", list: RATE } }, GN = 5;
 S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph";
 S.gres = {}; S.gedit = null; S.gdraft = {};
 const isGameQid = (k) => /^(tot|rate)-/.test(k);
 const gDayIdx = () => S.qid ? todayIndex() : todayIndex() + S.dayOffset;
-function gItems(kind, d){ const L = GAMES[kind].list, B = Math.floor(L.length / GN), out = []; for (let k = 0; k < GN; k++) out.push((((d % B) + B) % B) + k * B); return out; }
+const gThemeIdx = (d) => ((d % GTHEMES.length) + GTHEMES.length) % GTHEMES.length;
+function gItems(kind, d){ const t = gThemeIdx(d), out = []; for (let k = 0; k < GN; k++) out.push(t * GN + k); return out; }
+const bonusQ = (d) => (S.gid && S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || null;
 const gQid = (kind, d) => kind + "-" + idxISO(d);
 const gEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 const gValid = (kind, p, items) => p && Array.isArray(p.items) && p.items.join() === items.join() && (kind === "tot" ? Array.isArray(p.picks) && p.picks.length === GN && p.picks.every(v => v === 0 || v === 1) : Array.isArray(p.r) && p.r.length === GN && p.r.every(v => Number.isInteger(v) && v >= 1 && v <= 10));
 function setGame(g){
   if (S.gedit) S.gedit = null;
-  S.game = g; ls.set("gg-game", g);
+  const prev = S.game; S.game = g; if (g !== "bonus") ls.set("gg-game", g);
   $("gameNav").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === g)));
-  renderGame(); window.scrollTo({ top: 0 });
+  if (g === "bonus" || prev === "bonus") { S.qid = null; go(); } else renderGame();
+  window.scrollTo({ top: 0 });
 }
 $("gameNav").addEventListener("click", (e) => { const b = e.target.closest("button[data-g]"); if (b) setGame(b.dataset.g); });
 function renderGame(){
   if (!S.gres) return;
-  const ok = !!(S.me && S.groups && S.groups.length && !$("appMain").hidden);
+  const ok = !!(S.me && !$("appMain").hidden);
   $("gameNav").hidden = !ok;
-  const g = ok ? S.game : "graph";
-  $("gameNav").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === g)));
+  const bq = !S.qid && bonusQ(gDayIdx()); $("gameNav").querySelector('[data-g="bonus"]').hidden = !bq;
+  if (S.game === "bonus" && !bq) { S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph"; S.drawnFor = null; setTimeout(go, 0); }
+  let g = ok ? S.game : "graph"; if (g === "bonus") g = "graph";
+  $("gameNav").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === (S.game === "bonus" ? "bonus" : g))));
   document.body.classList.toggle("gm", g !== "graph");
   const V = $("gameView"); V.hidden = g === "graph"; if (g === "graph") { V.innerHTML = ""; return; }
   const d = gDayIdx(), qid = gQid(g, d), items = gItems(g, d), L = GAMES[g].list;
@@ -1869,8 +1893,8 @@ function renderGame(){
   const head = gEl("div", "q-head gq"); const eb = gEl("div", "eyebrow");
   if (!S.qid && S.dayOffset === 0) eb.appendChild(gEl("span", "today", "Today's " + (g === "tot" ? "picks" : "ratings")));
   eb.appendChild(gEl("span", null, GAMES[g].name)); eb.appendChild(gEl("span", null, "Day " + (d + 1)));
-  head.append(eb, gEl("h1", "prompt", g === "tot" ? "Pick one from each pair" : "Rate each one from 1 to 10"),
-    gEl("p", "sub", g === "tot" ? "Go with your gut. You'll see who sided with you once you've answered." : "1 is awful, 10 is perfect. You'll see everyone's ratings once you've answered."));
+  head.append(eb, gEl("h1", "prompt", "Theme: " + GTHEMES[gThemeIdx(d)].name),
+    gEl("p", "sub", (g === "tot" ? "Pick one from each pair. Go with your gut." : "Rate each one from 1 (awful) to 10 (perfect).") + (S.gid ? " You'll see your group's answers once you've answered." : " Everyone gets the same set today.")));
   V.appendChild(head);
   const sheet = gEl("div", "sheet gsheet"); V.appendChild(sheet);
   if (editing) {
@@ -1909,8 +1933,9 @@ function renderGame(){
     lb.appendChild(gEl("span", null, g === "tot" ? "Your picks are locked in." : "Your ratings are locked in."));
     const ch = gEl("button", "btn", "Change my answers"); ch.type = "button"; ch.style.marginLeft = "auto";
     ch.addEventListener("click", () => { S.gedit = qid; delete S.gdraft[qid]; renderGame(); }); lb.appendChild(ch); sheet.appendChild(lb);
-    const res = gEl("div", "gres"); res.id = "gameRes"; res.appendChild(gEl("p", "note", "Loading the group's answers…")); sheet.appendChild(res);
-    loadGameRes(qid, false);
+    const res = gEl("div", "gres"); res.id = "gameRes"; sheet.appendChild(res);
+    if (!S.gid) { renderSolo(res, g, items, mine); }
+    else { res.appendChild(gEl("p", "note", "Loading the group's answers…")); loadGameRes(qid, false); }
   }
 }
 async function loadGameRes(qid, countOnly){
@@ -1929,11 +1954,17 @@ async function loadGameRes(qid, countOnly){
   const list = (r.answers || []).filter(a => gValid(g, a.payload, items)).map(a => ({ key: a.username, name: a.name || names[a.username] || a.username, p: a.payload }));
   if (g === "tot") renderTotRes(box, items, list, me); else renderRateRes(box, items, list, me);
 }
+/* no group yet: show your own answers, and that they'll count once you join one */
+function renderSolo(box, g, items, mine){
+  const me = S.me.username, list = [{ key: me, name: S.me.display_name || me, p: mine }];
+  if (g === "tot") renderTotRes(box, items, list, me, true); else renderRateRes(box, items, list, me, true);
+  const n = gEl("p", "note", "Your answers are saved. Join a group or start one under Groups & profile, and they'll count there too, along with every past day you've played."); box.prepend(n);
+}
 function gChip(e, me){ const c = gEl("span", "gchip" + (e.key === me ? " me" : "")); const dot = gEl("i"); dot.style.background = colorOf(e.key).c; c.append(dot, document.createTextNode(e.key === me ? "You" : e.name)); return c; }
 function gTile(k, v, dsc){ const t = gEl("div", "sumtile"); t.append(gEl("span", "k", k), gEl("span", "v", v), gEl("span", "d", dsc)); return t; }
-function renderTotRes(box, items, list, me){
+function renderTotRes(box, items, list, me, solo){
   const n = list.length, myE = list.find(e => e.key === me);
-  if (n < 2) box.appendChild(gEl("p", "note", "You're the first one here. Check back once others in your group have picked."));
+  if (n < 2 && !solo) box.appendChild(gEl("p", "note", "You're the first one here. Check back once others in your group have picked."));
   const tiles = gEl("div", "sumtiles");
   if (n >= 2 && myE) {
     let maj = 0, decided = 0; items.forEach((_, k) => { const a = list.filter(e => e.p.picks[k] === 0).length, b = n - a; if (a !== b) { decided++; if ((a > b ? 0 : 1) === myE.p.picks[k]) maj++; } });
@@ -1953,12 +1984,12 @@ function renderTotRes(box, items, list, me){
     const who = gEl("div", "tr-who"); [0, 1].forEach(s => { const w = gEl("div"); sides[s].forEach(e => w.appendChild(gChip(e, me))); who.appendChild(w); });
     row.append(top, bar, who); box.appendChild(row);
   });
-  box.appendChild(gEl("p", "gfoot", n + (n === 1 ? " answer" : " answers") + " from your group so far."));
+  if (!solo) box.appendChild(gEl("p", "gfoot", n + (n === 1 ? " answer" : " answers") + " from your group so far."));
 }
-function renderRateRes(box, items, list, me){
+function renderRateRes(box, items, list, me, solo){
   const n = list.length, myE = list.find(e => e.key === me);
   const st = items.map((it, k) => { const vs = list.map(e => e.p.r[k]), avg = vs.reduce((a, b) => a + b, 0) / (vs.length || 1); return { it, k, avg, sd: Math.sqrt(vs.reduce((a, v) => a + (v - avg) ** 2, 0) / (vs.length || 1)) }; });
-  if (n < 2) box.appendChild(gEl("p", "note", "You're the first one here. Check back once others in your group have rated."));
+  if (n < 2) { if (!solo) box.appendChild(gEl("p", "note", "You're the first one here. Check back once others in your group have rated.")); }
   else {
     const tiles = gEl("div", "sumtiles"), fmt = (v) => v.toFixed(1);
     const best = st.slice().sort((a, b) => b.avg - a.avg)[0], worst = st.slice().sort((a, b) => a.avg - b.avg)[0], div = st.slice().sort((a, b) => b.sd - a.sd)[0];
@@ -1975,13 +2006,13 @@ function renderRateRes(box, items, list, me){
     for (let v = 1; v <= 10; v++) { const t = gEl("span", "tk", String(v)); t.style.left = ((v - 1) / 9 * 100) + "%"; strip.appendChild(t); }
     const am = gEl("span", "am"); am.style.left = ((s.avg - 1) / 9 * 100) + "%"; strip.appendChild(am);
     const stack = {}; list.slice().sort((a, b) => (a.key === me) - (b.key === me)).forEach(e => { const v = e.p.r[s.k], h = stack[v] = (stack[v] || 0) + 1;
-      const dot = gEl("span", "dt" + (e.key === me ? " me" : ""), (e.key === me ? "You" : e.name).slice(0, 1).toUpperCase()); dot.style.left = ((v - 1) / 9 * 100) + "%"; dot.style.bottom = (22 + (h - 1) * 19) + "px";
+      const dot = gEl("span", "dt" + (e.key === me ? " me" : ""), (e.key === me ? "You" : e.name).slice(0, 1).toUpperCase()); dot.style.left = ((v - 1) / 9 * 100) + "%"; dot.style.bottom = (22 + (h - 1) * 14) + "px";
       dot.style.background = colorOf(e.key).c; dot.title = (e.key === me ? "You" : e.name) + ": " + v; strip.appendChild(dot); });
-    strip.style.height = (44 + Math.max(0, Math.max(0, ...Object.values(stack)) - 1) * 19) + "px";
+    strip.style.height = (44 + Math.max(0, Math.max(0, ...Object.values(stack)) - 1) * 14) + "px";
     row.append(top, strip); box.appendChild(row);
   });
   if (n >= 2) { const lg = gEl("div", "rr-legend"); list.forEach(e => lg.appendChild(gChip(e, me))); box.appendChild(lg); }
-  box.appendChild(gEl("p", "gfoot", "The thin line on each row is the group average. " + n + (n === 1 ? " answer" : " answers") + " from your group so far."));
+  if (!solo) box.appendChild(gEl("p", "gfoot", "The thin line on each row is the group average. " + n + (n === 1 ? " answer" : " answers") + " from your group so far."));
 }
 document.addEventListener("visibilitychange", () => { if (document.hidden && S.gedit) { S.gedit = null; S.gdraft = {}; renderGame(); } });
 
@@ -2118,10 +2149,10 @@ async function boot(){
   let failed = false;
   try { await refreshMe(); } catch (e) { if (e.message === "not_signed_in") return signOut(); failed = true; setStatus(errText(e) + " Retrying…", true); }
   S.loaded = true; showScreen("app"); renderGroupbar(); go();
-  if (!failed) { if (!S.groups.length) showScreen("groups"); return; }
+  if (!failed) { if (!S.groups.length && !ls.get("gg-groups-seen", false)) { ls.set("gg-groups-seen", true); showScreen("groups"); } return; }
   for (let i = 0; i < 6; i++) {
     await new Promise(r => setTimeout(r, 1500 * (i + 1)));
-    try { await refreshMe(); setStatus(""); renderGroupbar(); go(); if (!S.groups.length) showScreen("groups"); return; }
+    try { await refreshMe(); setStatus(""); renderGroupbar(); go(); if (!S.groups.length && !ls.get("gg-groups-seen", false)) { ls.set("gg-groups-seen", true); showScreen("groups"); } return; }
     catch (e) { if (e.message === "not_signed_in") return signOut(); }
   }
   setStatus("Couldn't reach the server. Close and reopen the app to try again.", true);
@@ -2783,7 +2814,7 @@ function renderHeader(){
   $("prevDay").disabled = isDaily && ti + S.dayOffset <= 0;
   const eb = $("eyebrow"); eb.innerHTML = "";
   const qi = Q.indexOf(q) + 1;
-  if (isDaily && S.dayOffset === 0) { const t = document.createElement("span"); t.className = "today"; t.textContent = "Today's graph"; eb.appendChild(t); }
+  if (isDaily && S.dayOffset === 0) { const t = document.createElement("span"); t.className = "today"; t.textContent = S.game === "bonus" ? "Group bonus" : "Today's graph"; eb.appendChild(t); }
   const c = document.createElement("span"); c.textContent = q.cat; eb.appendChild(c);
   const n = document.createElement("span"); n.textContent = "Day " + (ti + S.dayOffset + 1); eb.appendChild(n);
   $("prompt").textContent = q.title; $("sub").textContent = q.sub || "";
