@@ -135,6 +135,55 @@ button { cursor: pointer; }
 .qmenu .qactions[hidden] { display: none; }
 .qmenu .qbox { border: 0; border-radius: 8px; min-height: 44px; padding: 10px 12px; background: none; }
 .qmenu .qbox:hover, .qmenu .qbox:focus-visible { background: var(--pen-soft); }
+.gamenav { margin: 0 0 14px; align-self: center; }
+.gamenav { display: flex; width: fit-content; max-width: 100%; margin-left: auto; margin-right: auto; }
+.gamenav button { padding: 8px 14px; min-height: 40px; white-space: nowrap; }
+body.gm .q-head:not(.gq), body.gm div:has(> #graphTabs), body.gm #panelDraw, body.gm #panelRes, body.gm #chatBox, body.gm #rulesBox { display: none !important; }
+.game { display: flex; flex-direction: column; gap: 14px; }
+.game .q-head { margin-bottom: 2px; }
+.gsheet { display: flex; flex-direction: column; gap: 12px; padding: 14px 12px 10px; }
+.gcount { margin: 0; font-size: 13px; color: var(--ink-2); }
+.totpick { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; }
+.totpick .or { font-size: 12px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; }
+.totbtn { border: 1.5px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 12px; padding: 12px 10px; min-height: 52px; font: inherit; font-weight: 700; font-size: 15px; line-height: 1.25; cursor: pointer; overflow-wrap: anywhere; }
+.totbtn:hover { border-color: var(--pen); }
+.totbtn[aria-pressed="true"] { background: var(--pen); border-color: var(--pen); color: var(--sheet); }
+.ratepick { display: flex; flex-direction: column; gap: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+.ratepick:last-of-type { border-bottom: 0; }
+.ratepick .rl { font-weight: 700; font-size: 15px; }
+.ratepick .scale { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; }
+.ratepick .scale button { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 8px; min-height: 40px; padding: 0; font: inherit; font-family: var(--f-mono); font-weight: 600; font-size: 14px; cursor: pointer; }
+.ratepick .scale button:hover { border-color: var(--pen); }
+.ratepick .scale button[aria-pressed="true"] { background: var(--pen); border-color: var(--pen); color: var(--sheet); }
+.ratepick .ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); }
+.gsheet .lockbar { padding: 0; flex-wrap: wrap; }
+.gres { display: flex; flex-direction: column; gap: 14px; }
+.totres { display: flex; flex-direction: column; gap: 6px; }
+.tr-top { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+.tr-top .lab:last-child { text-align: right; }
+.tr-top .lab small { font-family: var(--f-mono); color: var(--ink-2); }
+.tr-top .lab.mine b { text-decoration: underline; text-decoration-color: var(--pen); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.tr-bar { display: flex; gap: 2px; height: 12px; }
+.tr-bar span { flex-basis: 0; border-radius: 4px; }
+.tr-bar .a { background: var(--pen); }
+.tr-bar .b { background: var(--ink-3); }
+.tr-who { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tr-who > div { display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-start; align-content: flex-start; }
+.tr-who > div:last-child { justify-content: flex-end; }
+.gchip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 99px; padding: 2px 8px 2px 5px; }
+.gchip i { width: 9px; height: 9px; border-radius: 50%; }
+.gchip.me { color: var(--ink); font-weight: 700; }
+.rateres { display: flex; flex-direction: column; gap: 4px; }
+.rr-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.rr-top .avg { font-family: var(--f-mono); font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.rr-strip { position: relative; margin: 0 9px; border-bottom: 2px solid var(--line); }
+.rr-strip .tk { position: absolute; bottom: -18px; transform: translateX(-50%); font-family: var(--f-mono); font-size: 10px; color: var(--ink-3); }
+.rr-strip .am { position: absolute; bottom: 0; top: 0; width: 2px; margin-left: -1px; background: var(--ink); opacity: .55; }
+.rr-strip .dt { position: absolute; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; color: #fff; font-size: 10px; font-weight: 800; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--sheet); transform: translateY(18px); }
+.rr-strip .dt.me { box-shadow: 0 0 0 2px var(--sheet), 0 0 0 4px var(--ink); z-index: 1; }
+.rateres { padding-bottom: 20px; }
+.rr-legend { display: flex; flex-wrap: wrap; gap: 4px; }
+.gfoot { margin: 0; font-size: 12px; color: var(--ink-3); }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .brand { font-family: var(--f-hand); font-weight: 800; font-size: 24px; line-height: 1; letter-spacing: -.03em; display: flex; align-items: baseline; gap: 8px; }
 .brand .mark { display: inline-block; width: 26px; height: 22px; flex: none; transform: translateY(3px); }
@@ -619,6 +668,12 @@ svg text { font-family: var(--f-body); }
     <button class="btn" id="newsOpen" type="button">See what's new</button>
     <button class="xdel" id="newsX" type="button" aria-label="Dismiss">×</button>
   </div>
+  <nav class="seg gamenav" id="gameNav" hidden aria-label="Games">
+    <button type="button" data-g="graph" aria-pressed="true">Graph</button>
+    <button type="button" data-g="tot" aria-pressed="false">This or that</button>
+    <button type="button" data-g="rate" aria-pressed="false">Rate it</button>
+  </nav>
+  <section class="game" id="gameView" hidden></section>
   <section class="q-head">
     <div class="eyebrow" id="eyebrow"></div>
     <h1 class="prompt" id="prompt">Loading question…</h1>
@@ -645,7 +700,7 @@ svg text { font-family: var(--f-body); }
   <div class="note" id="localNote" hidden>This copy isn't connected to a database yet, so answers can't be saved.</div>
 
   <div>
-    <div class="tabs" role="tablist">
+    <div class="tabs" role="tablist" id="graphTabs">
       <button class="tab" role="tab" id="tabDraw" aria-selected="true" aria-controls="panelDraw">Draw yours</button>
       <button class="tab" role="tab" id="tabRes" aria-selected="false" aria-controls="panelRes">Group results <span class="count" id="count">0</span></button>
     </div>
@@ -1647,7 +1702,7 @@ function buildMyStats(g, d){
   const friends = Object.entries(withF).map(([k, v]) => ({ k, name: nm(k), v: v.s / v.n, n: v.n })).sort((a, b) => b.v - a.v);
   const rank = R.ranked.findIndex(([k]) => k === me);
   const favCat = Object.entries(cats).sort((a, b) => b[1] - a[1])[0];
-  return { R, me, answered: Object.keys(S.mine).length, together: mineQs.length, odd, friends, rank, nRanked: R.ranked.length, mySync: (R.ranked.find(([k]) => k === me) || [])[1],
+  return { R, me, answered: Object.keys(S.mine).filter(k => !isGameQid(k)).length, together: mineQs.length, odd, friends, rank, nRanked: R.ranked.length, mySync: (R.ranked.find(([k]) => k === me) || [])[1],
     favCat, titles: R.titles[me] || 0, takes: takes.sort((a, b) => a.v - b.v).slice(0, 3), streak: myStreak() };
 }
 function renderMyStats(g, T){
@@ -1742,12 +1797,199 @@ function syncMenuCount(){ let n = 0; $("qActions").querySelectorAll(".count").fo
 new MutationObserver(syncMenuCount).observe($("qActions"), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["hidden"] });
 syncMenuCount();
 
+/* ---------------- games: This or that, Rate it ----------------
+   Each game has one set of 5 a day. Answers are saved like graph answers, under ids
+   "tot-YYYY-MM-DD" and "rate-YYYY-MM-DD", so no new database tables are needed. */
+const TOT = [
+  ["Coffee", "Tea"], ["Beach", "Mountains"], ["Morning person", "Night owl"], ["Cats", "Dogs"], ["Text", "Call"],
+  ["Pipette", "Burette"], ["Fume hood", "Glovebox"], ["Organic", "Inorganic"], ["Theory", "Experiment"], ["NMR", "Mass spec"],
+  ["Pizza", "Tacos"], ["Sweet", "Salty"], ["Movie at home", "Movie in theaters"], ["Summer", "Winter"], ["Books", "Podcasts"],
+  ["Early to the airport", "Just in time"], ["Window seat", "Aisle seat"], ["Shower at night", "Shower in the morning"], ["Plan everything", "Wing it"], ["Big party", "Small dinner"],
+  ["Pen", "Pencil"], ["Lab notebook", "Electronic notebook"], ["Bench work", "Writing"], ["Group meeting", "Root canal"], ["Conference talk", "Poster session"],
+  ["Pancakes", "Waffles"], ["Fries", "Tots"], ["Cake", "Pie"], ["Ketchup", "Mustard"], ["Hot sauce on everything", "No spice ever"],
+  ["Be able to fly", "Be invisible"], ["Time travel to the past", "Time travel to the future"], ["Read minds", "See the future"], ["Never sleep again", "Never eat again"], ["Free coffee for life", "Free flights for life"],
+  ["Periodic table on a mug", "Periodic table on a shower curtain"], ["Benzene", "Buckyball"], ["Chlorine", "Fluorine"], ["Carbon", "Silicon"], ["Gold", "Platinum"],
+  ["Sneakers", "Sandals"], ["Hoodie", "Cardigan"], ["Spotify", "Apple Music"], ["iPhone", "Android"], ["Mac", "PC"],
+  ["Road trip", "Flight"], ["Camping", "Hotel"], ["City", "Countryside"], ["Museum", "Theme park"], ["Hike", "Brunch"],
+  ["Reply instantly", "Reply three days later"], ["Voice memo", "Long text"], ["Emoji", "No emoji"], ["Group chat", "Private chat"], ["Meme", "Gif"],
+  ["Ice cream", "Frozen yogurt"], ["Chocolate", "Vanilla"], ["Popcorn", "Candy"], ["Breakfast for dinner", "Dinner for breakfast"], ["Leftovers", "Takeout"],
+  ["Overleaf", "Word"], ["Excel", "Python"], ["Origin", "Matplotlib"], ["Reviewer 2", "Reviewer 3"], ["Nature", "Science"],
+  ["Sunrise", "Sunset"], ["Rain", "Snow"], ["Thunderstorm", "Heatwave"], ["Fall", "Spring"], ["Ocean", "Lake"],
+  ["Board games", "Video games"], ["Karaoke", "Trivia night"], ["Bowling", "Mini golf"], ["Escape room", "Murder mystery"], ["Concert", "Comedy show"],
+  ["Free lunch seminar", "No seminar"], ["Office", "Lab"], ["Work from home", "Work from a cafe"], ["4-day week", "6-hour days"], ["Cold lab", "Hot lab"],
+  ["Lasagna", "Mac and cheese"], ["Sushi", "Ramen"], ["Burrito", "Burger"], ["Bagel", "Croissant"], ["Wings", "Nachos"],
+  ["Superpower: undo button", "Superpower: pause button"], ["Live in a castle", "Live on a boat"], ["Talk to animals", "Speak every language"], ["Always 10 minutes late", "Always 20 minutes early"], ["Lose your phone", "Lose your keys"],
+  ["Safety goggles", "Lab coat"], ["Titration", "Recrystallization"], ["Column", "Distillation"], ["Grad school", "Industry"], ["Acid", "Base"],
+  ["Star Wars", "Star Trek"], ["Marvel", "DC"], ["The Office", "Parks and Rec"], ["Harry Potter", "Lord of the Rings"], ["Friends", "Seinfeld"],
+];
+const RATE = [
+  "Pineapple on pizza", "Mondays", "Group meetings", "Cilantro", "Airport food", "Rain on a weekend", "Socks with sandals", "Daylight saving time",
+  "Your lab's coffee", "Running a column", "Reviewer comments", "Free conference swag", "Pumpkin spice", "Brussels sprouts", "Karaoke", "Camping",
+  "Ketchup on eggs", "Cold pizza for breakfast", "Voice memos", "Small talk", "Surprise parties", "Online dating", "Assembling IKEA furniture", "Road trips",
+  "Mayonnaise", "Black licorice", "Olives", "Sushi", "Crocs", "Cargo shorts", "Skinny jeans", "Fanny packs",
+  "Reply-all emails", "Zoom calls", "LinkedIn", "Being on hold", "Self-checkout", "Gas station sushi", "Waiting rooms", "Group projects",
+  "The smell of the lab", "Fume hood music", "Organic chemistry", "Physical chemistry", "Writing a thesis", "Poster sessions", "Lab cleanup day", "Safety training",
+  "Dogs in sweaters", "Cats", "Pigeons", "Geese", "Spiders", "Squirrels", "Raccoons", "Frogs",
+  "Cereal as dinner", "Hot dogs", "Candy corn", "Fruitcake", "Tofu", "Kale", "Avocado toast", "Energy drinks",
+  "Waking up at 6am", "Naps", "Alarm snoozing", "Sleeping with socks on", "Cold showers", "Hot yoga", "Running", "Leg day",
+  "Halloween", "Thanksgiving", "New Year's Eve", "Valentine's Day", "Birthdays", "Gift cards as gifts", "Secret Santa", "Holiday music in November",
+  "Musicals", "Horror movies", "Reality TV", "True crime podcasts", "Audiobooks", "Spoilers", "Rom-coms", "Movie sequels",
+  "Hot summers", "Snow days", "Humidity", "Wind", "Fog", "Thunderstorms at night", "Sunburns", "Cold mornings",
+  "Your handwriting", "Your cooking", "Your parallel parking", "Your sense of direction", "Your dance moves", "Your singing", "Your memory", "Your patience",
+];
+const GAMES = { tot: { name: "This or that", list: TOT }, rate: { name: "Rate it", list: RATE } }, GN = 5;
+S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph";
+S.gres = {}; S.gedit = null; S.gdraft = {};
+const isGameQid = (k) => /^(tot|rate)-/.test(k);
+const gDayIdx = () => S.qid ? todayIndex() : todayIndex() + S.dayOffset;
+function gItems(kind, d){ const L = GAMES[kind].list, B = Math.floor(L.length / GN), out = []; for (let k = 0; k < GN; k++) out.push((((d % B) + B) % B) + k * B); return out; }
+const gQid = (kind, d) => kind + "-" + idxISO(d);
+const gEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+const gValid = (kind, p, items) => p && Array.isArray(p.items) && p.items.join() === items.join() && (kind === "tot" ? Array.isArray(p.picks) && p.picks.length === GN && p.picks.every(v => v === 0 || v === 1) : Array.isArray(p.r) && p.r.length === GN && p.r.every(v => Number.isInteger(v) && v >= 1 && v <= 10));
+function setGame(g){
+  if (S.gedit) S.gedit = null;
+  S.game = g; ls.set("gg-game", g);
+  $("gameNav").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === g)));
+  renderGame(); window.scrollTo({ top: 0 });
+}
+$("gameNav").addEventListener("click", (e) => { const b = e.target.closest("button[data-g]"); if (b) setGame(b.dataset.g); });
+function renderGame(){
+  if (!S.gres) return;
+  const ok = !!(S.me && S.groups && S.groups.length && !$("appMain").hidden);
+  $("gameNav").hidden = !ok;
+  const g = ok ? S.game : "graph";
+  $("gameNav").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === g)));
+  document.body.classList.toggle("gm", g !== "graph");
+  const V = $("gameView"); V.hidden = g === "graph"; if (g === "graph") { V.innerHTML = ""; return; }
+  const d = gDayIdx(), qid = gQid(g, d), items = gItems(g, d), L = GAMES[g].list;
+  const mine = gValid(g, S.mine[qid], items) ? S.mine[qid] : null, editing = S.gedit === qid || !mine;
+  V.innerHTML = "";
+  const head = gEl("div", "q-head gq"); const eb = gEl("div", "eyebrow");
+  if (!S.qid && S.dayOffset === 0) eb.appendChild(gEl("span", "today", "Today's " + (g === "tot" ? "picks" : "ratings")));
+  eb.appendChild(gEl("span", null, GAMES[g].name)); eb.appendChild(gEl("span", null, "Day " + (d + 1)));
+  head.append(eb, gEl("h1", "prompt", g === "tot" ? "Pick one from each pair" : "Rate each one from 1 to 10"),
+    gEl("p", "sub", g === "tot" ? "Go with your gut. You'll see who sided with you once you've answered." : "1 is awful, 10 is perfect. You'll see everyone's ratings once you've answered."));
+  V.appendChild(head);
+  const sheet = gEl("div", "sheet gsheet"); V.appendChild(sheet);
+  if (editing) {
+    const dr = S.gdraft[qid] = S.gdraft[qid] || (mine ? JSON.parse(JSON.stringify(mine)) : g === "tot" ? { picks: Array(GN).fill(null), items } : { r: Array(GN).fill(null), items });
+    const done = () => (g === "tot" ? dr.picks : dr.r).every(v => v != null);
+    const submit = gEl("button", "btn primary", mine ? "Resubmit" : "Submit"); submit.type = "button";
+    items.forEach((it, k) => {
+      if (g === "tot") {
+        const row = gEl("div", "totpick"); row.setAttribute("role", "group"); row.setAttribute("aria-label", L[it][0] + " or " + L[it][1]);
+        [0, 1].forEach(side => { const b = gEl("button", "totbtn", L[it][side]); b.type = "button"; b.setAttribute("aria-pressed", String(dr.picks[k] === side));
+          b.addEventListener("click", () => { dr.picks[k] = side; row.querySelectorAll(".totbtn").forEach((x, i) => x.setAttribute("aria-pressed", String(i === side))); submit.disabled = !done(); }); row.appendChild(b);
+          if (side === 0) row.appendChild(gEl("span", "or", "or")); });
+        sheet.appendChild(row);
+      } else {
+        const row = gEl("div", "ratepick"); row.appendChild(gEl("div", "rl", RATE[it]));
+        const sc = gEl("div", "scale"); sc.setAttribute("role", "group"); sc.setAttribute("aria-label", "Rate " + RATE[it]);
+        for (let v = 1; v <= 10; v++) { const b = gEl("button", null, String(v)); b.type = "button"; b.setAttribute("aria-pressed", String(dr.r[k] === v)); b.setAttribute("aria-label", v + " out of 10");
+          b.addEventListener("click", () => { dr.r[k] = v; sc.querySelectorAll("button").forEach((x, i) => x.setAttribute("aria-pressed", String(i + 1 === v))); submit.disabled = !done(); }); sc.appendChild(b); }
+        const ends = gEl("div", "ends"); ends.append(gEl("span", null, "awful"), gEl("span", null, "perfect"));
+        row.append(sc, ends); sheet.appendChild(row);
+      }
+    });
+    const ctr = gEl("div", "controls"); ctr.appendChild(gEl("span", "spacer"));
+    if (mine) { const c = gEl("button", "btn ghost", "Cancel"); c.type = "button"; c.addEventListener("click", () => { S.gedit = null; delete S.gdraft[qid]; renderGame(); }); ctr.appendChild(c); }
+    submit.disabled = !done(); ctr.appendChild(submit); sheet.appendChild(ctr);
+    const st = gEl("div", "status"); st.setAttribute("role", "status"); V.appendChild(st);
+    submit.addEventListener("click", async () => {
+      if (!done()) return; submit.disabled = true; st.className = "status"; st.textContent = "Saving…";
+      const payload = g === "tot" ? { picks: dr.picks.slice(), items } : { r: dr.r.slice(), items };
+      try { await rpc("submit_answer", { p_secret: S.secret, p_qid: qid, p_payload: payload }); S.mine[qid] = payload; S.gedit = null; delete S.gdraft[qid]; delete S.gres[S.gid + "|" + qid]; renderGame(); }
+      catch (e) { if (e.message === "not_signed_in") return signOut(); st.className = "status err"; st.textContent = errText(e); submit.disabled = false; }
+    });
+    if (!mine) loadGameRes(qid, true);
+  } else {
+    const lb = gEl("div", "lockbar"); lb.innerHTML = '<svg viewBox="0 0 16 18" aria-hidden="true"><rect x="2" y="8" width="12" height="9" rx="2" fill="currentColor"/><path d="M5 8V5.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+    lb.appendChild(gEl("span", null, g === "tot" ? "Your picks are locked in." : "Your ratings are locked in."));
+    const ch = gEl("button", "btn", "Change my answers"); ch.type = "button"; ch.style.marginLeft = "auto";
+    ch.addEventListener("click", () => { S.gedit = qid; delete S.gdraft[qid]; renderGame(); }); lb.appendChild(ch); sheet.appendChild(lb);
+    const res = gEl("div", "gres"); res.id = "gameRes"; res.appendChild(gEl("p", "note", "Loading the group's answers…")); sheet.appendChild(res);
+    loadGameRes(qid, false);
+  }
+}
+async function loadGameRes(qid, countOnly){
+  const gid = S.gid, k = gid + "|" + qid; if (!gid) return;
+  let r = S.gres[k];
+  if (!r || Date.now() - r.at > 30000) {
+    try { r = await rpc("get_results", { p_secret: S.secret, p_group: gid, p_qid: qid }); r.at = Date.now(); S.gres[k] = r; }
+    catch (e) { if (e.message === "not_signed_in") return signOut(); const box = $("gameRes"); if (box) { box.innerHTML = ""; box.appendChild(gEl("p", "note", errText(e))); } return; }
+  }
+  if (S.gid !== gid || S.game === "graph" || gQid(S.game, gDayIdx()) !== qid) return;
+  if (countOnly) { const n = r.count || 0; const sheet = $("gameView").querySelector(".gsheet"); if (sheet && n && !sheet.querySelector(".gcount")) sheet.prepend(gEl("p", "gcount", n + (n === 1 ? " person in your group has" : " people in your group have") + " answered. Submit yours to see theirs.")); return; }
+  const box = $("gameRes"); if (!box) return; box.innerHTML = "";
+  if (!r.answered) { box.appendChild(gEl("p", "note", "Couldn't load results yet.")); return; }
+  const g = S.game, d = gDayIdx(), items = gItems(g, d), me = S.me.username, grp = group();
+  const names = {}; (grp ? grp.members : []).forEach(m => { names[m.username] = m.display_name || m.name || m.username; });
+  const list = (r.answers || []).filter(a => gValid(g, a.payload, items)).map(a => ({ key: a.username, name: a.name || names[a.username] || a.username, p: a.payload }));
+  if (g === "tot") renderTotRes(box, items, list, me); else renderRateRes(box, items, list, me);
+}
+function gChip(e, me){ const c = gEl("span", "gchip" + (e.key === me ? " me" : "")); const dot = gEl("i"); dot.style.background = colorOf(e.key).c; c.append(dot, document.createTextNode(e.key === me ? "You" : e.name)); return c; }
+function gTile(k, v, dsc){ const t = gEl("div", "sumtile"); t.append(gEl("span", "k", k), gEl("span", "v", v), gEl("span", "d", dsc)); return t; }
+function renderTotRes(box, items, list, me){
+  const n = list.length, myE = list.find(e => e.key === me);
+  if (n < 2) box.appendChild(gEl("p", "note", "You're the first one here. Check back once others in your group have picked."));
+  const tiles = gEl("div", "sumtiles");
+  if (n >= 2 && myE) {
+    let maj = 0, decided = 0; items.forEach((_, k) => { const a = list.filter(e => e.p.picks[k] === 0).length, b = n - a; if (a !== b) { decided++; if ((a > b ? 0 : 1) === myE.p.picks[k]) maj++; } });
+    tiles.appendChild(gTile("With the crowd", maj + " of " + decided, decided ? (maj === decided ? "You agreed with the majority every time" : maj === 0 ? "A true contrarian today" : "pairs where you sided with the majority") : "Every pair was a tie"));
+    const sim = list.filter(e => e.key !== me).map(e => ({ e, s: e.p.picks.filter((v, k) => v === myE.p.picks[k]).length })).sort((a, b) => b.s - a.s);
+    if (sim.length) tiles.appendChild(gTile("Most like you", sim[0].e.name, sim[0].s + " of " + GN + " same picks"));
+    if (n >= 3) { const sp = items.map((it, k) => ({ it, a: list.filter(e => e.p.picks[k] === 0).length })).sort((x, y) => Math.abs(x.a - n / 2) - Math.abs(y.a - n / 2))[0];
+      tiles.appendChild(gTile("Most split", TOT[sp.it][0] + " or " + TOT[sp.it][1], sp.a + " vs " + (n - sp.a))); }
+    box.appendChild(tiles);
+  }
+  items.forEach((it, k) => {
+    const sides = [0, 1].map(s => list.filter(e => e.p.picks[k] === s)), a = sides[0].length, pa = n ? Math.round(a / n * 100) : 0;
+    const row = gEl("div", "totres");
+    const top = gEl("div", "tr-top"); [0, 1].forEach(s => { const l = gEl("span", "lab" + (myE && myE.p.picks[k] === s ? " mine" : "")); l.append(gEl("b", null, TOT[it][s]), gEl("small", null, " " + sides[s].length)); top.appendChild(l); });
+    const bar = gEl("div", "tr-bar"); bar.setAttribute("role", "img"); bar.setAttribute("aria-label", TOT[it][0] + ": " + a + ", " + TOT[it][1] + ": " + (n - a));
+    const fa = gEl("span", "a"), fb = gEl("span", "b"); fa.style.flexGrow = a; fb.style.flexGrow = n - a; if (!a) fa.hidden = true; if (a === n) fb.hidden = true; bar.append(fa, fb);
+    const who = gEl("div", "tr-who"); [0, 1].forEach(s => { const w = gEl("div"); sides[s].forEach(e => w.appendChild(gChip(e, me))); who.appendChild(w); });
+    row.append(top, bar, who); box.appendChild(row);
+  });
+  box.appendChild(gEl("p", "gfoot", n + (n === 1 ? " answer" : " answers") + " from your group so far."));
+}
+function renderRateRes(box, items, list, me){
+  const n = list.length, myE = list.find(e => e.key === me);
+  const st = items.map((it, k) => { const vs = list.map(e => e.p.r[k]), avg = vs.reduce((a, b) => a + b, 0) / (vs.length || 1); return { it, k, avg, sd: Math.sqrt(vs.reduce((a, v) => a + (v - avg) ** 2, 0) / (vs.length || 1)) }; });
+  if (n < 2) box.appendChild(gEl("p", "note", "You're the first one here. Check back once others in your group have rated."));
+  else {
+    const tiles = gEl("div", "sumtiles"), fmt = (v) => v.toFixed(1);
+    const best = st.slice().sort((a, b) => b.avg - a.avg)[0], worst = st.slice().sort((a, b) => a.avg - b.avg)[0], div = st.slice().sort((a, b) => b.sd - a.sd)[0];
+    tiles.appendChild(gTile("Group favorite", RATE[best.it], "average " + fmt(best.avg)));
+    tiles.appendChild(gTile("Group least favorite", RATE[worst.it], "average " + fmt(worst.avg)));
+    tiles.appendChild(gTile("Most divisive", RATE[div.it], "ratings spread ±" + fmt(div.sd)));
+    if (myE) { const hot = st.map(s => ({ ...s, d: myE.p.r[s.k] - s.avg })).sort((a, b) => Math.abs(b.d) - Math.abs(a.d))[0];
+      tiles.appendChild(gTile("Your hottest take", RATE[hot.it], "you gave " + myE.p.r[hot.k] + ", the group averages " + fmt(hot.avg))); }
+    box.appendChild(tiles);
+  }
+  st.forEach(s => {
+    const row = gEl("div", "rateres"); const top = gEl("div", "rr-top"); top.append(gEl("b", null, RATE[s.it]), gEl("span", "avg", "avg " + s.avg.toFixed(1)));
+    const strip = gEl("div", "rr-strip"); strip.setAttribute("role", "img"); strip.setAttribute("aria-label", RATE[s.it] + ": " + list.map(e => (e.key === me ? "you" : e.name) + " " + e.p.r[s.k]).join(", "));
+    for (let v = 1; v <= 10; v++) { const t = gEl("span", "tk", String(v)); t.style.left = ((v - 1) / 9 * 100) + "%"; strip.appendChild(t); }
+    const am = gEl("span", "am"); am.style.left = ((s.avg - 1) / 9 * 100) + "%"; strip.appendChild(am);
+    const stack = {}; list.slice().sort((a, b) => (a.key === me) - (b.key === me)).forEach(e => { const v = e.p.r[s.k], h = stack[v] = (stack[v] || 0) + 1;
+      const dot = gEl("span", "dt" + (e.key === me ? " me" : ""), (e.key === me ? "You" : e.name).slice(0, 1).toUpperCase()); dot.style.left = ((v - 1) / 9 * 100) + "%"; dot.style.bottom = (22 + (h - 1) * 19) + "px";
+      dot.style.background = colorOf(e.key).c; dot.title = (e.key === me ? "You" : e.name) + ": " + v; strip.appendChild(dot); });
+    strip.style.height = (44 + Math.max(0, Math.max(0, ...Object.values(stack)) - 1) * 19) + "px";
+    row.append(top, strip); box.appendChild(row);
+  });
+  if (n >= 2) { const lg = gEl("div", "rr-legend"); list.forEach(e => lg.appendChild(gChip(e, me))); box.appendChild(lg); }
+  box.appendChild(gEl("p", "gfoot", "The thin line on each row is the group average. " + n + (n === 1 ? " answer" : " answers") + " from your group so far."));
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden && S.gedit) { S.gedit = null; S.gdraft = {}; renderGame(); } });
+
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
   $("authPanel").hidden = name !== "auth"; $("codePanel").hidden = name !== "code"; $("groupsPanel").hidden = name !== "groups";
   $("appMain").hidden = name === "auth" || name === "code"; $("bankBox").hidden = true;
   $("groupbar").hidden = name === "auth" || name === "code" || !S.me;
   if (name === "groups") { renderGroupsPanel(); renderRemind(); }
+  if (typeof renderGame === "function") renderGame();
   renderInstall();
 }
 function renderGroupbar(){
@@ -2560,7 +2802,7 @@ function renderAll(full){
   syncControls();
 }
 function setStatus(msg, err){ S.status = msg; const s = $("status"); s.textContent = msg; s.className = "status" + (err ? " err" : ""); }
-function go(){ S.unlocked = null; S.drawnFor = null; S.peeked = false; S.hidden.clear(); setStatus(""); renderAll(true); loadResults(false); loadComments(false); loadActivity(false); loadNudges(false); }
+function go(){ S.gedit = null; S.gdraft = {}; setTimeout(renderGame, 0); S.unlocked = null; S.drawnFor = null; S.peeked = false; S.hidden.clear(); setStatus(""); renderAll(true); loadResults(false); loadComments(false); loadActivity(false); loadNudges(false); }
 
 /* ---------------- events ---------------- */
 $("prevDay").addEventListener("click", ()=>{ if (S.qid) { S.qid = null; history.replaceState(null, "", location.pathname + location.search); } S.dayOffset--; go(); });
