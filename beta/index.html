@@ -64,6 +64,8 @@ button { cursor: pointer; }
 :root[data-theme="sunset"] { --paper:#fbf3ee; --sheet:#ffffff; --grid:#f1e1d8; --grid-major:#e5cbbd; --ink:#2e1d17; --ink-2:#6a4c40; --ink-3:#a68a7e; --pen:#c4462a; --pen-soft:rgba(196,70,42,.10); --hl:#ffd9a0; --line:rgba(46,29,23,.12); --band:rgba(196,70,42,.05); --danger:#a51d24; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948; }
 :root[data-theme="grape"] { --paper:#15121f; --sheet:#1d1930; --grid:#29233f; --grid-major:#352e52; --ink:#f1eefb; --ink-2:#c3bcd9; --ink-3:#8a82a6; --pen:#b49cff; --pen-soft:rgba(180,156,255,.15); --hl:#5a3f8c; --line:rgba(255,255,255,.12); --band:rgba(180,156,255,.06); --danger:#ff8a8f; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; color-scheme: dark; }
 :root[data-theme="terminal"] { --paper:#0c1410; --sheet:#111c17; --grid:#1a2a22; --grid-major:#24382e; --ink:#e3f5ea; --ink-2:#a9c9b6; --ink-3:#6f8f7c; --pen:#5be39a; --pen-soft:rgba(91,227,154,.14); --hl:#2c5a3f; --line:rgba(255,255,255,.12); --band:rgba(91,227,154,.06); --danger:#ff8a8f; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; color-scheme: dark; }
+:root[data-theme="blossom"] { --paper:#fdf2f5; --sheet:#ffffff; --grid:#f6dfe6; --grid-major:#ecc6d2; --ink:#33161f; --ink-2:#6e4452; --ink-3:#a98592; --pen:#c2185b; --pen-soft:rgba(194,24,91,.10); --hl:#ffd3e2; --line:rgba(51,22,31,.12); --band:rgba(194,24,91,.05); --danger:#a51d24; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948; }
+:root[data-theme="ocean"] { --paper:#0b1622; --sheet:#10202f; --grid:#183044; --grid-major:#213d56; --ink:#e6f2fb; --ink-2:#a9c3d6; --ink-3:#6f8ca3; --pen:#4cc9f0; --pen-soft:rgba(76,201,240,.14); --hl:#1d4e6b; --line:rgba(255,255,255,.12); --band:rgba(76,201,240,.06); --danger:#ff8a8f; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767; color-scheme: dark; }
 .cphint { margin: 4px 0 10px; font-size: 13px; color: var(--ink-2); }
 .cprow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .cpwheel { position: relative; width: 44px; height: 44px; border-radius: 50%; flex: none; cursor: pointer; background: conic-gradient(#e34948, #eda100, #1baf7a, #2a78d6, #6250d6, #e87ba4, #e34948); padding: 4px; box-sizing: border-box; }
@@ -463,7 +465,7 @@ svg text { font-family: var(--f-body); }
   @keyframes draw { to { stroke-dashoffset: 0; } }
 }
 </style>
-<script>try{var t=localStorage.getItem("gg-theme");if(/^(light|dark|notebook|lab|sunset|grape|terminal)$/.test(t||""))document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{var t=localStorage.getItem("gg-theme");if(/^(light|dark|notebook|lab|sunset|grape|terminal|blossom|ocean)$/.test(t||""))document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1547,8 +1549,10 @@ const THEMES = [
   { id: "sunset", name: "Sunset", note: "Warm and cozy", sw: ["#fbf3ee", "#ffffff", "#c4462a", "#ffd9a0"] },
   { id: "grape", name: "Grape", note: "Dark and purple", sw: ["#15121f", "#1d1930", "#b49cff", "#5a3f8c"] },
   { id: "terminal", name: "Terminal", note: "Hacker green", sw: ["#0c1410", "#111c17", "#5be39a", "#24382e"] },
+  { id: "blossom", name: "Blossom", note: "Soft pink", sw: ["#fdf2f5", "#ffffff", "#c2185b", "#ffd3e2"] },
+  { id: "ocean", name: "Ocean", note: "Deep sea blue", sw: ["#0b1622", "#10202f", "#4cc9f0", "#1d4e6b"] },
 ];
-const THEME_BAR = { light: "#2348b8", dark: "#11151b", notebook: "#f6f1e4", lab: "#0f7a6c", sunset: "#c4462a", grape: "#15121f", terminal: "#0c1410" };
+const THEME_BAR = { light: "#2348b8", dark: "#11151b", notebook: "#f6f1e4", lab: "#0f7a6c", sunset: "#c4462a", grape: "#15121f", terminal: "#0c1410", blossom: "#c2185b", ocean: "#0b1622" };
 function curTheme(){ try { return localStorage.getItem("gg-theme") || ""; } catch (e) { return ""; } }
 function applyTheme(t){ if (t && THEMES.some(x => x.id === t)) document.documentElement.dataset.theme = t; else { t = ""; delete document.documentElement.dataset.theme; }
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t ? THEME_BAR[t] : (matchMedia("(prefers-color-scheme: dark)").matches ? "#11151b" : "#2348b8"); }
@@ -1754,6 +1758,15 @@ function renderMyStats(g, T){
 /* ---------------- what's new ----------------
    Newest first. Add an entry at the top whenever an update goes live; "id" must be new each time. */
 const CHANGES = [
+  { id: "2026-11-10b", date: "Nov 10, later", items: [
+    ["Two new games", "This or that and Rate it 1–10, next to the daily graph. Both share one theme a day."],
+    ["Play solo", "the games and the graph work without a group. Your answers count in every group you join."],
+    ["Group bonus", "a group's winning question idea is now an extra Bonus question, and the daily graph stays the same for everyone."],
+    ["Answers lock", "once you submit. Tap Unlock or Change my answers to redo it."],
+    ["One Menu", "group chat, summary, ideas, reminders, stats and feedback are now under Menu."],
+    ["Two new color themes", "Blossom and Ocean, under Theme."],
+    ["Smaller fixes", "Sign in is easier to find, example text is darker, and a slow start no longer opens Groups & profile."],
+  ] },
   { id: "2026-11-10", date: "Nov 10", items: [
     ["Your stats", "a personal page with your streak, best match, how often you're the odd one out, and your hottest takes."],
     ["Results are in", "a notification when the last person in your group answers."],
@@ -1856,6 +1869,10 @@ const GTHEMES = [
     rate: ["Self-checkout", "Smart speakers", "Autocorrect", "Software updates", "Printers"] },
   { name: "Life skills", tot: [["Plan everything", "Wing it"], ["Early", "Fashionably late"], ["Lose your phone", "Lose your keys"], ["Make the bed", "Leave it"], ["Budget", "Vibes"]],
     rate: ["Your parallel parking", "Your sense of direction", "Your cooking", "Your handwriting", "Your patience"] },
+  { name: "Childhood", tot: [["Recess", "Lunch"], ["Lunchables", "Packed lunch"], ["Bunk bed: top", "Bunk bed: bottom"], ["Cartoons", "Video games"], ["Sleepover host", "Sleepover guest"]],
+    rate: ["Gushers", "Book fairs", "Field trips", "Bedtime", "Pokémon cards"] },
+  { name: "Sports", tot: [["Play", "Watch"], ["Basketball", "Football"], ["Gym", "Run outside"], ["Team sport", "Solo sport"], ["Game day snacks", "Game day itself"]],
+    rate: ["Golf", "Pickleball", "Fantasy football", "The wave", "Overtime"] },
 ];
 const TOT = GTHEMES.flatMap(t => t.tot), RATE = GTHEMES.flatMap(t => t.rate);
 const GAMES = { tot: { name: "This or that", list: TOT }, rate: { name: "Rate it", list: RATE } }, GN = 5;
