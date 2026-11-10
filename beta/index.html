@@ -184,6 +184,7 @@ body.gm .q-head:not(.gq), body.gm div:has(> #graphTabs), body.gm #panelDraw, bod
 .rateres { padding-bottom: 20px; }
 .rr-legend { display: flex; flex-wrap: wrap; gap: 4px; }
 .gfoot { margin: 0; font-size: 12px; color: var(--ink-3); }
+input::placeholder, textarea::placeholder { color: var(--ink-2); opacity: .85; }
 header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .brand { font-family: var(--f-hand); font-weight: 800; font-size: 24px; line-height: 1; letter-spacing: -.03em; display: flex; align-items: baseline; gap: 8px; }
 .brand .mark { display: inline-block; width: 26px; height: 22px; flex: none; transform: translateY(3px); }
@@ -581,7 +582,7 @@ svg text { font-family: var(--f-body); }
   <section class="panel" id="authPanel" hidden>
     <h2>Join GroupGraphs</h2>
     <p>One new graph a day. Make a profile, then ask a friend who hosts a group to add your username.</p>
-    <div class="seg" role="group" aria-label="Choose"><button id="modeNew" aria-pressed="true">I'm new</button><button id="modeBack" aria-pressed="false">I have a code</button></div>
+    <div class="seg" role="group" aria-label="Choose"><button id="modeNew" aria-pressed="true">I'm new</button><button id="modeBack" aria-pressed="false">Sign in</button></div>
     <form id="newForm" class="row">
       <div class="field"><label for="suName">Your name</label><input id="suName" maxlength="24" autocomplete="nickname" placeholder="Maddie"></div>
       <div class="field"><label for="suUser">Pick a username</label><input id="suUser" maxlength="21" autocapitalize="none" autocomplete="username" placeholder="maddie_g"></div>
@@ -1090,6 +1091,7 @@ async function refreshMe(){
   S.me = d.me; S.groups = d.groups || []; S.mine = d.mine || {}; if (!fbData) { fbData = { inbox: [], mine: [] }; loadFeedback(); }
   if (!S.groups.some(g => g.id === S.gid)) S.gid = S.groups.length ? S.groups[0].id : null;
   ls.set("gg-group", S.gid);
+  if (S.gres) renderGame();
 }
 let resultsReq = 0;
 async function loadResults(force){
@@ -2113,9 +2115,16 @@ async function boot(){
   if (!CFG.url || !CFG.key) { $("localNote").hidden = false; S.canWrite = false; S.loaded = true; renderAll(false); return; }
   S.secret = ls.get("gg-secret", null); S.gid = ls.get("gg-group", null);
   if (!S.secret) { if (await trySavedLogin()) return; showScreen("auth"); return; }
-  try { await refreshMe(); } catch (e) { if (e.message === "not_signed_in") return signOut(); setStatus(errText(e), true); }
+  let failed = false;
+  try { await refreshMe(); } catch (e) { if (e.message === "not_signed_in") return signOut(); failed = true; setStatus(errText(e) + " Retrying…", true); }
   S.loaded = true; showScreen("app"); renderGroupbar(); go();
-  if (!S.groups.length) showScreen("groups");
+  if (!failed) { if (!S.groups.length) showScreen("groups"); return; }
+  for (let i = 0; i < 6; i++) {
+    await new Promise(r => setTimeout(r, 1500 * (i + 1)));
+    try { await refreshMe(); setStatus(""); renderGroupbar(); go(); if (!S.groups.length) showScreen("groups"); return; }
+    catch (e) { if (e.message === "not_signed_in") return signOut(); }
+  }
+  setStatus("Couldn't reach the server. Close and reopen the app to try again.", true);
 }
 function afterSignIn(sess, fresh){
   S.secret = sess.secret; ls.set("gg-secret", sess.secret); S.me = sess;
