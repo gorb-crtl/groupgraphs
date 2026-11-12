@@ -467,6 +467,232 @@ svg text { font-family: var(--f-body); }
 </style>
 <script>try{var t=localStorage.getItem("gg-theme");if(/^(light|dark|notebook|lab|sunset|grape|terminal|blossom|ocean)$/.test(t||""))document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<style id="boldLayout">
+/* Bold layout: home shows today's games and who's in; tapping one opens it full screen ("focus"). Colors come from the theme tokens, plus one color per game. */
+:root { --g-graph: var(--pen); --g-tot: var(--s3); --g-rate: var(--s4); --g-bonus: var(--s7); --r-card: 22px; --shadow: 0 1px 2px rgba(10,14,22,.07), 0 6px 20px rgba(10,14,22,.06); }
+header.top, #groupbar, .gamenav, #pulse, footer { display: none !important; }
+body.scr-auth header.top, body.scr-code header.top { display: flex !important; }
+body.scr-auth header.top .daynav, body.scr-code header.top .daynav { visibility: hidden; }
+.wrap { max-width: 560px; gap: 16px; padding-block: 12px 56px; }
+body.v-home #appMain, body.v-focus #homeView { display: none !important; }
+#appMain { display: flex; flex-direction: column; gap: 16px; }
+#homeView { display: flex; flex-direction: column; gap: 16px; }
+/* Seasonal background: one canvas under the page, only on the home screen */
+#seasonBg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; display: none; }
+body.season-on #seasonBg { display: block; }
+.wrap { position: relative; z-index: 1; }
+/* Profile / Groups / Preferences panes */
+.prefrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; }
+.prefrow .pt { display: flex; flex-direction: column; min-width: 0; }
+.prefrow .pt b { font-size: 16px; }
+.prefrow .pt span { font-size: 13px; color: var(--ink-2); }
+.prefbtn { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 10px; min-height: 44px; padding: 0 14px; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.sw2 { position: relative; flex: none; width: 52px; height: 32px; border-radius: 99px; border: 0; background: var(--grid-major); cursor: pointer; padding: 0; transition: background .15s; }
+.sw2::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .15s; }
+.sw2[aria-checked="true"] { background: var(--pen); }
+.sw2[aria-checked="true"]::after { transform: translateX(20px); }
+@media (prefers-reduced-motion: reduce) { .sw2, .sw2::after { transition: none; } }
+.gcard { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+.gcard h4.gsub { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.gcard .ffbox { padding: 0; }
+#groupDetail { display: flex; flex-direction: column; gap: 12px; }
+#groupDetail > h3 { margin-bottom: 2px; }
+.gcard .gtools { border-top: 1px solid var(--line); padding: 0; margin: 0; }
+.gcard .gtools summary { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0; list-style: none; }
+.gcard .gtools summary::-webkit-details-marker { display: none; }
+.gcard .gtools summary::before { content: ""; flex: none; width: 0; height: 0; border-style: solid; border-width: 5px 0 5px 7px; border-color: transparent transparent transparent currentColor; transition: transform .15s; }
+.gcard .gtools[open] summary::before { transform: rotate(90deg); }
+.gcard .gtools[open] { padding-bottom: 14px; }
+@media (prefers-reduced-motion: reduce) { .gcard .gtools summary::before { transition: none; } }
+.gcard .gtools + .gtools { margin-top: -12px; }
+.gcard div.ffbox { border-top: 1px solid var(--line); padding-top: 12px; }
+#newGroupForm { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; }
+#newGroupForm label { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); font-weight: 700; }
+#newGroupForm input { font: inherit; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; padding: 9px 11px; min-width: 0; min-height: 44px; }
+#newGroupForm .btn { min-height: 44px; white-space: nowrap; }
+#newGroupForm .gthint { grid-column: 1 / -1; }
+.gcard div.ffbox h4 { font-size: 15px; }
+.gcard .btn.ghost { border: 1px solid var(--line); min-height: 40px; padding: 0 14px; }
+.gcard > .btn.ghost { align-self: flex-start; }
+#groupsPanel .btn.ghost:not(#closeGroups) { border: 1px solid var(--line); min-height: 40px; padding: 0 14px; }
+#closeGroups { border: 0; }
+#groupsPanel .err:empty { display: none; }
+
+#homeView[hidden] { display: none !important; }
+
+.icbtn { position: relative; flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); display: grid; place-items: center; padding: 0; cursor: pointer; }
+.icbtn svg { width: 20px; height: 20px; }
+.icbtn:hover { border-color: var(--ink-3); }
+
+.hhead { display: flex; align-items: center; gap: 8px; min-height: 60px; }
+.hday { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hgroup { position: relative; align-self: flex-start; max-width: 100%; }
+.hgroup button { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; max-width: 100%; border: 0; background: none; padding: 0; color: var(--ink-2); font-size: 14px; font-weight: 700; cursor: pointer; }
+.hgroup button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hgroup select { position: absolute; inset: 0; width: 100%; opacity: 0; font-size: 16px; cursor: pointer; }
+.hday h1 { margin: 0; font-size: 32px; line-height: 1.1; font-weight: 800; letter-spacing: -.03em; }
+.hdate { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.htoday { min-height: 28px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 99px; padding: 0 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.hme { border: 0; color: #fff; font-weight: 800; font-size: 16px; background: var(--s1); }
+.hme .count { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px; border: 2px solid var(--paper); background: var(--danger); color: var(--sheet); font-size: 11px; font-weight: 800; line-height: 16px; text-align: center; }
+
+#homeView .install, #homeView .nudgebar, #homeView .newsbar { margin: 0; border-radius: 18px; }
+#homeView .nudgebar .btn, #homeView .newsbar .btn, #homeView .install .btn { min-height: 40px; }
+
+.hwho { background: var(--sheet); border-radius: var(--r-card); box-shadow: var(--shadow); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.hwho .row1 { display: flex; align-items: center; gap: 12px; }
+.havs { flex: 1; min-width: 0; display: flex; gap: 8px; overflow-x: auto; padding: 4px; margin: -4px; scrollbar-width: none; }
+.havs::-webkit-scrollbar { display: none; }
+.hav { position: relative; flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; color: #fff; font: inherit; font-size: 15px; font-weight: 800; }
+.hav.todo { background: transparent; color: var(--ink-2); border: 2px dashed var(--ink-3); }
+button.hav.todo { cursor: pointer; }
+button.hav.todo:hover { border-color: var(--pen); color: var(--pen); }
+button.hav:disabled { opacity: .55; cursor: default; }
+.hav .ok { position: absolute; right: -3px; bottom: -3px; width: 17px; height: 17px; border-radius: 50%; background: var(--s3); color: #fff; border: 2px solid var(--sheet); display: grid; place-items: center; box-sizing: border-box; }
+.hav .ok svg { width: 10px; height: 10px; }
+.hstreak { flex: none; display: flex; flex-direction: column; align-items: flex-end; }
+.hstreak b { font-family: var(--f-mono); font-size: 26px; line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hstreak.hot b { color: var(--s2); }
+.hstreak span { font-size: 12px; color: var(--ink-2); }
+.hwho p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--ink-2); }
+.hsolo { flex-direction: row; align-items: center; gap: 12px; }
+.hsolo p { flex: 1; font-size: 14px; }
+.hsolo p b { color: var(--ink); }
+
+.hsw { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--line); margin: 2px 0 4px; }
+.hsw button { min-height: 44px; border: 0; border-radius: 11px; background: transparent; color: var(--ink-2); font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.hsw button[aria-pressed="true"] { background: var(--sheet); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+body.ffm .hsw button[data-ff="1"] { background: var(--g-ff); color: #fff; }
+.hsw i { width: 7px; height: 7px; border-radius: 50%; background: var(--g-ff); }
+:root { --g-ff: #e8743f; }
+body.ffm { --g-graph: var(--g-ff); }
+.ffbox { display: flex; flex-direction: column; gap: 8px; padding: 12px 0 4px; }
+.ffbox h4 { margin: 0; font-size: 16px; }
+.ffpick { display: flex; flex-direction: column; gap: 8px; }
+.ffpick button { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--sheet); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.ffpick button b { display: block; font-size: 15px; }
+.ffpick button small { display: block; font-size: 12px; color: var(--ink-2); }
+.ffpick button .rd { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); }
+.ffpick button[aria-checked="true"] { border-color: var(--g-ff); background: color-mix(in srgb, var(--g-ff) 10%, var(--sheet)); }
+.ffpick button[aria-checked="true"] .rd { border: 6px solid var(--g-ff); }
+.ffpick button:disabled { cursor: default; color: var(--ink); }
+.hhero { position: relative; overflow: hidden; width: 100%; min-height: 236px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; border: 0; border-radius: 26px; padding: 18px; background: var(--g-graph); color: var(--sheet); font: inherit; text-align: left; cursor: pointer; }
+.hhero .art { position: absolute; right: -6px; top: 10px; width: 80%; height: 132px; pointer-events: none; }
+.hhero .art line { stroke: currentColor; stroke-width: 1; opacity: .16; }
+.hhero .art path { fill: none; stroke: currentColor; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 2 9; opacity: .55; }
+.hhero > span { position: relative; }
+.hhero .lab { font-family: var(--f-mono); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+.hhero .sp { flex: 1; min-height: 8px; }
+.hhero .t { font-size: 26px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; max-width: 95%; text-wrap: balance; }
+.hhero .s { font-size: 14px; line-height: 1.4; opacity: .85; max-width: 95%; }
+.hhero .crow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+.hhero .cta { min-height: 48px; padding: 0 20px; border-radius: 24px; background: var(--sheet); color: var(--g-graph); font-size: 15px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; }
+.hhero .meta { font-size: 13px; font-weight: 600; opacity: .9; }
+.hhero:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+.htiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.htile { --gc: var(--g-tot); min-width: 0; min-height: 148px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; border: 0; border-radius: var(--r-card); padding: 16px; background: var(--sheet); background: color-mix(in srgb, var(--gc) 17%, var(--sheet)); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.htile.rate { --gc: var(--g-rate); }
+.htile.bonus { --gc: var(--g-bonus); grid-column: 1 / -1; min-height: 0; }
+.htile .lab { width: 100%; min-height: 22px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); color: color-mix(in srgb, var(--gc) 50%, var(--ink)); }
+.htile .sp { flex: 1; min-height: 10px; }
+.htile b { font-size: 17px; line-height: 1.2; font-weight: 800; overflow-wrap: anywhere; }
+.htile .st { font-size: 13px; color: var(--ink-2); }
+.okc { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--gc); color: #fff; display: grid; place-items: center; }
+.okc svg { width: 13px; height: 13px; }
+.htile:hover { box-shadow: inset 0 0 0 2px var(--gc); }
+
+.hchat { width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 20px; padding: 10px 14px; background: var(--sheet); box-shadow: var(--shadow); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.hchat .av { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--pen-soft); color: var(--pen); display: grid; place-items: center; }
+.hchat .av svg { width: 18px; height: 18px; }
+.hchat .tx { flex: 1; min-width: 0; font-size: 14px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hchat .tx b { color: var(--ink); }
+.hchat .n { flex: none; min-width: 24px; height: 24px; padding: 0 7px; box-sizing: border-box; border-radius: 12px; background: var(--pen-soft); color: var(--pen); font-family: var(--f-mono); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+
+.fhead { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; margin: -12px 0 -4px; padding: 10px 0 8px; background: var(--paper); }
+.fsegs { flex: 1; min-width: 0; display: flex; gap: 4px; }
+.fsegs button { flex: 1; min-width: 0; min-height: 44px; border: 0; background: none; padding: 0; display: flex; align-items: center; cursor: pointer; }
+.fsegs button i { display: block; width: 100%; height: 6px; border-radius: 3px; background: var(--line); }
+.fsegs button.done i { background: var(--gc); }
+.fsegs button[aria-current="true"] i { height: 8px; border-radius: 4px; background: var(--gc); opacity: .55; }
+.fsegs button.done[aria-current="true"] i { opacity: 1; }
+.fcount { flex: none; min-width: 2.6em; text-align: right; font-family: var(--f-mono); font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.fnext { position: sticky; bottom: max(12px, env(safe-area-inset-bottom, 0px)); z-index: 20; }
+.fnext .btn { box-shadow: 0 8px 24px rgba(10,14,22,.22); width: 100%; min-height: 54px; font-size: 16px; font-weight: 800; background: var(--gc); border-color: var(--gc); }
+
+h1.prompt { font-size: clamp(28px, 7.4vw, 36px); }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; font-weight: 600; color: var(--ink-2); gap: 6px 12px; }
+.eyebrow .today { background: none; padding: 0; color: var(--g-graph); }
+body.gm .eyebrow .today { color: inherit; }
+.btn { min-height: 44px; border-radius: 99px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; }
+.btn.primary { min-height: 48px; padding: 0 24px; font-size: 15px; font-weight: 800; }
+.btn.ghost { padding: 0 12px; }
+.controls { gap: 8px; }
+.controls #submit, .gsheet .controls .btn.primary { flex: 1 1 140px; }
+.sheet { border: 0; border-radius: var(--r-card); box-shadow: var(--shadow); padding: 14px 12px 10px; }
+.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border: 0; border-radius: 99px; background: var(--line); }
+.tab { justify-content: center; min-height: 42px; margin: 0; border: 0; border-radius: 99px; color: var(--ink-2); font-size: 15px; }
+.tab[aria-selected="true"] { background: var(--sheet); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.14); }
+.totpick { gap: 8px; }
+.totbtn { min-height: 64px; border-width: 2px; border-radius: 18px; font-size: 16px; }
+.totbtn:hover { border-color: var(--g-tot); }
+.totbtn[aria-pressed="true"] { background: var(--sheet); background: color-mix(in srgb, var(--g-tot) 22%, var(--sheet)); border-color: var(--g-tot); color: var(--ink); }
+.ratepick { gap: 8px; padding-bottom: 10px; }
+.ratepick .rl { font-size: 16px; }
+.ratepick .scale { gap: 4px; }
+.ratepick .scale button { min-height: 44px; border-radius: 10px; }
+.ratepick .scale button:hover { border-color: var(--g-rate); }
+.ratepick .scale button[aria-pressed="true"] { background: var(--g-rate); border-color: var(--g-rate); color: #10151d; }
+.tr-bar { height: 10px; gap: 3px; }
+.tr-bar .a { background: var(--g-tot); }
+.tr-bar .b { background: var(--ink-3); }
+.chat { margin-top: 0; border: 0; border-radius: var(--r-card); box-shadow: var(--shadow); }
+.stat { border: 0; border-radius: 18px; box-shadow: var(--shadow); }
+.fun { border-radius: 18px; }
+.rules { border-radius: 16px; }
+.lockbar { font-size: 14px; }
+
+.mback { position: fixed; inset: 0; z-index: 65; background: rgba(8,12,20,.5); display: flex; align-items: flex-end; justify-content: center; }
+.mback[hidden] { display: none !important; }
+.msheet { width: 100%; max-width: 560px; max-height: calc(100% - 32px); overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box; background: var(--paper); border-radius: 26px 26px 0 0; padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 18px; box-shadow: 0 -10px 40px rgba(0,0,0,.25); }
+.mgrab { align-self: center; width: 40px; height: 5px; border-radius: 3px; background: var(--ink-3); opacity: .5; }
+.mprof { display: flex; align-items: center; gap: 12px; }
+.mav { flex: none; width: 48px; height: 48px; border-radius: 50%; color: #fff; font-size: 19px; font-weight: 800; display: grid; place-items: center; background: var(--s1); }
+.mprof > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mprof b { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mprof > div span { font-size: 13px; color: var(--ink-2); }
+.mh { margin-bottom: 8px; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.mgroups { display: flex; flex-wrap: wrap; gap: 6px; }
+.mgroups button { min-height: 40px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.mgroups button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.mgroups button.add { border-style: dashed; color: var(--ink-2); }
+#qActions.mgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+#qActions .qbox { min-height: 60px; border: 0; border-radius: 16px; background: var(--sheet); box-shadow: var(--shadow); padding: 0 14px; font-size: 14px; }
+#qActions .qbox:hover { box-shadow: var(--shadow), inset 0 0 0 2px var(--pen); }
+.mlist { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.mlist button { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 0 2px; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; }
+.mlist .mv { color: var(--ink-2); font-weight: 500; }
+#mClose { align-self: stretch; min-height: 48px; }
+
+/* fixed sizes: cards and answer rows keep the same size every day, long text is trimmed to fit */
+.clamp1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.htoday { flex: none; min-height: 44px; padding: 0 16px; font-size: 14px; }
+.hdate { min-height: 20px; }
+.hday h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hwho p { min-height: 2.8em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.hhero { height: 264px; min-height: 0; }
+.hhero .t, .hhero .s { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.htile { height: 148px; min-height: 0; }
+.htile.bonus { height: 104px; }
+.htile b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-width: 100%; }
+.htile .st { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+h1.prompt { min-height: 2.24em; }
+.q-head .sub { min-height: 3em; }
+.totbtn { height: 64px; min-height: 0; padding: 0 10px; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; line-height: 1.2; }
+.ratepick .rl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+
+
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#2348b8">
@@ -476,6 +702,7 @@ svg text { font-family: var(--f-body); }
 </head>
 <body>
 
+<canvas id="seasonBg" aria-hidden="true"></canvas>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -491,7 +718,7 @@ svg text { font-family: var(--f-body); }
   </header>
   <div class="sumback" id="ideaBack" hidden role="dialog" aria-label="Question ideas"><div class="sumwrap">
     <div class="sumtop"><div><div class="k" id="ideaGroup"></div><h2>Question ideas</h2></div><button id="ideaClose" type="button">Close</button></div>
-    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight Central time, the idea with the most votes becomes the next day's bonus question, just for this group. The daily graph stays the same for everyone.</p>
+    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight Central time, the idea with the most votes becomes the next day's bonus question, just for this group. If your Fun Friday theme is Custom, Friday's winning idea becomes your Fun Friday graph instead. Today's questions stay the same for everyone.</p>
     <div class="sumcard" id="ideaNext" hidden></div>
     <div class="sumcard"><h3>Vote</h3><div class="idlist" id="ideaList"></div></div>
     <form class="sumcard idform" id="ideaForm" autocomplete="off">
@@ -569,6 +796,26 @@ svg text { font-family: var(--f-body); }
     <div class="sumtop"><div><div class="k" id="statsGroup"></div><h2 id="statsTitle">Your stats</h2></div><button id="statsClose" type="button">Close</button></div>
     <div id="statsBody"><p class="note">Loading…</p></div>
   </div></div>
+<div class="mback" id="menuBack" hidden><div class="msheet" role="dialog" aria-modal="true" aria-label="Menu">
+  <span class="mgrab" aria-hidden="true"></span>
+  <div class="mprof"><span class="mav" id="mAv"></span><div><b id="mName"></b><span id="mUser"></span></div><button type="button" class="btn" id="mProfile">Profile</button></div>
+  <div><div class="mh">Group</div><div class="mgroups" id="mGroups"></div></div>
+  <div class="qactions mgrid" id="qActions" role="menu">
+      <button class="qbox" id="chatJump" type="button"><span>Group chat</span><span class="count" id="chatCount" hidden>0</span></button>
+      <button class="qbox" id="sumJump" type="button"><span id="sumLabel">Group summary</span></button>
+      <button class="qbox" id="ideaJump" type="button"><span>Question ideas</span><span class="count" id="ideaCount" hidden>0</span></button>
+      <button class="qbox" id="notifJump" type="button"><span id="notifLabel">Get reminders</span></button>
+      <button class="qbox" id="statsJump" type="button"><span>Your stats</span></button>
+      <button class="qbox" id="fbJump" type="button"><span>Feedback</span><span class="count" id="fbCount" hidden>0</span></button>
+  </div>
+  <div class="mlist">
+    <button type="button" id="mCal"><span>Past days</span><span class="mv">Calendar</span></button>
+    <button type="button" id="mGroupsRow"><span>Groups</span><span class="mv">Members, Fun Friday</span></button>
+    <button type="button" id="mPrefs"><span>Preferences</span><span class="mv" id="mThemeName"></span></button>
+    <button type="button" id="mNews"><span>What's new<span class="newsdot" id="newsDot" hidden></span></span><span class="mv">Changelog</span></button>
+  </div>
+  <button type="button" class="btn" id="mClose">Close</button>
+</div></div>
   <div class="calback" id="calBack" hidden><div class="cal" role="dialog" aria-label="Pick a day">
     <div class="calhead"><button id="calPrev" aria-label="Previous month">&#8249;</button><b id="calTitle"></b><button id="calNext" aria-label="Next month">&#8250;</button></div>
     <div class="calgrid" id="calGrid"></div>
@@ -614,12 +861,12 @@ svg text { font-family: var(--f-body); }
   </section>
 
   <section class="panel" id="groupsPanel" hidden>
-    <div class="row" style="justify-content:space-between;align-items:center"><h2>Groups &amp; profile</h2><button class="btn ghost" id="closeGroups">Done</button></div>
-    <div>
+    <div class="row" style="justify-content:space-between;align-items:center"><h2 id="gpTitle">Groups</h2><button class="btn ghost" id="closeGroups">Done</button></div>
+    <div data-pane="profile">
       <h3>Your username</h3>
       <p>Send <b id="myUser"></b> to a group's host so they can add you.</p>
     </div>
-    <div>
+    <div data-pane="profile">
       <h3>Your color</h3>
       <p class="cphint">You'll be this color on every chart. Tap the circle for the color wheel, or type a hex code.</p>
       <div class="cprow">
@@ -631,24 +878,30 @@ svg text { font-family: var(--f-body); }
       <div class="cpprev" id="colorPrev"><svg viewBox="0 0 120 24" aria-hidden="true"><path d="M2 20 C 30 20, 40 4, 64 8 S 100 18, 118 4" fill="none" stroke-width="3" stroke-linecap="round"/></svg><span id="colorNote"></span></div>
       <div class="err" id="colorErr" role="alert"></div>
     </div>
-    <div class="divider"></div>
-    <div class="remind" id="remindBox" style="display:flex;flex-direction:column;gap:10px">
+    <div data-pane="prefs" style="display:flex;flex-direction:column;gap:4px">
+      <h3>Look</h3>
+      <div class="prefrow"><div class="pt"><b>Color theme</b><span id="prefThemeName"></span></div><button class="prefbtn" id="prefTheme" type="button">Change</button></div>
+      <div class="prefrow"><div class="pt"><b id="seasonLbl">Seasonal background</b><span id="seasonNote"></span></div><button class="sw2" id="seasonSw" type="button" role="switch" aria-checked="true" aria-labelledby="seasonLbl"></button></div>
+    </div>
+    <div class="divider" data-pane="prefs"></div>
+    <div class="remind" id="remindBox" data-pane="prefs" style="display:flex;flex-direction:column;gap:10px">
       <h3>Daily reminder</h3>
       <div class="row" style="align-items:center"><label for="remindHour" style="font-weight:700;font-size:14px;color:var(--ink-2)">Remind me at</label><select id="remindHour"></select><span class="hint2">Notifications skip days you've already answered.</span></div>
       <div class="row" style="align-items:center"><button class="btn primary" id="pushBtn" type="button">Turn on notifications</button><span class="hint2" id="pushState"></span></div>
       <p class="hint2" id="pushHelp" hidden></p>
       <div class="row" style="align-items:center"><span class="hint2">Or use your calendar:</span><a class="btn" id="icsBtn" href="#">Apple / Outlook</a><a class="btn" id="gcalBtn" target="_blank" rel="noopener" href="#">Google Calendar</a></div>
     </div>
-    <div class="divider"></div>
-    <div id="groupDetail"></div>
-    <div class="divider"></div>
-    <form id="newGroupForm" class="row">
-      <div class="field"><label for="ngName">Start a new group (you'll be the host)</label><input id="ngName" maxlength="40" placeholder="The Nerds"></div>
+    <div id="groupDetail" data-pane="groups"></div>
+    <div class="divider" data-pane="groups"></div>
+    <form id="newGroupForm" data-pane="groups">
+      <label for="ngName">Start a new group</label>
+      <input id="ngName" maxlength="40" placeholder="The Nerds">
       <button class="btn" type="submit">Create group</button>
+      <p class="gthint">You'll be the host, so you can add people and pick the Fun Friday theme.</p>
     </form>
     <div class="err" id="groupErr" role="alert"></div>
-    <div class="divider"></div>
-    <div class="row" style="align-items:center">
+    <div class="divider" data-pane="profile"></div>
+    <div class="row" data-pane="profile" style="align-items:center">
       <span style="color:var(--ink-2);font-size:14px">Personal code: <b id="myCode" style="font-family:var(--f-mono)">••••••</b></span>
       <button class="btn ghost" id="revealCode">Show</button>
       <span class="spacer" style="flex:1"></span>
@@ -656,7 +909,18 @@ svg text { font-family: var(--f-body); }
     </div>
   </section>
 
-  <div id="appMain">
+  <section id="homeView" hidden aria-label="Today">
+    <div class="hhead">
+      <div class="hday">
+        <div class="hgroup"><button type="button" id="hGroup"><span id="hGroupName"></span><svg id="hGroupChev" width="10" height="7" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><select id="hGroupSel" aria-label="Switch group" hidden></select></div>
+        <h1 id="hDay">Today</h1>
+        <div class="hdate"><span id="hDate"></span></div>
+      </div>
+      <button type="button" class="htoday" id="hToday" hidden>Today</button>
+      <button type="button" class="icbtn" id="hCal" aria-label="Pick a day"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <div id="qMenu" hidden><button type="button" class="icbtn hme" id="qMenuBtn" aria-label="Menu" aria-haspopup="dialog" aria-expanded="false"><span id="hMeTxt"></span><span class="count" id="qMenuCount" hidden>0</span></button></div>
+    </div>
+  <div class="hsw" id="hSw" hidden role="group" aria-label="Which questions"><button type="button" data-ff="0" aria-pressed="true">Today</button><button type="button" data-ff="1" aria-pressed="false">Fun Friday<i id="hSwDot" hidden></i></button></div>
   <div class="install" id="installTip" hidden>
     <img src="apple-touch-icon.png" alt="">
     <div class="txt"><b>Put GroupGraphs on your home screen</b><span id="installHow"></span></div>
@@ -673,6 +937,33 @@ svg text { font-family: var(--f-body); }
     <button class="btn" id="newsOpen" type="button">See what's new</button>
     <button class="xdel" id="newsX" type="button" aria-label="Dismiss">×</button>
   </div>
+    <div class="hwho" id="hWho" hidden>
+      <div class="row1"><div class="havs" id="hAvs"></div><div class="hstreak" id="hStreak"><b id="hStreakN">0</b><span>day streak</span></div></div>
+      <p id="hWhoTxt"></p>
+    </div>
+    <div class="hwho hsolo" id="hSolo" hidden><p><b>Play with your friends.</b> Start a group, or send your username to a friend who hosts one.</p><button type="button" class="btn" id="hSoloBtn">Groups</button></div>
+    <button type="button" class="hhero" id="hHero">
+      <svg class="art" viewBox="0 0 280 132" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="26" x2="280" y2="26"/><line x1="0" y1="66" x2="280" y2="66"/><line x1="0" y1="106" x2="280" y2="106"/><path d="M76 116 C 112 112, 132 66, 160 56 S 200 26, 222 22 S 262 46, 280 74"/></svg>
+      <span class="lab" id="hHeroLab">Today's graph</span>
+      <span class="sp"></span>
+      <span class="t" id="hHeroT"></span>
+      <span class="s" id="hHeroS"></span>
+      <span class="crow"><span class="cta"><span id="hHeroCta">Draw yours</span><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="meta" id="hHeroMeta"></span></span>
+    </button>
+    <div class="htiles">
+      <button type="button" class="htile bonus" id="hBonus" hidden><span class="lab">Group bonus<span class="okc" id="hBonusOk" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><b id="hBonusT"></b><span class="st" id="hBonusSt"></span></button>
+      <button type="button" class="htile tot" id="hTot"><span class="lab">This or that<span class="okc" id="hTotOk" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="sp"></span><b id="hTotT"></b><span class="st" id="hTotSt"></span></button>
+      <button type="button" class="htile rate" id="hRate"><span class="lab">Rate it<span class="okc" id="hRateOk" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="sp"></span><b id="hRateT"></b><span class="st" id="hRateSt"></span></button>
+    </div>
+    <button type="button" class="hchat" id="hChat" hidden><span class="av"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span><span class="tx" id="hChatTx"></span><span class="n" id="hChatN" hidden>0</span></button>
+  </section>
+
+  <div id="appMain">
+  <div class="fhead" id="fHead">
+    <button type="button" class="icbtn" id="fClose" aria-label="Back to today"><svg viewBox="0 0 14 14" style="width:14px;height:14px" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <nav class="fsegs" id="fSegs" aria-label="Today's games"></nav>
+    <span class="fcount" id="fCount"></span>
+  </div>
   <nav class="seg gamenav" id="gameNav" hidden aria-label="Games">
     <button type="button" data-g="graph" aria-pressed="true">Graph</button>
     <button type="button" data-g="tot" aria-pressed="false">This or that</button>
@@ -684,17 +975,6 @@ svg text { font-family: var(--f-body); }
     <div class="eyebrow" id="eyebrow"></div>
     <h1 class="prompt" id="prompt">Loading question…</h1>
     <p class="sub" id="sub"></p>
-    <div class="qmenu" id="qMenu" hidden>
-    <button class="qmenubtn" id="qMenuBtn" type="button" aria-expanded="false" aria-controls="qActions"><span>Menu</span><span class="count" id="qMenuCount" hidden>0</span><svg class="chev" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <div class="qactions" id="qActions" hidden role="menu">
-      <button class="qbox" id="chatJump" type="button"><span>Group chat</span><span class="count" id="chatCount" hidden>0</span></button>
-      <button class="qbox" id="sumJump" type="button"><span id="sumLabel">Group summary</span></button>
-      <button class="qbox" id="ideaJump" type="button"><span>Question ideas</span><span class="count" id="ideaCount" hidden>0</span></button>
-      <button class="qbox" id="notifJump" type="button"><span id="notifLabel">Get reminders</span></button>
-      <button class="qbox" id="statsJump" type="button"><span>Your stats</span></button>
-      <button class="qbox" id="fbJump" type="button"><span>Feedback</span><span class="count" id="fbCount" hidden>0</span></button>
-    </div>
-    </div>
     <div class="pulse" id="pulse" hidden>
       <div class="streak" id="streakBox"><b id="streakN">0</b><span><span id="streakLbl">day group streak</span><small id="streakSub"></small></span></div>
       <div class="pwho"><div class="ptitle" id="pTitle"></div><div class="plist" id="pList"></div></div>
@@ -762,6 +1042,8 @@ svg text { font-family: var(--f-body); }
     <details class="box" style="margin-top:14px"><summary>Data table</summary><div class="tablewrap"><table id="table"></table></div></details>
   </section>
 
+  <div class="fnext" id="fNext" hidden><button type="button" class="btn primary" id="fNextBtn"><span id="fNextT">Next</span><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+
   <section class="chat" id="chatBox" hidden aria-label="Group chat">
     <div class="chat-h">Group chat<small>only your group sees this</small></div>
     <ul class="chat-list" id="chatList"></ul>
@@ -777,7 +1059,7 @@ svg text { font-family: var(--f-body); }
     <div class="filters" id="filters"></div>
     <div class="bank" id="bank"></div>
   </details>
-  <footer>A new graph every day. Results unlock once you've answered. <button type="button" class="newslink" id="newsLink">What's new<span class="newsdot" id="newsDot" hidden></span></button></footer>
+  <footer>A new graph every day. Results unlock once you've answered. <button type="button" class="newslink" id="newsLink">What's new</button></footer>
 </div>
 
 <script>
@@ -937,6 +1219,63 @@ Q.unshift(
   M("grocery-style", "Life", "What kind of grocery shopper are you?", "Be honest about the list you left on the counter.", { lo: "Strict list", hi: "Pure vibes" }, { lo: "In and out in 5 min", hi: "Lives in the store" }),
   R("late-excuses", "Social", "Rank the excuses for being late", "Most believable to least believable. We've heard all of them.", ["Traffic","Couldn't find parking","My alarm didn't go off","The bus was late","I was already on my way","Couldn't find my keys","My cat was sick","Lost track of time","My experiment ran over","I thought it was tomorrow"], "most believable", "least believable"),
   DRINKS);
+/* ---------------- everyday questions (from Nov 13 2026) ----------------
+   The lab and "most likely to" lab questions are swapped for everyday ones of the same type,
+   so the mix of graphs, rankings and maps stays the same. Days before GEN_FROM keep what people answered. */
+const GEN_FROM = 10; // rotation day of Nov 13 2026
+const GEN = {
+ curve: [
+  {id:"shower-temp", cat:"Body", title:"Happiness vs shower temperature", sub:"Somebody else used all the hot water. Or did they?", x:{label:"water temp (°F)", min:50, max:115, step:10, fmt:"deg"}, y:{label:"happiness", lo:"screaming", hi:"spa day"}},
+  {id:"snooze", cat:"Body", title:"How awake you feel vs times you hit snooze", sub:"Each snooze is nine minutes of lying to yourself.", x:{label:"snoozes", min:0, max:10, step:1}, y:{label:"awake", bands:B([[0,2,"zombie"],[2,4,"groggy"],[4,6,"functional"],[6,8,"awake"],[8,10,"ready to go"]])}},
+  {id:"friday-hype", cat:"Life", title:"Excitement through a Friday", sub:"From the morning alarm to whatever happens after midnight.", x:{label:"time of day", min:8, max:26, step:2, fmt:"hour"}, y:{label:"excitement", bands:MOOD}},
+  {id:"trip-countdown", cat:"Life", title:"Excitement as a trip gets closer", sub:"Booked a month out. Do you peak early or at the airport?", x:{label:"days until the trip", min:30, max:0, step:5}, y:{label:"excitement", lo:"forgot I booked it", hi:"already packed"}},
+  {id:"birthday-age", cat:"Life", title:"Excitement for your birthday, by age", sub:"From 'I'm five and a half' to 'please don't sing'.", x:{label:"age", min:0, max:80, step:10}, y:{label:"excitement", lo:"ignore it", hi:"birthday month"}},
+  {id:"line-wait", cat:"Food", title:"Willingness to wait vs people in line", sub:"The brunch place everyone posts about. No reservations.", x:{label:"people ahead of you", min:0, max:50, step:10}, y:{label:"willingness", lo:"leaving", hi:"worth it"}},
+  {id:"ice-cream-temp", cat:"Food", title:"How much you want ice cream vs the temperature", sub:"Outside temperature. Is ice cream in a snowstorm a power move?", x:{label:"temperature (°F)", min:0, max:110, step:10, fmt:"deg"}, y:{label:"ice cream urge", lo:"no thanks", hi:"two scoops"}},
+  {id:"nap-length", cat:"Body", title:"How you feel after a nap, by its length", sub:"A nap in the afternoon. At some point it stops being a nap.", x:{label:"nap length (minutes)", min:0, max:180, step:30}, y:{label:"how you feel", bands:B([[0,2,"what year is it"],[2,4,"groggy"],[4,6,"same as before"],[6,8,"refreshed"],[8,10,"new person"]])}},
+  {id:"star-rating", cat:"Food", title:"Trust in a restaurant vs its star rating", sub:"A place you've never tried. Four point two stars from 3,000 reviews.", x:{label:"stars", min:1, max:5, step:0.5}, y:{label:"trust", lo:"not eating there", hi:"booking now"}},
+  {id:"haircut", cat:"Body", title:"How good your hair looks vs days since a haircut", sub:"Day one is never the best day. Or is it?", x:{label:"days since the haircut", min:0, max:60, step:10}, y:{label:"hair", bands:B([[0,2,"hat time"],[2,4,"rough"],[4,6,"fine"],[6,8,"good"],[8,10,"perfect"]])}},
+  {id:"airport-early", cat:"Life", title:"Stress vs how early you get to the airport", sub:"Minutes before your flight boards. Security line unknown.", x:{label:"minutes before boarding", min:180, max:0, step:30}, y:{label:"stress", bands:B([[0,2,"calm"],[2,4,"fine"],[4,6,"checking the time"],[6,8,"sprinting"],[8,10,"missed it"]])}},
+  {id:"walk-distance", cat:"Life", title:"Willingness to walk somewhere vs how far", sub:"Nice weather, no rush, comfy shoes.", x:{label:"miles", min:0, max:3, step:0.5}, y:{label:"willingness", lo:"calling a ride", hi:"lovely walk"}},
+  {id:"sequels", cat:"Media", title:"How good each movie in a series is", sub:"The original, then the sequel, then the one nobody asked for.", x:{label:"movie in the series", min:1, max:8, step:1}, y:{label:"quality", lo:"straight to streaming", hi:"masterpiece"}},
+  {id:"cook-time", cat:"Food", title:"Will to cook dinner vs how long it takes", sub:"A weeknight. You're tired. There's a frozen pizza in the freezer.", x:{label:"minutes of cooking", min:0, max:120, step:15}, y:{label:"will to cook", lo:"cereal for dinner", hi:"chef mode"}},
+  {id:"plant-water", cat:"Life", title:"How alive your plants are vs days since watering", sub:"Your houseplants. Be honest about the one by the window.", x:{label:"days since watering", min:0, max:30, step:5}, y:{label:"plant health", lo:"crispy", hi:"thriving"}},
+  {id:"gift-price", cat:"Social", title:"How much you like a gift vs what it cost", sub:"A gift from a friend. It's the thought that counts. Supposedly.", x:{label:"price", min:0, max:200, step:25, fmt:"money"}, y:{label:"love for it", lo:"regifting", hi:"keeping forever"}},
+  {id:"cold-days", cat:"Body", title:"How dramatic you are on each day of a cold", sub:"A regular cold. Not the flu. Everyone can hear you sniffling.", x:{label:"day of the cold", min:0, max:10, step:1}, y:{label:"drama", bands:B([[0,2,"totally fine"],[2,4,"bit sniffly"],[4,6,"need soup"],[6,8,"bedridden"],[8,10,"writing my will"]])}},
+  {id:"phone-age", cat:"Media", title:"Love for your phone vs how long you've had it", sub:"From unboxing day to the cracked screen era.", x:{label:"months owned", min:0, max:48, step:6}, y:{label:"love", lo:"ancient brick", hi:"my baby"}},
+ ],
+ rank: [
+  R("fast-food", "Food", "Rank the fast food", "Best to worst. Road trip rules apply.", ["McDonald's","Chick-fil-A","Taco Bell","Wendy's","Chipotle","Subway","Five Guys","Popeyes","In-N-Out","Panda Express"]),
+  R("condiments", "Food", "Rank the condiments", "Best to worst. Mayo people, this is your trial.", ["Ketchup","Mustard","Mayo","Ranch","BBQ sauce","Hot sauce","Sriracha","Honey mustard","Relish","Soy sauce"]),
+  R("board-games", "Social", "Rank the board games", "Best game night to worst. Monopoly has ended friendships.", ["Monopoly","Scrabble","Clue","Catan","Uno","Jenga","Sorry!","Risk","Codenames","Twister"]),
+  R("potatoes", "Food", "Rank the potatoes", "Every form a potato can take. Best to worst.", ["Fries","Tater tots","Hash browns","Mashed","Baked","Chips","Potato salad","Wedges","Curly fries","Scalloped"]),
+  R("sounds", "Life", "Rank the sounds", "Most soothing to most annoying. Close your eyes and imagine each one.", ["Rain on a window","Crackling fire","Ocean waves","Birds in the morning","Cat purring","Thunder","Coffee shop chatter","Wind chimes","Lawn mower at 8am","Nails on a chalkboard"], "most soothing", "most annoying"),
+  R("party-spots", "Social", "Rank the places to stand at a party", "Best spot to worst. Everyone ends up in the kitchen anyway.", ["Kitchen","Couch","Near the snacks","Next to the dog","Backyard","Balcony","Stairs","Dance floor","By the door","Hiding in the bathroom"]),
+  R("fruits", "Food", "Rank the fruits", "Best to worst. Cantaloupe is filler and we all know it.", ["Strawberry","Mango","Banana","Apple","Watermelon","Grapes","Pineapple","Blueberry","Kiwi","Cantaloupe"]),
+  R("pasta", "Food", "Rank the pasta shapes", "Same sauce, different shape. It matters. It really does.", ["Spaghetti","Penne","Rigatoni","Bowtie","Fusilli","Mac","Lasagna","Ravioli","Tortellini","Orzo"]),
+  R("dog-breeds", "Life", "Rank the dog breeds by vibes", "Pure vibes. All dogs are good dogs, but some are better at parties.", ["Golden retriever","Corgi","Pug","Husky","Dachshund","Chihuahua","Poodle","Great Dane","Border collie","Pit bull"]),
+  R("rainy-day", "Life", "Rank the ways to spend a rainy day", "Nowhere to be. Best plan to worst.", ["Movie marathon","Nap","Baking","Reading","Video games","Cleaning","Online shopping","Board games","Puddle jumping","Doomscrolling"]),
+  R("school-subjects", "Life", "Rank the school subjects", "Best class to worst, back in the day. Lunch counts.", ["Math","English","History","Science","Art","Gym","Music","Foreign language","Lunch","Recess"]),
+  R("sandwiches", "Food", "Rank the sandwiches", "Best to worst. A hot dog is not on this list, and we're not discussing it.", ["Grilled cheese","BLT","PB&J","Club","Reuben","Cuban","Philly cheesesteak","Italian sub","Egg salad","Tuna melt"]),
+ ],
+ map: [
+  M("vacation-style", "Life", "What's your vacation style?", "Your dream week off, not the one you can afford.", { lo: "Lying by the pool", hi: "Every hour planned" }, { lo: "Close to home", hi: "Other side of the world" }),
+  M("restaurant", "Food", "How do you eat at a restaurant?", "Your usual dinner out with friends.", { lo: "Same order every time", hi: "Tries something new" }, { lo: "Done in 5 minutes", hi: "Last one still eating" }),
+  M("gift-giver", "Social", "What kind of gift giver are you?", "Birthdays, holidays, all of it. Your friends know.", { lo: "Last-minute gift card", hi: "Planned for months" }, { lo: "Practical", hi: "Sentimental" }),
+  M("tv-style", "Media", "How do you watch TV?", "A normal night on the couch.", { lo: "Full attention", hi: "Phone in hand" }, { lo: "Same comfort show", hi: "Always something new" }),
+  M("mornings", "Life", "What are your mornings like?", "A regular weekday. The snooze button is listening.", { lo: "Snooze, snooze, snooze", hi: "Up before the alarm" }, { lo: "Out the door in 5", hi: "Hour-long routine" }),
+  M("arguing", "Social", "How do you argue?", "With friends, about something that doesn't matter at all.", { lo: "Avoids it", hi: "Loves a debate" }, { lo: "Admits when wrong", hi: "Never wrong" }),
+ ],
+};
+const GEN_WHO = {
+ "who-nobel": W("who-millionaire", "become a millionaire", "Lottery, startup or a very lucky garage sale. All count."),
+ "who-element-baby": W("who-kid-name", "give their kid a really unusual name", "The kind you have to spell out every single time."),
+ "who-taste-test": W("who-five-second", "eat food off the floor", "Five-second rule, ten-second rule, no rule at all."),
+};
+const Q_OLD = Q.slice();
+{ const n = { curve: 0, rank: 0, map: 0 }; for (let i = 0; i < Q.length; i++) { const q = Q[i];
+  if (GEN_WHO[q.id]) Q[i] = GEN_WHO[q.id];
+  else if (q.cat === "Lab") { const k = q.kind || "curve"; Q[i] = GEN[k][n[k]++]; } } }
 const CATS = ["All", ...Array.from(new Set(Q.map(q=>q.cat)))];
 const ROT_START = Date.UTC(2026,10,3); // day 0 of the rotation (Nov 3 2026): grocery map, late excuses, drinks, numbers on Nov 6, hunger on Nov 9
 const ROT_OFFSET = 0;
@@ -1004,15 +1343,15 @@ const S = {
   tab: "draw", peeked: false, hidden: new Set(),
   canWrite: true, sample: null, roasts: {}, funCtx: null,
   drawnFor: null, loaded: false,
-  secret: null, me: null, groups: [], gid: null, mine: {}, results: {}, store: null,
+  secret: null, me: null, groups: [], gid: null, mine: {}, results: {}, store: null, gthemes: {}, ff: false,
 };
 /* everyone gets the new question at midnight Central time, wherever they are */
 const ctParts = () => { const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "numeric", day: "numeric", weekday: "short" }).formatToParts(new Date()); const g = (t) => (p.find(x => x.type === t) || {}).value; return { y: +g("year"), m: +g("month"), d: +g("day"), wd: g("weekday") }; };
 const todayIndex = () => { const c = ctParts(); return Math.round((Date.UTC(c.y, c.m - 1, c.d) - ROT_START) / 864e5); };
 const ctISO = () => { const c = ctParts(); return c.y + "-" + String(c.m).padStart(2, "0") + "-" + String(c.d).padStart(2, "0"); };
-const qForDay = (d) => Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
-const qById = (id) => Q.find(q => q.id === id) || (S.ideas && S.ideas.gid === S.gid ? Object.values(S.ideas.byDay).find(q => q.id === id) : null) || null;
-function baseQ(){ if (S.game === "bonus" && !S.qid && bonusQ(todayIndex() + S.dayOffset)) return bonusQ(todayIndex() + S.dayOffset); if (S.qid) return qById(S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
+const qForDay = (d) => d >= 0 && d < GEN_FROM ? Q_OLD[d] : Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
+const qById = (id) => Q.find(q => q.id === id) || Q_OLD.find(q => q.id === id) || PACK_IDS.map(k => PACKS[k].graphs.find(q => q.id === id)).find(Boolean) || (S.ideas && S.ideas.gid === S.gid ? Object.values(S.ideas.byDay).find(q => q.id === id) : null) || null;
+function baseQ(){ if (!S.qid && S.game === "graph" && ffMode(todayIndex() + S.dayOffset)) { const f = ffGraph(todayIndex() + S.dayOffset); if (f) return f; } if (S.game === "bonus" && !S.qid && bonusQ(todayIndex() + S.dayOffset)) return bonusQ(todayIndex() + S.dayOffset); if (S.qid) return qById(S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
 /* "most likely to" questions rank the current group's members, so each group gets its own copy of the question */
 function withPeople(q){
   if (!q || !q.people) return q; const g = group(); if (!g) return q;
@@ -1134,6 +1473,7 @@ function agoText(t){ const s = (Date.now() - Date.parse(t)) / 1000; if (!(s >= 0
 function delBtn(c){ const b = document.createElement("button"); b.type = "button"; b.className = "xdel"; b.textContent = "×"; b.title = "Delete"; b.setAttribute("aria-label", "Delete");
   b.addEventListener("click", async () => { if (!confirm("Delete this " + (c.kind === "rule" ? "rule" : "comment") + "?")) return; try { await rpc("delete_comment", { p_secret: S.secret, p_id: c.id }); } catch (e) {} loadComments(true); }); return b; }
 function renderComments(){
+  homeSoon();
   const on = !!(S.secret && S.gid && S.me);
   $("chatBox").hidden = !on; $("qMenu").hidden = !S.me; if (!on) { $("rulesBox").hidden = true; $("chatJump").hidden = true; return; }
   const c = S.comments[rkey(currentQ().id)], list = c ? c.list : [];
@@ -1215,9 +1555,9 @@ $("pushBtn").addEventListener("click", async () => {
   btn.disabled = false; renderRemind();
 });
 $("remindHour").addEventListener("change", async () => { ls.set("gg-remind-hour", remindHour()); const sub = await currentSub(); if (sub) { try { await savePush(sub); } catch (e) {} } renderRemind(); });
-$("notifJump").addEventListener("click", () => { showScreen("groups"); setTimeout(() => $("remindBox").scrollIntoView({ behavior: "smooth", block: "start" }), 50); });
+$("notifJump").addEventListener("click", () => { showScreen("groups", "prefs"); setTimeout(() => $("remindBox").scrollIntoView({ behavior: "smooth", block: "start" }), 50); });
 
-$("chatJump").addEventListener("click", () => { $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }); setTimeout(() => $("chatInput").focus({ preventScroll: true }), 400); });
+$("chatJump").addEventListener("click", () => { if (S.view !== "focus" || S.game !== "graph") openFocus("graph"); $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }); setTimeout(() => $("chatInput").focus({ preventScroll: true }), 400); });
 
 /* ---------------- saved logins + home screen tip ---------------- */
 async function storeLogin(user, code){ try { if (window.PasswordCredential && navigator.credentials) await navigator.credentials.store(new PasswordCredential({ id: user, password: code, name: user })); } catch (e) {} }
@@ -1324,7 +1664,7 @@ function sumQuips(R){
   const out = [], nm = (k) => R.names[k] || k, seed = hashStr(R.g.id + R.played.length + ":" + R.pairs.length), P = (arr, sh) => pick(arr, seed >>> (sh || 0));
   const pct = (v) => Math.round(v * 100) + "%";
   if (!R.played.length) return [R.mode === "week" ? "Quiet week. Nobody answered the same question as anyone else. Suspicious." : "Nothing to report yet. Answer a few questions together and the gossip writes itself."];
-  if (R.mode === "week") out.push(P([`Week in review: ${R.played.length} questions, ${R.qs.reduce((t, x) => t + x.list.length, 0)} answers, and a lot of opinions.`, `This week the group answered ${R.played.length} questions together. Science marches on.`, `${R.played.length} questions this week. Here's who embarrassed themselves.`], 14));
+  if (R.mode === "week") out.push(P([`Week in review: ${R.played.length} questions, ${R.qs.reduce((t, x) => t + x.list.length, 0)} answers, and a lot of opinions.`, `This week the group answered ${R.played.length} questions together. The data speaks for itself.`, `${R.played.length} questions this week. Here's who embarrassed themselves.`], 14));
   if (R.sync != null) {
     if (R.sync >= 0.72) out.push(P([`Overall the group is ${pct(R.sync)} in sync. That's not a friend group, that's a hive mind.`, `${pct(R.sync)} group sync. Somebody check whether you all share one group chat brain.`, `The group agrees ${pct(R.sync)} of the time. Peer review has never been this friendly.`]));
     else if (R.sync >= 0.6) out.push(P([`Overall sync: ${pct(R.sync)}. Close enough to be friends, far enough apart to keep the group chat spicy.`, `The group is ${pct(R.sync)} in sync. Healthy disagreement, mostly.`, `${pct(R.sync)} in sync. You'd pass a vibe check, but not a reproducibility check.`]));
@@ -1415,7 +1755,7 @@ function ideaQ(row){
 let ideasBusy = false;
 function ensureIdeas(){ if (!S.secret || !S.gid || ideasBusy) return; if (S.ideas && S.ideas.gid === S.gid && Date.now() - S.ideas.at < 60000) return; loadIdeas(); }
 async function loadIdeas(){
-  const gid = S.gid; ideasBusy = true; let d;
+  const gid = S.gid; ideasBusy = true; let d; loadGroupThemes();
   try { d = await rpc("get_ideas", { p_secret: S.secret, p_group: gid, p_today: ctISO() }); }
   catch (e) { ideasBusy = false; if (e.message === "not_signed_in") return signOut(); S.ideas = { gid, at: e.message === "offline" ? 0 : Date.now(), byDay: {}, pending: [], past: [], err: e.message === "offline" ? "offline" : true }; $("ideaJump").hidden = !S.gid; return; }
   ideasBusy = false;
@@ -1426,7 +1766,7 @@ async function loadIdeas(){
   if (!$("ideaBack").hidden) renderIdeas();
   if (S.gid === gid && before !== Object.keys(byDay).join()) go();
 }
-function renderIdeaPill(){ const n = S.ideas && S.ideas.gid === S.gid ? S.ideas.pending.length : 0; $("ideaCount").textContent = n; $("ideaCount").hidden = !n; }
+function renderIdeaPill(){ homeSoon(); const n = S.ideas && S.ideas.gid === S.gid ? S.ideas.pending.length : 0; $("ideaCount").textContent = n; $("ideaCount").hidden = !n; }
 let ideaKind = "curve";
 function setIdeaKind(k){ ideaKind = k; document.querySelectorAll("#ideaKinds button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k))); document.querySelectorAll("#ideaForm [data-for]").forEach(e => { e.hidden = !e.dataset.for.split(" ").includes(k); }); $("ideaMsg").textContent = ""; }
 document.querySelectorAll("#ideaKinds button").forEach(b => b.addEventListener("click", () => setIdeaKind(b.dataset.k)));
@@ -1463,7 +1803,7 @@ function renderIdeas(){
     list.appendChild(row);
   });
   const nx = $("ideaNext"); nx.innerHTML = ""; const top = sorted[0];
-  if (top && top.votes > 0) { nx.hidden = false; nx.append(mk("h3", null, "Tomorrow's bonus question, if nothing overtakes it"), mk("div", "t", ideaTitle(top.spec)), mk("p", "note", "From " + top.author + " with " + top.votes + (top.votes === 1 ? " vote" : " votes") + ". Voting closes at midnight Central time.")); nx.querySelector(".t").style.cssText = "font-weight:800;font-size:17px"; }
+  if (top && top.votes > 0) { nx.hidden = false; nx.append(mk("h3", null, (isFriday(todayIndex() + 1) && packKey(S.gid, todayIndex() + 1) === "custom" ? "Tomorrow's Fun Friday graph" : "Tomorrow's bonus question") + ", if nothing overtakes it"), mk("div", "t", ideaTitle(top.spec)), mk("p", "note", "From " + top.author + " with " + top.votes + (top.votes === 1 ? " vote" : " votes") + ". Voting closes at midnight Central time.")); nx.querySelector(".t").style.cssText = "font-weight:800;font-size:17px"; }
   else nx.hidden = true;
   const past = $("ideaPast"); past.innerHTML = ""; past.hidden = !I.past.length;
   if (I.past.length) { past.appendChild(mk("h3", null, "Already played")); const rows = mk("div", "sumrows"); I.past.slice(0, 20).forEach(r => { const d = isoDay(r.day), rr = mk("div", "sumrow"); const dt = new Date(ROT_START + d * 864e5); rr.append(mk("span", null, dt.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }) + " · " + r.author), mk("span", null, ideaTitle(r.spec))); rows.appendChild(rr); }); past.appendChild(rows); }
@@ -1559,7 +1899,7 @@ function renderThemes(){ const g = $("themeGrid"); g.innerHTML = ""; const cur =
   THEMES.forEach(t => { const b = document.createElement("button"); b.type = "button"; b.className = "thopt"; b.dataset.t = t.id || "auto"; b.setAttribute("aria-pressed", String(t.id === cur));
     const sw = document.createElement("span"); sw.className = "sw"; t.sw.forEach(c => { const i = document.createElement("i"); i.style.background = c; sw.appendChild(i); });
     const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = t.name; const sm = document.createElement("small"); sm.textContent = t.note; nm.appendChild(sm);
-    b.append(sw, nm); b.addEventListener("click", () => { try { if (t.id) localStorage.setItem("gg-theme", t.id); else localStorage.removeItem("gg-theme"); } catch (e) {} applyTheme(t.id); renderThemes(); renderAll(true); });
+    b.append(sw, nm); b.addEventListener("click", () => { try { if (t.id) localStorage.setItem("gg-theme", t.id); else localStorage.removeItem("gg-theme"); } catch (e) {} applyTheme(t.id); renderThemes(); renderAll(true); if (typeof renderPrefs === "function") renderPrefs(); seasonRefresh(); });
     g.appendChild(b); }); }
 $("themeBtn").addEventListener("click", () => { renderThemes(); $("themeBack").hidden = false; });
 $("themeClose").addEventListener("click", () => { $("themeBack").hidden = true; });
@@ -1597,6 +1937,7 @@ function streakInfo(){
   return { cur, best, todayDone, todayQ, answered: (u) => !!got[u], nudged: new Set(A.data.nudged || []) };
 }
 function renderPulse(){
+  homeSoon();
   const box = $("pulse"); if (!box) return;
   const g = group(), info = streakInfo();
   if (!g || !info || S.qid || S.dayOffset !== 0) { box.hidden = true; return; }
@@ -1626,7 +1967,7 @@ function renderPulse(){
 
 /* ---------------- nudges ---------------- */
 let nudgeTo = null;
-const NUDGE_PICKS = (n) => [`Draw your graph, ${n}`, "The group average misses you", "Reviewer 2 is waiting", "We can't see the results until you answer", "Streak's on the line"];
+const NUDGE_PICKS = (n) => [`Draw your graph, ${n}`, "The group average misses you", "Your friends are waiting", "We can't see the results until you answer", "Streak's on the line"];
 function openNudge(m){
   nudgeTo = m; $("nudgeTitle").textContent = "Nudge " + m.display_name; $("nudgeMsg").value = ""; $("nudgeErr").textContent = ""; $("nudgeSend").disabled = false;
   const p = $("nudgePicks"); p.innerHTML = "";
@@ -1654,6 +1995,7 @@ async function loadNudges(force){
   renderNudges();
 }
 function renderNudges(){
+  homeSoon();
   const L = (S.nudges.list || []).filter(n => !S.mine[n.qid]), bar = $("nudgeBar");
   if (!L.length) { bar.hidden = true; return; }
   const n = L[0], multiGroup = S.groups.length > 1;
@@ -1666,7 +2008,7 @@ $("nbX").addEventListener("click", dismissNudges);
 $("nbGo").addEventListener("click", () => {
   const n = (S.nudges.list || [])[0]; dismissNudges();
   if (n && n.group_id && n.group_id !== S.gid && S.groups.some(g => g.id === n.group_id)) { S.gid = n.group_id; ls.set("gg-group", S.gid); renderGroupbar(); }
-  S.dayOffset = 0; S.qid = null; setTab("draw"); go(); $("panelDraw").scrollIntoView({ behavior: "smooth", block: "start" });
+  S.dayOffset = 0; S.qid = null; go(); openFocus("graph");
 });
 
 /* ---------------- your stats ---------------- */
@@ -1765,6 +2107,14 @@ function renderMyStats(g, T){
      "Fixes and improvements" line.
    - Keep each update to about 3-6 lines. */
 const CHANGES = [
+  { id: "2026-11-12", date: "Nov 12", items: [
+    ["New look", "A cleaner home screen that opens one game at a time."],
+    ["Fun Friday", "Group hosts can pick a theme for an extra set of questions every Friday."],
+    ["Everyday questions", "Daily questions now cover everyday life, so anyone can play."],
+    ["Seasonal backgrounds", "Subtle animations that change with the seasons. Turn them off in Preferences."],
+    ["Preferences and Groups", "Settings and group management now have their own screens in the menu."],
+    ["Fixes and improvements", "Graphs fill their space, plus smaller polish."],
+  ] },
   { id: "2026-11-10b", date: "Nov 10", items: [
     ["New games", "This or that and Rate it, alongside the daily graph."],
     ["Solo play", "Play without a group. Your answers count in every group you join."],
@@ -1783,7 +2133,7 @@ function renderNews(){
   const seen = newsSeen(), fresh = seen ? seen !== CHANGES[0].id : had;
   if (!seen && !had) { try { localStorage.setItem("gg-news", CHANGES[0].id); } catch (e) {} }
   $("newsDot").hidden = !fresh; $("newsBar").hidden = !fresh;
-  if (fresh) { const t = $("newsText"); t.innerHTML = ""; const b = document.createElement("b"); b.textContent = "Updated: "; t.append(b, CHANGES[0].items.map(i => i[0]).join(", ")); }
+  if (fresh) { const t = $("newsText"); t.innerHTML = ""; const b = document.createElement("b"); b.textContent = "Updated: "; const it = CHANGES[0].items; t.append(b, it[0][0] + (it.length > 1 ? " and " + (it.length - 1) + " more" : "")); }
 }
 function openNews(){
   const L = $("newsList"); L.innerHTML = "";
@@ -1801,11 +2151,12 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("news
 renderNews();
 
 /* ---------------- menu dropdown ---------------- */
-function setMenu(open){ $("qActions").hidden = !open; $("qMenuBtn").setAttribute("aria-expanded", String(open)); if (open) { const f = $("qActions").querySelector(".qbox:not([hidden])"); if (f) f.focus({ preventScroll: true }); } }
-$("qMenuBtn").addEventListener("click", (e) => { e.stopPropagation(); setMenu($("qActions").hidden); });
+function setMenu(open){ const was = !$("menuBack").hidden; $("menuBack").hidden = !open; $("qMenuBtn").setAttribute("aria-expanded", String(open)); if (open) { renderMenu(); const f = $("qActions").querySelector(".qbox:not([hidden])"); if (f) f.focus({ preventScroll: true }); } else if (was) $("qMenuBtn").focus({ preventScroll: true }); }
+$("qMenuBtn").addEventListener("click", (e) => { e.stopPropagation(); setMenu($("menuBack").hidden); });
 $("qActions").addEventListener("click", (e) => { if (e.target.closest(".qbox")) setMenu(false); });
-document.addEventListener("click", (e) => { if (!$("qActions").hidden && !e.target.closest("#qMenu")) setMenu(false); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("qActions").hidden) { setMenu(false); $("qMenuBtn").focus(); } });
+$("menuBack").addEventListener("click", (e) => { if (e.target === $("menuBack")) setMenu(false); });
+$("mClose").addEventListener("click", () => setMenu(false));
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("menuBack").hidden) setMenu(false); });
 /* the Menu button shows the total of the unread counts inside it */
 function syncMenuCount(){ let n = 0; $("qActions").querySelectorAll(".count").forEach(c => { if (!c.hidden && !(c.closest(".qbox") || {}).hidden) n += +c.textContent || 0; }); $("qMenuCount").textContent = n; $("qMenuCount").hidden = !n; }
 new MutationObserver(syncMenuCount).observe($("qActions"), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["hidden"] });
@@ -1869,21 +2220,142 @@ const GTHEMES = [
   { name: "Sports", tot: [["Play", "Watch"], ["Basketball", "Football"], ["Gym", "Run outside"], ["Team sport", "Solo sport"], ["Game day snacks", "Game day itself"]],
     rate: ["Golf", "Pickleball", "Fantasy football", "The wave", "Overtime"] },
 ];
-/* Nov 12 2026: the Chemistry theme was swapped for Fall */
+/* Nov 12 2026 gets Fall instead of Chemistry; from Nov 13 the lab, grad school and chemistry themes are swapped for everyday ones (earlier days keep theirs) */
 const GT_BASE = GTHEMES.length;
 GTHEMES.push(
+  { name: "Home", tot: [["House", "Apartment"], ["Big city", "Small town"], ["Bath", "Shower"], ["Carpet", "Hardwood"], ["Minimalist", "Cozy clutter"]],
+    rate: ["IKEA furniture", "Roommates", "Throw pillows", "Houseplants", "Moving day"] },
+  { name: "School days", tot: [["Front row", "Back row"], ["Pen", "Pencil"], ["Group project", "Solo project"], ["Morning class", "Night class"], ["Study alone", "Study group"]],
+    rate: ["Group projects", "Pop quizzes", "Cafeteria food", "Summer break", "Homework"] },
+  { name: "Shopping", tot: [["Online", "In store"], ["Brand name", "Store brand"], ["Cash", "Card"], ["Shop alone", "Shop with friends"], ["Mall", "Outlet"]],
+    rate: ["Black Friday", "Free samples", "Costco", "Thrift stores", "Carts with a wobbly wheel"]  },
   { name: "Fall", tot: [["Pumpkin spice", "Apple cider"], ["Sweater", "Flannel"], ["Hayride", "Corn maze"], ["Apple picking", "Pumpkin patch"], ["Bonfire", "Hot cocoa"]],
     rate: ["Leaf peeping", "Daylight saving time", "Football Sundays", "Raking leaves", "Cozy socks"] });
+const GT_SWAP = { 1: GT_BASE, 7: GT_BASE + 1, 9: GT_BASE + 2 };
+/* ---------------- Fun Friday ----------------
+   A group's host picks a theme. Every Friday that group gets one extra graph, This or that and Rate it
+   on the theme, under the Fun Friday switch. Today's questions stay the same for everyone. */
+const FF_GAMES = (list) => list.map(t => { GTHEMES.push(t); return GTHEMES.length - 1; });
+const PACKS = {
+ science: { name: "Science", desc: "Lab life, research, experiments", graphs: SCI.slice(1).concat(SCI[0]), games: [1, 7, 9] },
+ gaming: { name: "Gaming", desc: "Consoles, classics, game nights", graphs: [
+  {id:"ff-rage-quit", cat:"Gaming", title:"Rage vs times you've died on the same level", sub:"Same boss, same pattern, same mistake.", x:{label:"deaths", min:0, max:50, step:10}, y:{label:"rage", bands:B([[0,2,"zen"],[2,4,"focused"],[4,6,"muttering"],[6,8,"yelling"],[8,10,"controller at risk"]])}},
+  R("ff-consoles", "Gaming", "Rank the consoles", "Best to worst, all time. Nostalgia is allowed.", ["NES","SNES","N64","GameCube","Wii","Switch","PlayStation 2","PlayStation 5","Xbox 360","Game Boy"]),
+  {id:"ff-one-more", cat:"Gaming", title:"\"One more game\" energy through the night", sub:"You said you'd stop at 11.", x:{label:"time of night", min:20, max:28, step:1, fmt:"hour"}, y:{label:"just one more", lo:"logging off", hi:"sun is rising"}},
+  M("ff-gamer-type", "Gaming", "What kind of gamer are you?", "Your actual habits, not your Steam wishlist.", { lo: "Casual", hi: "Sweaty" }, { lo: "Solo story games", hi: "Online with friends" }),
+  {id:"ff-backlog", cat:"Gaming", title:"Guilt vs games in your backlog", sub:"Bought on sale, never opened. They're watching.", x:{label:"unplayed games", min:0, max:100, step:20}, y:{label:"guilt", lo:"none", hi:"crushing"}},
+  R("ff-party-games", "Gaming", "Rank the party games", "Best for a game night to worst.", ["Mario Kart","Smash Bros","Mario Party","Jackbox","Among Us","Just Dance","Overcooked","Rock Band","Wii Sports","Tetris 99"]),
+  {id:"ff-tutorial", cat:"Gaming", title:"Patience vs minutes of tutorial", sub:"You just want to play the game.", x:{label:"minutes of tutorial", min:0, max:60, step:10}, y:{label:"patience", lo:"skip skip skip", hi:"reading every tip"}},
+  M("ff-game-taste", "Gaming", "Map your game taste", "What you reach for on a free Saturday.", { lo: "Cozy farming", hi: "Horror" }, { lo: "Short and sweet", hi: "200-hour RPG" }),
+ ], games: FF_GAMES([
+  { name: "Game night", tot: [["Controller", "Keyboard"], ["Co-op", "Versus"], ["Retro", "New release"], ["Story mode", "Multiplayer"], ["Easy mode", "Hard mode"]], rate: ["Loading screens", "Microtransactions", "Speedruns", "Couch co-op", "Escort missions"] },
+  { name: "Arcade", tot: [["Pac-Man", "Tetris"], ["Pinball", "Skee-Ball"], ["Air hockey", "Claw machine"], ["Tickets", "High score"], ["Racing", "Shooting"]], rate: ["Claw machines", "Dance machines", "Prize counters", "Token prices", "Arcade bars"] },
+  { name: "Game worlds", tot: [["Open world", "Linear"], ["Fantasy", "Sci-fi"], ["Boss fight", "Puzzle"], ["Sword", "Bow"], ["Save often", "Live dangerously"]], rate: ["Water levels", "Side quests", "Fetch quests", "Plot twists", "Final bosses"] },
+ ]) },
+ nature: { name: "Nature", desc: "Outdoors, animals, the planet", graphs: [
+  {id:"ff-bugs", cat:"Nature", title:"Panic vs size of the bug", sub:"It's on the wall. Now it's not.", x:{label:"bug size (inches)", min:0, max:4, step:0.5}, y:{label:"panic", bands:B([[0,2,"cute"],[2,4,"noticing"],[4,6,"tracking it"],[6,8,"leaving the room"],[8,10,"moving out"]])}},
+  R("ff-biomes", "Nature", "Rank the places to live", "If you had to live in one, forever.", ["Beach","Mountains","Forest","Desert","Tundra","Rainforest","Prairie","Lake shore","Island","Swamp"]),
+  {id:"ff-camp-nights", cat:"Nature", title:"Happiness on each night of camping", sub:"No showers. The campfire smell is now part of you.", x:{label:"nights camping", min:0, max:10, step:1}, y:{label:"happiness", bands:MOOD}},
+  M("ff-outdoorsy", "Nature", "How outdoorsy are you?", "Be honest. A patio counts as outside.", { lo: "Indoor cat", hi: "Lives outside" }, { lo: "Glamping", hi: "Survival mode" }),
+  {id:"ff-sunset", cat:"Nature", title:"Beauty of the sky through the evening", sub:"From golden hour to full dark.", x:{label:"minutes around sunset", min:-60, max:60, step:20}, y:{label:"beauty", lo:"just sky", hi:"stop the car"}},
+  R("ff-wild-animals", "Nature", "Rank the wild animals you'd want to meet", "Best surprise encounter to worst.", ["Deer","Fox","Moose","Bear","Bald eagle","Raccoon","Owl","Wolf","Skunk","Mountain lion"]),
+  {id:"ff-garden", cat:"Nature", title:"Gardening motivation through the year", sub:"From seed catalog season to whatever survived.", x:{label:"month", min:0, max:12, step:1, fmt:"month"}, y:{label:"motivation", lo:"what garden", hi:"planting everything"}},
+  M("ff-weather-type", "Nature", "What's your ideal weather?", "Your perfect day off.", { lo: "Cold", hi: "Hot" }, { lo: "Dry", hi: "Stormy" }),
+ ], games: FF_GAMES([
+  { name: "Great outdoors", tot: [["Sunrise hike", "Sunset hike"], ["Tent", "Hammock"], ["Waterfall", "Hot spring"], ["Kayak", "Canoe"], ["Map", "Trail app"]], rate: ["Bug spray smell", "Wet socks", "Scenic overlooks", "Trail mix", "Outhouses"] },
+  { name: "Wildlife", tot: [["Owls", "Hawks"], ["Dolphins", "Whales"], ["Frogs", "Turtles"], ["Foxes", "Wolves"], ["Bees", "Butterflies"]], rate: ["Squirrels", "Seagulls", "Jellyfish", "Moths", "Opossums"] },
+  { name: "Seasons", tot: [["First snow", "First warm day"], ["Leaves changing", "Flowers blooming"], ["Fog", "Frost"], ["Rainy morning", "Windy night"], ["Stargazing", "Cloud watching"]], rate: ["Pollen season", "Black ice", "Heat lightning", "Leaf piles", "Spring cleaning"] },
+ ]) },
+ business: { name: "Business", desc: "Offices, meetings, money", graphs: [
+  {id:"ff-meeting-size", cat:"Business", title:"Meeting usefulness vs people invited", sub:"Same agenda, more people.", x:{label:"people in the meeting", min:2, max:30, step:4}, y:{label:"usefulness", lo:"waste of time", hi:"great meeting"}},
+  R("ff-office-perks", "Business", "Rank the office perks", "Best to worst. Pizza parties are not a raise.", ["Free lunch","Remote days","Gym membership","Unlimited PTO","Free snacks","Good coffee","Team offsite","Standing desks","Pizza party","Swag"]),
+  {id:"ff-friday-focus", cat:"Business", title:"Focus through a work Friday", sub:"From the 9am standup to the 4:59 email.", x:{label:"time of day", min:8, max:18, step:2, fmt:"hour"}, y:{label:"focus", bands:B([[0,2,"gone"],[2,4,"drifting"],[4,6,"okay"],[6,8,"locked in"],[8,10,"machine"]])}},
+  M("ff-work-style", "Business", "What's your work style?", "How you actually get things done.", { lo: "Deadline sprinter", hi: "Done early" }, { lo: "Heads down solo", hi: "Always collaborating" }),
+  {id:"ff-reply-all", cat:"Business", title:"Annoyance vs people on a reply-all thread", sub:"Someone replied 'please remove me'. Then everyone did.", x:{label:"people on the thread", min:0, max:500, step:100}, y:{label:"annoyance", lo:"fine", hi:"logging off"}},
+  R("ff-jargon", "Business", "Rank the office jargon", "Least annoying to most annoying.", ["Circle back","Synergy","Low-hanging fruit","Touch base","Bandwidth","Deep dive","Move the needle","Take it offline","Per my last email","Let's unpack that"], "least annoying", "most annoying"),
+  {id:"ff-raise", cat:"Business", title:"Happiness vs size of a raise", sub:"Your yearly review. HR is smiling.", x:{label:"raise", min:0, max:20, step:2, fmt:"pct"}, y:{label:"happiness", lo:"updating my resume", hi:"staying forever"}},
+  M("ff-boss", "Business", "What kind of boss would you be?", "Or are, if you already are one.", { lo: "Hands off", hi: "Micromanager" }, { lo: "All business", hi: "Everyone's friend" }),
+ ], games: FF_GAMES([
+  { name: "The office", tot: [["Morning meetings", "Afternoon meetings"], ["Slack", "Email"], ["Camera on", "Camera off"], ["Desk lunch", "Lunch out"], ["Inbox zero", "Inbox chaos"]], rate: ["Open offices", "Team lunches", "Performance reviews", "Office birthdays", "Casual Fridays"] },
+  { name: "Money", tot: [["Save", "Invest"], ["Stocks", "Real estate"], ["Budget app", "Spreadsheet"], ["Side hustle", "Free time"], ["Big salary", "Great team"]], rate: ["Taxes", "Payday", "Credit cards", "Crypto", "Coupons"] },
+  { name: "Career", tot: [["Startup", "Big company"], ["Be the boss", "Work for yourself"], ["Short commute", "Bigger paycheck"], ["Specialist", "Generalist"], ["Interview in person", "Interview on video"]], rate: ["Networking events", "LinkedIn", "Cover letters", "Job fairs", "Business cards"] },
+ ]) },
+ media: { name: "Media", desc: "Film, TV, music, the internet", graphs: [
+  {id:"ff-scroll", cat:"Media", title:"Joy vs minutes of scrolling", sub:"Short videos, one after another.", x:{label:"minutes scrolling", min:0, max:120, step:20}, y:{label:"joy", lo:"brain melting", hi:"having a blast"}},
+  R("ff-genres", "Media", "Rank the movie genres", "Best night in to worst.", ["Comedy","Horror","Action","Romance","Sci-fi","Documentary","Animated","Musical","Thriller","Western"]),
+  {id:"ff-trailer", cat:"Media", title:"Hype vs how much the trailer shows", sub:"Some trailers show the whole movie.", x:{label:"plot revealed", min:0, max:100, step:20, fmt:"pct"}, y:{label:"hype", lo:"skipping it", hi:"opening night"}},
+  M("ff-media-diet", "Media", "What's your media diet?", "A normal week.", { lo: "Podcasts", hi: "Video" }, { lo: "Old favorites", hi: "Whatever's new" }),
+  {id:"ff-season", cat:"Media", title:"How good a show is, by season", sub:"A long-running show you love. When should it have ended?", x:{label:"season", min:1, max:10, step:1}, y:{label:"quality", lo:"jumped the shark", hi:"peak TV"}},
+  R("ff-platforms", "Media", "Rank the apps", "Most fun to least fun.", ["YouTube","TikTok","Instagram","Reddit","Spotify","Netflix","Pinterest","Snapchat","X","LinkedIn"], "most fun", "least fun"),
+  {id:"ff-concert", cat:"Media", title:"Concert enjoyment by hour", sub:"Doors at 7. Headliner whenever they feel like it.", x:{label:"hours since doors", min:0, max:5, step:1}, y:{label:"enjoyment", bands:MOOD}},
+  M("ff-spoilers", "Media", "How do you handle spoilers?", "A big finale just aired.", { lo: "Spoil me", hi: "Muted every keyword" }, { lo: "Watch alone", hi: "Watch party" }),
+ ], games: FF_GAMES([
+  { name: "Streaming", tot: [["Netflix", "Hulu"], ["Subtitles on", "Subtitles off"], ["Skip intro", "Watch intro"], ["Rewatch", "Something new"], ["Movie", "Series"]], rate: ["Autoplay", "Cliffhangers", "Laugh tracks", "Recaps", "Ads"] },
+  { name: "The internet", tot: [["Memes", "Long reads"], ["Post", "Lurk"], ["Podcasts", "Audiobooks"], ["Reels", "Stories"], ["Comments", "No comments"]], rate: ["Viral challenges", "Influencers", "Comment sections", "Cat videos", "Life hacks"] },
+  { name: "Music scene", tot: [["Front row", "Back of the room"], ["Arena", "Small venue"], ["Old hits", "New album"], ["Live album", "Studio album"], ["Playlist", "Radio"]], rate: ["Encores", "Opening acts", "Merch lines", "Remixes", "Covers"] },
+ ]) },
+ sports: { name: "Sports", desc: "Playing, watching, game day", graphs: [
+  {id:"ff-game-tension", cat:"Sports", title:"Tension through a close game", sub:"Your team, a big game, tied going into the last quarter.", x:{label:"minutes played", min:0, max:60, step:10}, y:{label:"tension", bands:B([[0,2,"relaxed"],[2,4,"into it"],[4,6,"standing up"],[6,8,"can't watch"],[8,10,"cardiac event"]])}},
+  R("ff-sports", "Sports", "Rank the sports to watch", "Most fun to watch to least.", ["Football","Basketball","Baseball","Soccer","Hockey","Tennis","Golf","Gymnastics","Swimming","F1"]),
+  {id:"ff-workout", cat:"Sports", title:"Will to live through a workout", sub:"Minutes into a hard class. The instructor is smiling.", x:{label:"minutes in", min:0, max:60, step:10}, y:{label:"will to live", lo:"lying on the floor", hi:"unstoppable"}},
+  M("ff-fan-type", "Sports", "What kind of fan are you?", "On game day.", { lo: "Watches the score later", hi: "Face paint" }, { lo: "One team forever", hi: "Bandwagon" }),
+  {id:"ff-pickup", cat:"Sports", title:"Fun vs how competitive a pickup game gets", sub:"Friendly game at the park. Someone is keeping score.", x:{label:"competitiveness", min:0, max:10, step:2}, y:{label:"fun", lo:"miserable", hi:"best day"}},
+  R("ff-rec-sports", "Sports", "Rank the sports to play", "Best for a weekend with friends.", ["Pickleball","Basketball","Volleyball","Soccer","Ultimate frisbee","Bowling","Golf","Tennis","Kickball","Dodgeball"]),
+  {id:"ff-season-hope", cat:"Sports", title:"Hope for your team across the season", sub:"From opening day to 'there's always next year'.", x:{label:"month of the season", min:0, max:6, step:1}, y:{label:"hope", lo:"tanking", hi:"championship"}},
+  M("ff-athlete", "Sports", "What kind of athlete are you?", "In your own way.", { lo: "Couch", hi: "Trains daily" }, { lo: "Solo workouts", hi: "Team sports" }),
+ ], games: FF_GAMES([
+  { name: "Game day", tot: [["Home game", "Away game"], ["Stadium", "Sports bar"], ["Wings", "Nachos"], ["Halftime show", "Commercials"], ["Jersey", "Team hoodie"]], rate: ["Overtime", "Replay reviews", "Tailgates", "The Kiss Cam", "Stadium prices"] },
+  { name: "Working out", tot: [["Morning workout", "Night workout"], ["Weights", "Cardio"], ["Gym", "Home workout"], ["Yoga", "Spin"], ["Music", "Podcast"]], rate: ["Leg day", "Burpees", "Protein shakes", "Gym selfies", "Rest days"] },
+  { name: "Olympics", tot: [["Summer Games", "Winter Games"], ["Gymnastics", "Swimming"], ["Skiing", "Skating"], ["Gold", "World record"], ["Track", "Field"]], rate: ["Curling", "Speed walking", "Opening ceremonies", "Synchronized swimming", "Ski jumping"] },
+ ]) },
+ food: { name: "Food", desc: "Cooking, restaurants, kitchens", graphs: [
+  {id:"ff-recipe-steps", cat:"Food", title:"Will to cook vs steps in a recipe", sub:"A new recipe. The story before it was 2,000 words.", x:{label:"steps", min:1, max:20, step:3}, y:{label:"will to cook", lo:"ordering pizza", hi:"let's go"}},
+  R("ff-cuisines", "Food", "Rank the cuisines", "If you could only eat one for a year.", ["Italian","Mexican","Japanese","Chinese","Indian","Thai","Greek","Korean","American","French"]),
+  {id:"ff-buffet", cat:"Food", title:"Happiness through a buffet", sub:"Plates into an all-you-can-eat buffet.", x:{label:"plates", min:0, max:6, step:1}, y:{label:"happiness", bands:B([[0,2,"regret"],[2,4,"uncomfortable"],[4,6,"satisfied"],[6,8,"thrilled"],[8,10,"king of the buffet"]])}},
+  M("ff-cook-type", "Food", "What kind of cook are you?", "In your kitchen on a weeknight.", { lo: "Follows the recipe", hi: "Wings it" }, { lo: "Microwave master", hi: "Chef" }),
+  {id:"ff-leftovers", cat:"Food", title:"Will to eat leftovers vs days in the fridge", sub:"Same meal, a little older each day.", x:{label:"days in the fridge", min:0, max:7, step:1}, y:{label:"will to eat it", lo:"science experiment", hi:"better than day one"}},
+  R("ff-kitchen-tools", "Food", "Rank the kitchen tools", "Most useful to most useless.", ["Air fryer","Instant Pot","Microwave","Cast iron pan","Blender","Toaster","Rice cooker","Stand mixer","Waffle maker","Spiralizer"], "most useful", "most useless"),
+  {id:"ff-menu", cat:"Food", title:"Ordering stress vs menu length", sub:"Pages on the menu. The server is back again.", x:{label:"menu pages", min:1, max:20, step:3}, y:{label:"stress", lo:"easy pick", hi:"ordering what they're having"}},
+  M("ff-eater", "Food", "What kind of eater are you?", "At dinner with friends.", { lo: "Picky", hi: "Will try anything" }, { lo: "Small plates", hi: "Clean plate club" }),
+ ], games: FF_GAMES([
+  { name: "Kitchen", tot: [["Gas stove", "Electric stove"], ["Bake", "Fry"], ["Recipe", "Wing it"], ["Cast iron", "Nonstick"], ["Meal prep", "Cook daily"]], rate: ["Doing dishes", "Cutting onions", "Smoke alarms", "Food processors", "Cookbooks"] },
+  { name: "Eating out", tot: [["Booth", "Table"], ["Appetizer", "Dessert"], ["Tasting menu", "Big portion"], ["Food truck", "Fancy restaurant"], ["Split the bill", "Take turns paying"]], rate: ["Shared plates", "QR code menus", "Small portions", "Tipping screens", "Bottomless brunch"] },
+  { name: "Comfort food", tot: [["Mac and cheese", "Grilled cheese"], ["Soup", "Chili"], ["Fried chicken", "Pot roast"], ["Mashed potatoes", "Fries"], ["Cookies", "Brownies"]], rate: ["Meatloaf", "Casseroles", "Instant ramen", "Pot pie", "Chicken noodle soup"] },
+ ]) },
+ custom: { name: "Custom", desc: "Your group's top-voted ideas", graphs: [], games: [] },
+ random: { name: "Random", desc: "A different theme every Friday", graphs: [], games: [] },
+};
+const PACK_IDS = ["science", "gaming", "nature", "business", "media", "sports", "food", "custom", "random"];
+const RAND_POOL = ["science", "gaming", "nature", "business", "media", "sports", "food"];
+const ffDay = () => S.qid ? todayIndex() : todayIndex() + S.dayOffset;
+/* the group's theme for the day being shown; "Random" picks a different one each Friday */
+const packKey = (gid, d) => { const k = gid && S.gthemes[gid]; if (!PACKS[k]) return null; if (k !== "random") return k; const n = ffN(d == null ? ffDay() : d), L = RAND_POOL.length; return RAND_POOL[((n * 3) % L + L) % L]; };
+const packOf = (gid, d) => PACKS[packKey(gid, d)] || null;
+const isFriday = (d) => (((d - 3) % 7) + 7) % 7 === 0; // day 3 is Fri Nov 6 2026
+const ffN = (d) => Math.floor((d - 3) / 7);
+const ffPick = (arr, d) => arr.length ? arr[((ffN(d) % arr.length) + arr.length) % arr.length] : null;
+const ffOn = (d) => !!(isFriday(d) && packOf(S.gid));
+const ffMode = (d) => !!(S.ff && ffOn(d));
+const ffGraph = (d) => { const pk = packOf(S.gid); if (!pk) return null; return packKey(S.gid, d) === "custom" ? ((S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || null) : ffPick(pk.graphs, d); };
+const ffGamesOK = () => { const pk = packOf(S.gid); return !!(pk && pk.games.length); };
+let themesBusy = false;
+async function loadGroupThemes(){
+  if (!S.secret || themesBusy) return; themesBusy = true;
+  try { const t = await rpc("get_group_themes", { p_secret: S.secret }), before = JSON.stringify(S.gthemes); S.gthemes = t && typeof t === "object" ? t : {}; if (JSON.stringify(S.gthemes) !== before) { if (S.me && !$("groupsPanel").hidden) renderGroupsPanel(); go(); } }
+  catch (e) {} // database without group-themes.sql: no Fun Friday
+  themesBusy = false;
+}
 const TOT = GTHEMES.flatMap(t => t.tot), RATE = GTHEMES.flatMap(t => t.rate);
 const GAMES = { tot: { name: "This or that", list: TOT }, rate: { name: "Rate it", list: RATE } }, GN = 5;
 S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph";
 S.gres = {}; S.gedit = null; S.gdraft = {};
 const isGameQid = (k) => /^(tot|rate)-/.test(k);
 const gDayIdx = () => S.qid ? todayIndex() : todayIndex() + S.dayOffset;
-const gThemeIdx = (d) => d === 9 ? GT_BASE : ((d % GT_BASE) + GT_BASE) % GT_BASE;
+const gThemeIdx = (d) => ffMode(d) && ffGamesOK() ? ffPick(packOf(S.gid, d).games, d) : gThemeBase(d);
+const gThemeBase = (d) => { if (d === 9) return GT_BASE + 3; const t = ((d % GT_BASE) + GT_BASE) % GT_BASE; return d >= GEN_FROM && GT_SWAP[t] != null ? GT_SWAP[t] : t; };
 function gItems(kind, d){ const t = gThemeIdx(d), out = []; for (let k = 0; k < GN; k++) out.push(t * GN + k); return out; }
 const bonusQ = (d) => (S.gid && S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || null;
-const gQid = (kind, d) => kind + "-" + idxISO(d);
+const gQid = (kind, d) => kind + (ffMode(d) && ffGamesOK() ? "-ff-" + packKey(S.gid, d) : "") + "-" + idxISO(d);
 const gEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 const gValid = (kind, p, items) => p && Array.isArray(p.items) && p.items.join() === items.join() && (kind === "tot" ? Array.isArray(p.picks) && p.picks.length === GN && p.picks.every(v => v === 0 || v === 1) : Array.isArray(p.r) && p.r.length === GN && p.r.every(v => Number.isInteger(v) && v >= 1 && v <= 10));
 function setGame(g){
@@ -1895,6 +2367,7 @@ function setGame(g){
 }
 $("gameNav").addEventListener("click", (e) => { const b = e.target.closest("button[data-g]"); if (b) setGame(b.dataset.g); });
 function renderGame(){
+  homeSoon();
   if (!S.gres) return;
   const ok = !!(S.me && !$("appMain").hidden);
   $("gameNav").hidden = !ok;
@@ -1908,7 +2381,7 @@ function renderGame(){
   const mine = gValid(g, S.mine[qid], items) ? S.mine[qid] : null, editing = S.gedit === qid || !mine;
   V.innerHTML = "";
   const head = gEl("div", "q-head gq"); const eb = gEl("div", "eyebrow");
-  if (!S.qid && S.dayOffset === 0) eb.appendChild(gEl("span", "today", "Today's " + (g === "tot" ? "picks" : "ratings")));
+  if (!S.qid && S.dayOffset === 0) eb.appendChild(gEl("span", "today", (ffMode(d) ? "Fun Friday " : "Today's ") + (g === "tot" ? "picks" : "ratings")));
   eb.appendChild(gEl("span", null, GAMES[g].name)); eb.appendChild(gEl("span", null, "Day " + (d + 1)));
   head.append(eb, gEl("h1", "prompt", "Theme: " + GTHEMES[gThemeIdx(d)].name),
     gEl("p", "sub", (g === "tot" ? "Pick one from each pair. Go with your gut." : "Rate each one from 1 (awful) to 10 (perfect).") + (S.gid ? " You'll see your group's answers once you've answered." : " Everyone gets the same set today.")));
@@ -2034,11 +2507,16 @@ function renderRateRes(box, items, list, me, solo){
 document.addEventListener("visibilitychange", () => { if (document.hidden && S.gedit) { S.gedit = null; S.gdraft = {}; renderGame(); } });
 
 /* ---------------- screens: sign in, groups ---------------- */
-function showScreen(name){
+const PANE_TITLES = { profile: "Profile", groups: "Groups", prefs: "Preferences" };
+function showScreen(name, pane){
+  if (name === "groups") { S.pane = PANE_TITLES[pane] ? pane : "groups"; $("gpTitle").textContent = PANE_TITLES[S.pane]; document.querySelectorAll("#groupsPanel [data-pane]").forEach(el => el.hidden = el.dataset.pane !== S.pane); }
   $("authPanel").hidden = name !== "auth"; $("codePanel").hidden = name !== "code"; $("groupsPanel").hidden = name !== "groups";
-  $("appMain").hidden = name === "auth" || name === "code"; $("bankBox").hidden = true;
+  $("appMain").hidden = name !== "app"; $("homeView").hidden = name !== "app"; $("bankBox").hidden = true;
+  ["auth", "code", "groups", "app"].forEach(n => document.body.classList.toggle("scr-" + n, n === name));
+  if (name === "app") { S.view = "home"; } setMenu(false); applyView(); if (name === "groups") window.scrollTo({ top: 0 });
   $("groupbar").hidden = name === "auth" || name === "code" || !S.me;
-  if (name === "groups") { renderGroupsPanel(); renderRemind(); }
+  if (name === "groups") { renderGroupsPanel(); renderRemind(); renderPrefs(); }
+  seasonSync();
   if (typeof renderGame === "function") renderGame();
   renderInstall();
 }
@@ -2088,13 +2566,14 @@ function renderGroupsPanel(){
   const h = document.createElement("h3"); h.textContent = S.groups.length ? "Your groups" : "You're not in a group yet"; box.appendChild(h);
   if (!S.groups.length) { const p = document.createElement("p"); p.textContent = "Send your username to a friend who hosts a group, or start one below and add your friends."; box.appendChild(p); return; }
   S.groups.forEach(g => {
-    const wrap = document.createElement("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:8px;padding:10px 0";
+    const wrap = document.createElement("div"); wrap.className = "gcard";
     const isHost = g.host === S.me.username;
     const title = document.createElement("div"); title.className = "row"; title.style.alignItems = "center";
     const nm = document.createElement("b"); nm.textContent = g.name; nm.style.fontSize = "18px"; title.appendChild(nm);
     const sub = document.createElement("span"); sub.style.cssText = "color:var(--ink-3);font-size:13px"; sub.textContent = isHost ? "you're the host" : "host: @" + g.host; title.appendChild(sub);
     if (g.id !== S.gid) { const sw = document.createElement("button"); sw.className = "btn ghost"; sw.textContent = "Switch to this group"; sw.addEventListener("click", () => { S.gid = g.id; ls.set("gg-group", g.id); renderGroupbar(); renderGroupsPanel(); go(); }); title.appendChild(sw); }
     wrap.appendChild(title);
+    { const mh = document.createElement("h4"); mh.className = "gsub"; mh.textContent = "Members (" + g.members.length + ")"; wrap.appendChild(mh); }
     const mem = document.createElement("div"); mem.className = "members";
     g.members.forEach((m, i) => {
       const c = document.createElement("span"); c.className = "member";
@@ -2106,6 +2585,21 @@ function renderGroupsPanel(){
       mem.appendChild(c);
     });
     wrap.appendChild(mem);
+    let ffEl; { const cur = S.gthemes[g.id] || "", box = document.createElement(isHost ? "details" : "div"); box.className = "ffbox gtools";
+      const curName = cur && PACKS[cur] ? PACKS[cur].name : "None";
+      const h4 = document.createElement(isHost ? "summary" : "h4"); h4.textContent = "Fun Friday theme: " + curName;
+      const nt = document.createElement("p"); nt.className = "gthint"; nt.textContent = (isHost ? "Only you can change this. " : "The host picks this. ") + "Every Friday the group gets one extra graph, This or that and Rate it on this theme, under the Fun Friday switch.";
+      const list = document.createElement("div"); list.className = "ffpick"; list.setAttribute("role", "radiogroup"); list.setAttribute("aria-label", "Fun Friday theme for " + g.name);
+      [["", "None", "Just today's questions"], ...PACK_IDS.map(k => [k, PACKS[k].name, PACKS[k].desc])].forEach(([k, nm, ds]) => {
+        if (!isHost && k !== cur) return;
+        const b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "radio"); b.setAttribute("aria-checked", String(k === cur)); b.disabled = !isHost;
+        const tx = document.createElement("span"), bb = document.createElement("b"), sm = document.createElement("small"); bb.textContent = nm; sm.textContent = ds; tx.append(bb, sm);
+        const rd = document.createElement("span"); rd.className = "rd"; b.append(tx, rd);
+        if (isHost) b.addEventListener("click", async () => { if (k === cur) return; $("groupErr").textContent = ""; list.querySelectorAll("button").forEach(x => x.disabled = true);
+          try { await rpc("set_group_theme", { p_secret: S.secret, p_group: g.id, p_theme: k }); await loadGroupThemes(); renderGroupsPanel(); go(); }
+          catch (e) { $("groupErr").textContent = errText(e); renderGroupsPanel(); } });
+        list.appendChild(b); });
+      if (isHost) box.append(h4, nt, list); else box.append(h4, nt); ffEl = box; }
     if (isHost) {
       const f = document.createElement("div"); f.className = "field";
       const lab = document.createElement("label"); lab.textContent = "Add someone by username"; lab.htmlFor = "find-" + g.id;
@@ -2123,9 +2617,9 @@ function renderGroupsPanel(){
             row.append(l, b); found.appendChild(row); });
         } catch (e) { found.textContent = errText(e); }
       }, 250); });
-      f.append(lab, inp); wrap.append(f, found);
+      f.append(lab, inp); wrap.append(f, found, ffEl);
       const tools = document.createElement("details"); tools.className = "gtools";
-      const sm = document.createElement("summary"); sm.textContent = "Manage this group"; tools.appendChild(sm);
+      const sm = document.createElement("summary"); sm.textContent = "Group settings: name, host, delete"; tools.appendChild(sm);
       const rn = document.createElement("div"); rn.className = "gtrow";
       const ri = document.createElement("input"); ri.value = g.name; ri.maxLength = 40; ri.setAttribute("aria-label", "Group name");
       const rb = document.createElement("button"); rb.className = "btn"; rb.textContent = "Rename"; rb.addEventListener("click", () => { const n = ri.value.trim(); if (n && n !== g.name) groupAction("rename_group", { p_group: g.id, p_name: n }); });
@@ -2145,6 +2639,7 @@ function renderGroupsPanel(){
       tools.appendChild(db);
       wrap.appendChild(tools);
     } else {
+      wrap.appendChild(ffEl);
       const lv = document.createElement("button"); lv.className = "btn ghost"; lv.style.alignSelf = "flex-start"; lv.textContent = "Leave this group";
       let armed = false;
       lv.addEventListener("click", () => { if (!armed) { armed = true; lv.textContent = "Tap again to leave " + g.name; lv.style.color = "var(--danger)"; return; } groupAction("remove_member", { p_group: g.id, p_username: S.me.username }); });
@@ -2181,17 +2676,43 @@ function afterSignIn(sess, fresh){
 }
 
 /* ---------------- plot geometry ---------------- */
+/* y labels get only as much room as their longest line needs, so the plot can use the rest of the box */
+let measureCtx = null;
+function textW(txt, px){
+  if (!measureCtx) measureCtx = document.createElement("canvas").getContext("2d");
+  const fam = getComputedStyle(document.documentElement).getPropertyValue("--f-hand").trim() || "system-ui, sans-serif";
+  measureCtx.font = `500 ${px}px ${fam}`; return measureCtx.measureText(txt).width;
+}
+function wrapPx(txt, maxW, px){
+  const out = []; let cur = "";
+  String(txt).split(/\s+/).filter(Boolean).forEach(w => { const nxt = cur ? cur + " " + w : w; if (cur && textW(nxt, px) > maxW) { out.push(cur); cur = w; } else cur = nxt; });
+  if (cur) out.push(cur);
+  if (out.length > 3) { out[2] = out.slice(2).join(" "); out.length = 3; }
+  return out;
+}
+function yLabels(y, W, narrow){
+  const texts = y.bands ? y.bands.map(b => b.label) : [y.hi, y.lo].filter(Boolean);
+  const cap = narrow ? 72 : 108;
+  const fit = {}; let need = 0;
+  texts.forEach(txt => {
+    let px = 12.5, lines = wrapPx(txt, cap, px), w = Math.max(...lines.map(l => textW(l, px)));
+    while (w > cap && px > 9.5) { px -= 0.5; lines = wrapPx(txt, cap, px); w = Math.max(...lines.map(l => textW(l, px))); }
+    fit[txt] = { lines, px }; need = Math.max(need, Math.min(w, cap));
+  });
+  if (!y.bands && y.fmt === "pct") need = Math.max(need, 30);
+  return { fit, w: Math.ceil(need) + 4 };
+}
 function geom(box, q){
   const W = Math.max(300, Math.round(box.clientWidth));
   const narrow = W < 520;
-  const y = yInfo(q);
-  const labelW = narrow ? 82 : 112;
-  const m = { l: labelW + 14, r: narrow ? 12 : 22, t: 30, b: 52 };
-  const H = Math.round(clamp(W * 0.6, 300, 470));
+  const y = yInfo(q), yl = yLabels(y, W, narrow);
+  // left: label text + 10px gap + rail; right: half of the last x tick label
+  const m = { l: yl.w + 20, r: narrow ? 14 : 16, t: 28, b: 48 };
+  const H = Math.round(narrow ? clamp(W * 0.92, 300, 440) : clamp(W * 0.6, 320, 480));
   const pw = W - m.l - m.r, ph = H - m.t - m.b;
   const X = (t) => m.l + t*pw, Y = (v) => m.t + (1 - (v - y.min)/(y.max - y.min)) * ph;
   const Tinv = (px) => clamp((px - m.l)/pw, 0, 1), Yinv = (py) => clamp(y.min + (1 - (py - m.t)/ph) * (y.max - y.min), y.min, y.max);
-  return { W, H, m, pw, ph, X, Y, Tinv, Yinv, narrow, y };
+  return { W, H, m, pw, ph, X, Y, Tinv, Yinv, narrow, y, yl };
 }
 const tToX = (q, t) => q.x.min + t*(q.x.max - q.x.min);
 function drawFrame(svg, g, q){
@@ -2206,7 +2727,8 @@ function drawFrame(svg, g, q){
   for (let i=0;i<=minor;i++){ const px = m.l + pw*i/minor; el("line", { x1:px, x2:px, y1:m.t, y2:m.t+ph, stroke:"var(--grid)", "stroke-width":1 }, gridG); }
   const ySteps = 20; for (let i=0;i<=ySteps;i++){ const py = m.t + ph*i/ySteps; el("line", { x1:m.l, x2:m.l+pw, y1:py, y2:py, stroke: i%2===0 ? "var(--grid-major)" : "var(--grid)", "stroke-width":1 }, gridG); }
   // x ticks
-  const skip = g.narrow && nMaj > 8 ? 2 : 1;
+  const tickW = Math.max(...Array.from({ length: nMaj + 1 }, (_, i) => fmtX(q.x, tToX(q, i / nMaj)).length)) * 7 + 8;
+  const skip = Math.max(1, Math.ceil(tickW / (pw / nMaj)));
   for (let i=0;i<=nMaj;i++){ const t = i/nMaj, px = X(t); el("line", { x1:px, x2:px, y1:m.t, y2:m.t+ph, stroke:"var(--grid-major)", "stroke-width":1 }, gridG); if (i % skip === 0) { const tx = el("text", { x:px, y:m.t+ph+18, "text-anchor":"middle", class:"tick" }, svg); tx.textContent = fmtX(q.x, tToX(q,t)); } }
   // axes
   el("path", { d:`M${m.l},${m.t} V${m.t+ph} H${m.l+pw}`, fill:"none", stroke:"var(--ink)", "stroke-width":1.6, "stroke-linecap":"round" }, svg);
@@ -2215,20 +2737,19 @@ function drawFrame(svg, g, q){
   const rail = m.l - 8, gid = "yg" + Math.random().toString(36).slice(2, 8);
   const defs = el("defs", {}, svg); const lg = el("linearGradient", { id: gid, x1: 0, y1: 1, x2: 0, y2: 0 }, defs);
   el("stop", { offset: "0%", "stop-color": "var(--pen)", "stop-opacity": .12 }, lg); el("stop", { offset: "100%", "stop-color": "var(--pen)", "stop-opacity": 1 }, lg);
-  const wrapLines = (txt, max) => { const out = []; let cur = ""; txt.split(" ").forEach(w => { if ((cur + " " + w).trim().length > max && cur) { out.push(cur); cur = w; } else cur = (cur + " " + w).trim(); }); if (cur) out.push(cur); return out.slice(0, 3); };
-  const maxCh = g.narrow ? 11 : 15;
-  const label = (txt, x, yMid, cls, anchor) => { const lines = wrapLines(txt, maxCh); const t = el("text", { x, y: yMid - (lines.length - 1) * 6.5 + 4, "text-anchor": anchor || "end", class: cls }, svg); lines.forEach((ln, i) => { const ts = el("tspan", { x, dy: i ? 13 : 0 }, t); ts.textContent = ln; }); return t; };
+  const label = (txt, x, yMid, cls, anchor) => { const f = g.yl.fit[txt] || { lines: [String(txt)], px: 12.5 }, lh = Math.round(f.px + 0.5); const t = el("text", { x, y: yMid - (f.lines.length - 1) * lh / 2 + 4, "text-anchor": anchor || "end", class: cls }, svg); if (f.px !== 12.5) t.setAttribute("font-size", f.px); f.lines.forEach((ln, i) => { const ts = el("tspan", { x, dy: i ? lh : 0 }, t); ts.textContent = ln; }); return t; };
   if (y.bands) {
     const nb = y.bands.length;
     y.bands.forEach((b, i) => {
       const y1 = Y(b.to) + 1.5, y2 = Y(b.from) - 1.5, mid = (y1 + y2) / 2;
       el("rect", { x: rail - 3, y: y1, width: 5, height: Math.max(2, y2 - y1), rx: 2.5, fill: "var(--pen)", opacity: (0.16 + 0.84 * i / Math.max(1, nb - 1)).toFixed(2) }, svg);
-      const lb = label(b.label, rail - 10, mid, "band-l"); if (y2 - y1 < 14) lb.setAttribute("font-size", 11);
+      const lb = label(b.label, rail - 10, mid, "band-l"); if (y2 - y1 < 14 && !lb.getAttribute("font-size")) lb.setAttribute("font-size", 11);
     });
   } else {
     el("rect", { x: rail - 3, y: m.t, width: 5, height: ph, rx: 2.5, fill: `url(#${gid})` }, svg);
-    label(y.hi, rail - 10, m.t + 10, "band-l");
-    label(y.lo, rail - 10, m.t + ph - 14, "band-l");
+    const nl = (txt) => ((g.yl.fit[txt] || { lines: [1] }).lines.length - 1) * 6.5;
+    label(y.hi, rail - 10, m.t + 6 + nl(y.hi), "band-l");
+    label(y.lo, rail - 10, m.t + ph - 10 - nl(y.lo), "band-l");
     if (y.fmt === "pct") [0, .5, 1].forEach(f => { const v = y.min + f * (y.max - y.min); if (f === .5) { const t = el("text", { x: rail - 10, y: Y(v) + 4, "text-anchor": "end", class: "tick" }, svg); t.textContent = Math.round(v) + "%"; } });
   }
   const yt = el("text", { x: 2, y: m.t - 14, class: "ax-cap" }, svg); yt.textContent = y.label.toUpperCase() + " ↑";
@@ -2831,7 +3352,7 @@ function renderHeader(){
   $("prevDay").disabled = isDaily && ti + S.dayOffset <= 0;
   const eb = $("eyebrow"); eb.innerHTML = "";
   const qi = Q.indexOf(q) + 1;
-  if (isDaily && S.dayOffset === 0) { const t = document.createElement("span"); t.className = "today"; t.textContent = S.game === "bonus" ? "Group bonus" : "Today's graph"; eb.appendChild(t); }
+  if (isDaily && S.dayOffset === 0) { const t = document.createElement("span"); t.className = "today"; t.textContent = S.game === "bonus" ? "Group bonus" : ffMode(ti + S.dayOffset) ? "Fun Friday graph" : "Today's graph"; eb.appendChild(t); }
   const c = document.createElement("span"); c.textContent = q.cat; eb.appendChild(c);
   const n = document.createElement("span"); n.textContent = "Day " + (ti + S.dayOffset + 1); eb.appendChild(n);
   $("prompt").textContent = q.title; $("sub").textContent = q.sub || "";
@@ -2848,8 +3369,9 @@ function renderBank(){
     a.append(t, n); bank.appendChild(a);
   });
 }
-function setTab(t){ relock(); if (t === "res") loadResults(true); S.tab = t; $("tabDraw").setAttribute("aria-selected", String(t==="draw")); $("tabRes").setAttribute("aria-selected", String(t==="res")); $("panelDraw").hidden = t!=="draw"; $("panelRes").hidden = t!=="res"; if (t==="draw") renderDraw(); else renderResults(); }
+function setTab(t){ relock(); homeSoon(); if (t === "res") loadResults(true); S.tab = t; $("tabDraw").setAttribute("aria-selected", String(t==="draw")); $("tabRes").setAttribute("aria-selected", String(t==="res")); $("panelDraw").hidden = t!=="draw"; $("panelRes").hidden = t!=="res"; if (t==="draw") renderDraw(); else renderResults(); }
 function renderAll(full){
+  homeSoon();
   ensureIdeas();
   loadPtsForQ();
   $("tabDraw").textContent = { rank: "Rank yours", map: "Place yours" }[currentQ().kind] || "Draw yours";
@@ -2911,8 +3433,8 @@ $("newForm").addEventListener("submit", async (ev) => { ev.preventDefault(); $("
 $("backForm").addEventListener("submit", async (ev) => { ev.preventDefault(); $("authErr").textContent = ""; $("siBtn").disabled = true;
   try { const sess = await rpc("sign_in", { p_username: $("siUser").value, p_personal_code: $("siCode").value }); storeLogin(sess.username, sess.personal_code); afterSignIn(sess, false); } catch (e) { $("authErr").textContent = errText(e); } $("siBtn").disabled = false; });
 $("codeForm").addEventListener("submit", (ev) => { ev.preventDefault(); storeLogin($("cfUser").value, $("cfCode").value); boot(); });
-$("manageBtn").addEventListener("click", () => showScreen("groups"));
-$("openGroups2").addEventListener("click", () => { showScreen("groups"); window.scrollTo({ top: 0, behavior: "smooth" }); });
+$("manageBtn").addEventListener("click", () => showScreen("groups", "groups"));
+$("openGroups2").addEventListener("click", () => { showScreen("groups", "groups"); window.scrollTo({ top: 0, behavior: "smooth" }); });
 $("closeGroups").addEventListener("click", () => { showScreen("app"); go(); });
 $("groupSel").addEventListener("change", (ev) => { S.gid = ev.target.value || null; ls.set("gg-group", S.gid); renderGroupbar(); go(); });
 $("newGroupForm").addEventListener("submit", async (ev) => { ev.preventDefault(); $("groupErr").textContent = "";
@@ -2943,8 +3465,256 @@ $("submit").addEventListener("click", async ()=>{
   catch (e) { setStatus(errText(e), true); if (e.message === "not_signed_in") signOut(); }
   syncControls();
 });
+
+/* ---------------- home + focus ----------------
+   Home lists today's games (graph, This or that, Rate it, and a group bonus when there is one) with who in the group is in.
+   Tapping one opens it in "focus": just that game, a progress bar of today's games, and a Next button once it's answered. */
+S.view = "home";
+const GAME_NAMES = { graph: "Graph", tot: "This or that", rate: "Rate it", bonus: "Group bonus" };
+const GAME_COLOR = { graph: "var(--g-graph)", tot: "var(--g-tot)", rate: "var(--g-rate)", bonus: "var(--g-bonus)" };
+const initialOf = (s) => (String(s || "?").trim()[0] || "?").toUpperCase();
+const homeDay = () => todayIndex() + S.dayOffset;
+const dayGraphQ = () => withPeople((ffMode(homeDay()) && ffGraph(homeDay())) || qForDay(homeDay()));
+const gamesToday = () => ffMode(homeDay()) ? (ffGraph(homeDay()) ? ["graph"] : []).concat(ffGamesOK() ? ["tot", "rate"] : []) : bonusQ(homeDay()) && !(ffOn(homeDay()) && packKey(S.gid, homeDay()) === "custom") ? ["graph", "bonus", "tot", "rate"] : ["graph", "tot", "rate"];
+function gameDone(k){
+  const d = homeDay();
+  if (k === "graph") { const q = dayGraphQ(); return !!(q && S.mine[q.id]); }
+  if (k === "bonus") { const b = bonusQ(d), q = b && withPeople(b); return !!(q && S.mine[q.id]); }
+  const qid = gQid(k, d); return !!gValid(k, S.mine[qid], gItems(k, d));
+}
+function homeSoon(){ clearTimeout(homeSoon.t); homeSoon.t = setTimeout(() => { renderHome(); renderFocus(); }, 0); }
+
+/* ---------- Seasonal background ---------- */
+const SEASON_NAMES = { fall: "Falling leaves", winter: "Snow", spring: "Spring petals", summer: "Fireflies" };
+function seasonNow(d){ d = d || new Date(); const md = (d.getMonth() + 1) * 100 + d.getDate();
+  return md >= 1221 || md < 320 ? "winter" : md < 621 ? "spring" : md < 922 ? "summer" : "fall"; }
+function seasonPref(){ return ls.get("gg-season", "on") !== "off"; }
+const SB = { on: false, raf: 0, ps: [], t: 0, last: 0, season: "", theme: "" };
+const rnd = (a, b) => a + Math.random() * (b - a);
+const SB_DARK = { dark: 1, grape: 1, terminal: 1, ocean: 1 };
+function sbTheme(){ const t = document.documentElement.dataset.theme || ""; return t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); }
+function sbPalette(season, th){
+  const dark = !!SB_DARK[th];
+  if (season === "fall") return dark ? ["#e0874a", "#d9a441", "#c25a3a", "#b88a3e"] : ["#d0702f", "#d99a2b", "#b04a2c", "#a7802f"];
+  if (season === "winter") return dark ? ["#ffffff", "#dfe8f2", "#c9d8e8"] : ["#a9bdd3", "#bccbdc", "#93abc6"];
+  if (season === "spring") return dark ? ["#f4b8cc", "#f7d3df", "#ffffff", "#e98fb0"] : ["#ec9ab7", "#f2b9cb", "#e47fa5", "#f6cdd9"];
+  return dark ? ["#ffe58a", "#fff1b0", "#ffd35c"] : ["#f2b632", "#f5c84f", "#e8a420"];
+}
+function sbLobed(lobes, valley){ const pts = [], n = lobes.length;
+  for (let i = 0; i < n; i++) { const a = lobes[i], b = lobes[(i + 1) % n], A = a.ang * Math.PI / 180;
+    pts.push([Math.cos(A - .34) * a.len * .74, Math.sin(A - .34) * a.len * .74], [Math.cos(A - .14) * a.len * .66, Math.sin(A - .14) * a.len * .66], [Math.cos(A) * a.len, Math.sin(A) * a.len], [Math.cos(A + .14) * a.len * .66, Math.sin(A + .14) * a.len * .66], [Math.cos(A + .34) * a.len * .74, Math.sin(A + .34) * a.len * .74]);
+    let B = b.ang; if (B < a.ang) B += 360; const mid = (a.ang + B) / 2 * Math.PI / 180;
+    if (i < n - 1) pts.push([Math.cos(mid) * valley, Math.sin(mid) * valley]); }
+  return pts; }
+const SB_MAPLE = sbLobed([{ ang: 150, len: .62 }, { ang: 205, len: .95 }, { ang: 270, len: 1.15 }, { ang: 335, len: .95 }, { ang: 30, len: .62 }], .32);
+const SB_MAPLE_V = [[150, .55], [205, .85], [270, 1.05], [335, .85], [30, .55]];
+const SB_OVAL = (() => { const r = []; for (let i = 0; i <= 14; i++) { const t = i / 14, y = -1.2 + t * 2; let w = Math.sin(Math.pow(t, .75) * Math.PI) * .58; if (t < .35) w *= Math.pow(t / .35, 2.2); r.push([w + (i % 2 && i > 1 && i < 14 ? .06 : 0), y]); } return r.concat(r.slice(0, -1).reverse().map(([x, y]) => [-x, y])); })();
+function sbSpawn(season, w, h, fresh){
+  const p = { x: rnd(0, w), y: fresh ? rnd(0, h) : rnd(-40, -12), rot: rnd(0, 6.28), phase: rnd(0, 6.28) };
+  if (season === "fall") Object.assign(p, { shape: Math.random() < .55 ? "maple" : "oval", s: rnd(9, 14), vy: rnd(16, 30), sway: rnd(14, 28), swayF: rnd(.5, 1), spin: rnd(-1, 1), flipF: rnd(.6, 1.3) });
+  else if (season === "winter") { const d = Math.random(); Object.assign(p, { s: 1 + d * 2.6, vy: 10 + d * 22, sway: rnd(6, 14), swayF: rnd(.3, .7), a: .45 + d * .5 }); }
+  else if (season === "spring") Object.assign(p, { s: rnd(6, 9), vy: rnd(10, 20), vx: rnd(18, 34), sway: rnd(8, 16), swayF: rnd(.8, 1.4), spin: rnd(-1.6, 1.6), flipF: rnd(1, 2), x: fresh ? rnd(0, w) : rnd(-60, w * .6) });
+  else Object.assign(p, { y: rnd(h * .25, h), s: rnd(2, 3), vx: rnd(-6, 6), vy: rnd(-6, 6), glowF: rnd(.4, .9), wander: rnd(0, 100) });
+  return p; }
+function sbReset(){
+  const c = $("seasonBg"), d = Math.min(window.devicePixelRatio || 1, 2), w = innerWidth, h = innerHeight;
+  c.width = Math.round(w * d); c.height = Math.round(h * d); SB.ctx = c.getContext("2d"); SB.ctx.setTransform(d, 0, 0, d, 0, 0); SB.w = w; SB.h = h;
+  SB.season = seasonNow(); SB.theme = sbTheme(); const cols = sbPalette(SB.season, SB.theme);
+  const base = { fall: 14, winter: 40, spring: 18, summer: 16 }[SB.season], k = Math.min(1.6, Math.max(.7, (w * h) / (390 * 844)));
+  SB.ps = Array.from({ length: Math.round(base * k) }, () => { const p = sbSpawn(SB.season, w, h, true); p.col = cols[(Math.random() * cols.length) | 0]; return p; });
+}
+function sbStep(dt){
+  const { w, h, season } = SB; SB.t += dt; const t = SB.t, gust = season === "spring" ? .55 + .45 * Math.sin(t * .35) + .25 * Math.sin(t * 1.1) : 1, cols = sbPalette(season, SB.theme);
+  for (const p of SB.ps) {
+    if (season === "summer") { p.wander += dt; p.vx = Math.max(-9, Math.min(9, p.vx + Math.sin(p.wander * .7 + p.phase) * 4 * dt)); p.vy = Math.max(-9, Math.min(9, p.vy + Math.cos(p.wander * .5 + p.phase) * 4 * dt)); p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.x < -10) p.x = w + 10; if (p.x > w + 10) p.x = -10; if (p.y < h * .15) p.vy = Math.abs(p.vy); if (p.y > h + 10) p.y = h * .3; continue; }
+    p.y += p.vy * dt * (season === "spring" ? .6 + gust * .5 : 1);
+    p.x += Math.cos(t * p.swayF + p.phase) * p.sway * dt + (p.vx || 0) * gust * dt;
+    if (p.spin) p.rot += p.spin * dt * (season === "spring" ? gust : 1);
+    if (p.y > h + 24 || p.x > w + 40) { Object.assign(p, sbSpawn(season, w, h, false)); p.col = cols[(Math.random() * cols.length) | 0]; }
+  } }
+function sbPath(ctx, pts, k){ ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x * k, y * k) : ctx.moveTo(x * k, y * k)); ctx.closePath(); }
+function sbDraw(){
+  const { ctx, w, h, season, t } = SB, dark = !!SB_DARK[SB.theme], alpha = dark ? .55 : .6;
+  ctx.clearRect(0, 0, w, h);
+  for (const p of SB.ps) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    if (season === "fall") {
+      ctx.rotate(p.rot); const f = Math.cos(t * p.flipF + p.phase); ctx.scale(Math.sign(f || 1) * Math.max(.2, Math.abs(f)), 1);
+      ctx.globalAlpha = alpha; ctx.fillStyle = p.col; sbPath(ctx, p.shape === "maple" ? SB_MAPLE : SB_OVAL, p.s); ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,.28)"; ctx.lineWidth = .8; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(0, p.s * (p.shape === "maple" ? .55 : .45) + p.s * .12); ctx.lineTo(0, 0);
+      if (p.shape === "maple") for (const [a, l] of SB_MAPLE_V) { const A = a * Math.PI / 180; ctx.moveTo(0, 0); ctx.lineTo(Math.cos(A) * l * p.s * .85, Math.sin(A) * l * p.s * .85); }
+      else { ctx.lineTo(0, -p.s); for (let i = 0; i < 4; i++) { const y = (-.75 + i * .38) * p.s; ctx.moveTo(0, y + .25 * p.s); ctx.lineTo(.32 * p.s, y); ctx.moveTo(0, y + .25 * p.s); ctx.lineTo(-.32 * p.s, y); } }
+      ctx.stroke();
+    } else if (season === "winter") {
+      ctx.globalAlpha = p.a * (dark ? .75 : .85); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(0, 0, p.s, 0, 6.2832); ctx.fill();
+    } else if (season === "spring") {
+      ctx.rotate(p.rot); ctx.scale(.45 + .55 * Math.abs(Math.cos(t * p.flipF + p.phase)), 1); ctx.globalAlpha = alpha; ctx.fillStyle = p.col; const s = p.s;
+      ctx.beginPath(); ctx.moveTo(0, -s); ctx.bezierCurveTo(s * .8, -s * .6, s * .6, s * .6, 0, s * .8); ctx.bezierCurveTo(-s * .6, s * .6, -s * .8, -s * .6, 0, -s); ctx.fill();
+    } else {
+      const g = Math.max(0, Math.sin(t * p.glowF * 2 + p.phase)), a = (dark ? .2 : .12) + g * (dark ? .7 : .55), r = p.s * 5, gr = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+      gr.addColorStop(0, p.col); gr.addColorStop(.25, p.col + "99"); gr.addColorStop(1, p.col + "00");
+      ctx.globalAlpha = a; ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = Math.min(1, a + .2); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(0, 0, p.s * .6, 0, 6.2832); ctx.fill();
+    }
+    ctx.restore();
+  } }
+const sbReduced = matchMedia("(prefers-reduced-motion: reduce)");
+function sbFrame(now){
+  SB.raf = 0; if (!SB.on) return;
+  const dt = Math.min(.05, (now - (SB.last || now)) / 1000); SB.last = now;
+  sbStep(dt); sbDraw(); SB.raf = requestAnimationFrame(sbFrame); }
+function seasonSync(){
+  const b = document.body, want = seasonPref() && b.classList.contains("scr-app") && b.classList.contains("v-home") && !document.hidden;
+  b.classList.toggle("season-on", want);
+  if (!want) { SB.on = false; if (SB.raf) cancelAnimationFrame(SB.raf); SB.raf = 0; return; }
+  if (!SB.ctx || SB.season !== seasonNow() || SB.theme !== sbTheme() || SB.w !== innerWidth || SB.h !== innerHeight) sbReset();
+  if (sbReduced.matches) { SB.on = false; sbDraw(); return; }
+  SB.on = true; if (!SB.raf) { SB.last = 0; SB.raf = requestAnimationFrame(sbFrame); } }
+function seasonRefresh(){ SB.ctx = null; seasonSync(); }
+document.addEventListener("visibilitychange", seasonSync);
+let sbRz; addEventListener("resize", () => { clearTimeout(sbRz); sbRz = setTimeout(seasonRefresh, 200); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", seasonRefresh);
+sbReduced.addEventListener("change", seasonRefresh);
+function renderPrefs(){
+  const t = THEMES.find(x => x.id === curTheme()); $("prefThemeName").textContent = t ? t.name : "Auto";
+  const on = seasonPref(); $("seasonSw").setAttribute("aria-checked", String(on));
+  $("seasonNote").textContent = "Right now: " + SEASON_NAMES[seasonNow()].toLowerCase() + ". Changes with the seasons." + (sbReduced.matches ? " Stays still with reduced motion." : ""); }
+$("seasonSw").addEventListener("click", () => { ls.set("gg-season", seasonPref() ? "off" : "on"); renderPrefs(); seasonSync(); });
+function applyView(){ document.body.classList.toggle("v-home", S.view !== "focus"); document.body.classList.toggle("v-focus", S.view === "focus"); if (typeof seasonSync === "function") seasonSync(); }
+function checkEl(cls){ const s = document.createElement("span"); s.className = cls; s.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>'; return s; }
+function listNames(ms){ const n = ms.map(m => m.display_name); return n.length <= 2 ? n.join(" and ") : n.slice(0, -1).join(", ") + " and " + n[n.length - 1]; }
+function renderHome(){
+  if (!S.me || !$("homeView")) return;
+  const d = homeDay(), dt = dayDate(d), g = group(), short = dt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  $("hDay").textContent = S.dayOffset === -1 ? "Yesterday" : dt.toLocaleDateString(undefined, { weekday: "long" });
+  $("hDate").textContent = short + " · Day " + (d + 1);
+  $("hToday").hidden = S.dayOffset === 0;
+  $("hGroupName").textContent = g ? g.name : "No group yet";
+  const sel = $("hGroupSel"); sel.hidden = S.groups.length < 2; $("hGroupChev").style.display = S.groups.length < 2 ? "none" : "";
+  if (!sel.hidden && sel.dataset.k !== S.groups.map(x => x.id + x.name).join() + S.gid) {
+    sel.innerHTML = ""; S.groups.forEach(x => { const o = document.createElement("option"); o.value = x.id; o.textContent = x.name; o.selected = x.id === S.gid; sel.appendChild(o); });
+    sel.dataset.k = S.groups.map(x => x.id + x.name).join() + S.gid; }
+  $("qMenuBtn").style.background = colorOf(S.me.username).c; $("hMeTxt").textContent = initialOf(S.me.display_name);
+
+  /* who's in today */
+  const info = streakInfo(), who = $("hWho");
+  $("hSolo").hidden = !!g || !S.loaded;
+  who.hidden = !(g && info && S.dayOffset === 0 && !S.qid && todayIndex() === S.act.t);
+  if (!who.hidden) {
+    const av = $("hAvs"); av.innerHTML = "";
+    const meU = S.me.username, rank = (m) => (info.answered(m.username) ? 0 : 2) + (m.username === meU ? 0 : 1);
+    g.members.slice().sort((a, b) => rank(a) - rank(b) || a.display_name.localeCompare(b.display_name)).forEach(m => {
+      const done = info.answered(m.username), isMe = m.username === meU, was = info.nudged.has(m.username), nm = isMe ? "You" : m.display_name;
+      const b = document.createElement(done || isMe ? "span" : "button"); b.className = "hav" + (done ? "" : " todo"); b.textContent = initialOf(m.display_name); b.title = nm;
+      if (done) { b.style.background = colorIn(g, m.username).c; b.appendChild(checkEl("ok")); b.setAttribute("aria-label", nm + " answered"); b.setAttribute("role", "img"); }
+      else if (isMe) { b.setAttribute("aria-label", "You haven't answered yet"); b.setAttribute("role", "img"); }
+      else { b.type = "button"; b.disabled = was; b.setAttribute("aria-label", (was ? "Already nudged " : "Nudge ") + m.display_name); b.addEventListener("click", () => openNudge(m)); }
+      av.appendChild(b); });
+    $("hStreakN").textContent = info.cur; $("hStreak").classList.toggle("hot", info.cur >= 3);
+    const others = g.members.filter(m => m.username !== meU && !info.answered(m.username));
+    $("hWhoTxt").textContent = info.todayDone ? "Everyone drew today's graph." + (info.best > info.cur ? " Best streak: " + info.best + "." : "")
+      : !others.length ? "Everyone else is in. Your turn." : listNames(others) + (others.length === 1 ? " hasn't" : " haven't") + " drawn today's graph yet." + (others.some(m => !info.nudged.has(m.username)) ? " Tap to nudge." : "")
+     ;
+  }
+
+  /* Fun Friday switch */
+  const ffOK = ffOn(d), ff = ffMode(d), pk = packOf(S.gid, d), rnd = S.gthemes[S.gid] === "random";
+  document.body.classList.toggle("ffm", ff); $("hSw").hidden = !ffOK;
+  $("hSw").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.ff === "1") === ff)));
+  if (ffOK) { const was = S.ff; S.ff = true; const all = gamesToday(), left = all.some(k => !gameDone(k)); S.ff = was; $("hSwDot").hidden = ff || !left || !all.length; }
+  const ffEmpty = ff && !ffGraph(d);
+  $("hHero").classList.toggle("ffempty", ffEmpty);
+
+  /* today's graph */
+  const gq = dayGraphQ(), gDone = !!S.mine[gq.id], n = g ? groupCount(gq.id) : 0;
+  $("hHeroLab").textContent = ff ? "Fun Friday graph · " + pk.name + (rnd ? " (random)" : "") : S.dayOffset === 0 ? "Today's graph" : "Graph · " + short;
+  $("hHeroT").textContent = ffEmpty ? "No idea voted in yet" : gq.title; $("hHeroS").textContent = ffEmpty ? "Suggest a question and vote. The top idea becomes your Fun Friday graph." : gq.sub || "";
+  $("hHeroCta").textContent = ffEmpty ? "Suggest an idea" : gDone ? "See results" : ({ rank: "Rank yours", map: "Place yours" }[gq.kind] || "Draw yours");
+  $("hHeroMeta").textContent = gDone ? (g ? "You're in" + (n > 1 ? " · " + n + " answered" : "") : "You're in") : n ? n + " answered" : "";
+
+  /* group bonus, This or that, Rate it */
+  const bq = !ff && !(ffOK && packKey(S.gid, d) === "custom") && bonusQ(d), bt = $("hBonus"); bt.hidden = !bq;
+  $("hTot").hidden = $("hRate").hidden = ff && !ffGamesOK();
+  if (bq) { const q = withPeople(bq), done = !!S.mine[q.id]; $("hBonusT").textContent = q.title; $("hBonusOk").hidden = !done; $("hBonusSt").textContent = done ? "Done · See results" : "Just for " + (g ? g.name : "your group"); }
+  const theme = GTHEMES[gThemeIdx(d)].name, td = gameDone("tot"), rd = gameDone("rate");
+  $("hTotT").textContent = theme + " picks"; $("hRateT").textContent = theme + " ratings";
+  $("hTotOk").hidden = !td; $("hRateOk").hidden = !rd;
+  $("hTotSt").textContent = td ? "Done · See results" : GN + " quick picks";
+  $("hRateSt").textContent = rd ? "Done · See results" : "Rate " + GN + " things";
+
+  /* chat preview for today's graph */
+  const ch = $("hChat"); ch.hidden = !g;
+  if (g) { const c = S.comments[rkey(gq.id)], all = c ? c.list : [], said = all.filter(x => x.kind !== "rule"), last = said[said.length - 1], tx = $("hChatTx");
+    tx.innerHTML = ""; if (last) { const b = document.createElement("b"); b.textContent = last.name + ": "; tx.append(b, last.body); } else tx.textContent = "Group chat: nothing yet today";
+    $("hChatN").textContent = all.length; $("hChatN").hidden = !all.length; ch.setAttribute("aria-label", "Group chat" + (last ? ", latest from " + last.name : "") + (all.length ? ", " + all.length + " messages" : "")); }
+}
+function renderFocus(){
+  if (S.view !== "focus") return;
+  const list = gamesToday(), cur = S.game === "bonus" ? "bonus" : S.game || "graph", segs = $("fSegs"); segs.innerHTML = "";
+  list.forEach(k => { const b = document.createElement("button"), done = gameDone(k); b.type = "button"; b.className = done ? "done" : ""; b.style.setProperty("--gc", GAME_COLOR[k]);
+    if (k === cur) b.setAttribute("aria-current", "true"); b.setAttribute("aria-label", GAME_NAMES[k] + (done ? ", done" : ""));
+    b.appendChild(document.createElement("i")); b.addEventListener("click", () => { if (k !== cur) openFocus(k); }); segs.appendChild(b); });
+  $("fCount").textContent = (list.indexOf(cur) + 1) + "/" + list.length;
+  const isGraph = cur === "graph" || cur === "bonus", fn = $("fNext");
+  fn.hidden = !gameDone(cur) || (isGraph ? S.tab !== "res" : !!S.gedit);
+  if (fn.hidden) return;
+  const i = list.indexOf(cur); let nx = null;
+  for (let j = 1; j < list.length; j++) { const k = list[(i + j) % list.length]; if (!gameDone(k)) { nx = k; break; } }
+  const b = $("fNextBtn"); b.style.setProperty("--gc", nx ? GAME_COLOR[nx] : "var(--ink)"); b.style.color = nx === "tot" || nx === "rate" ? "#10151d" : "var(--sheet)";
+  b.dataset.g = nx || ""; $("fNextT").textContent = nx ? "Next: " + GAME_NAMES[nx] : "Back to today";
+}
+function openFocus(k){
+  setMenu(false); relock();
+  if (S.view !== "focus" && !(history.state && history.state.gf)) { try { history.pushState({ gf: 1 }, ""); } catch (e) {} }
+  S.view = "focus"; applyView();
+  if (k !== S.game) setGame(k); else renderGame();
+  if (k === "graph" || k === "bonus") setTab(S.mine[currentQ().id] ? "res" : "draw");
+  window.scrollTo({ top: 0 }); renderFocus();
+}
+function leaveFocus(){
+  if (S.view !== "focus") return; relock(); S.view = "home"; S.gedit = null;
+  if (S.game === "bonus") { S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph"; go(); }
+  applyView(); renderHome(); window.scrollTo({ top: 0 });
+}
+function closeFocus(){ if (history.state && history.state.gf) history.back(); else leaveFocus(); }
+window.addEventListener("popstate", () => { if (!$("menuBack").hidden) setMenu(false); if (S.view === "focus") leaveFocus(); });
+$("fClose").addEventListener("click", closeFocus);
+$("fNextBtn").addEventListener("click", (e) => { const k = e.currentTarget.dataset.g; if (k) openFocus(k); else closeFocus(); });
+$("hHero").addEventListener("click", () => { if ($("hHero").classList.contains("ffempty")) openIdeas(); else openFocus("graph"); });
+$("hSw").addEventListener("click", (e) => { const b = e.target.closest("button[data-ff]"); if (!b) return; const v = b.dataset.ff === "1"; if (v === S.ff) return; S.ff = v; S.qid = null; S.results = S.results || {}; go(); });
+$("hBonus").addEventListener("click", () => openFocus("bonus"));
+$("hTot").addEventListener("click", () => openFocus("tot"));
+$("hRate").addEventListener("click", () => openFocus("rate"));
+$("hChat").addEventListener("click", () => { openFocus("graph"); setTimeout(() => $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }), 60); });
+$("hCal").addEventListener("click", openCal);
+$("hToday").addEventListener("click", () => { S.dayOffset = 0; S.qid = null; go(); });
+$("hGroup").addEventListener("click", () => { if (S.groups.length < 2) showScreen("groups"); });
+$("hGroupSel").addEventListener("change", (e) => { S.gid = e.target.value || null; ls.set("gg-group", S.gid); renderGroupbar(); go(); });
+$("hSoloBtn").addEventListener("click", () => showScreen("groups"));
+function renderMenu(){
+  if (!S.me) return;
+  const av = $("mAv"); av.textContent = initialOf(S.me.display_name); av.style.background = colorOf(S.me.username).c;
+  $("mName").textContent = S.me.display_name; $("mUser").textContent = "@" + S.me.username;
+  const box = $("mGroups"); box.innerHTML = "";
+  S.groups.forEach(x => { const b = document.createElement("button"); b.type = "button"; b.textContent = x.name; b.setAttribute("aria-pressed", String(x.id === S.gid));
+    b.addEventListener("click", () => { setMenu(false); if (x.id === S.gid) return; S.gid = x.id; ls.set("gg-group", S.gid); renderGroupbar(); go(); }); box.appendChild(b); });
+  const add = document.createElement("button"); add.type = "button"; add.className = "add"; add.textContent = S.groups.length ? "+ New group" : "Start or join a group";
+  add.addEventListener("click", () => { setMenu(false); showScreen("groups"); }); box.appendChild(add);
+  $("mThemeName").textContent = "Theme, background";
+}
+$("mProfile").addEventListener("click", () => { setMenu(false); showScreen("groups", "profile"); });
+$("mGroupsRow").addEventListener("click", () => { setMenu(false); showScreen("groups", "groups"); });
+$("mPrefs").addEventListener("click", () => { setMenu(false); showScreen("groups", "prefs"); });
+$("prefTheme").addEventListener("click", () => $("themeBtn").click());
+$("mCal").addEventListener("click", () => { setMenu(false); openCal(); });
+$("mNews").addEventListener("click", () => { setMenu(false); openNews(); });
+applyView();
+
 function fromHash(){ S.qid = null; go(); } // one question a day: links to other questions are ignored
 window.addEventListener("hashchange", fromHash);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!S.loaded) return; if (S.tab === "draw") renderDraw(); else renderResults(); });
 let rz; window.addEventListener("resize", ()=>{ clearTimeout(rz); rz = setTimeout(()=>{ if (S.tab === "draw") renderDraw(); else renderResults(); }, 120); });
 
 fromHash();
