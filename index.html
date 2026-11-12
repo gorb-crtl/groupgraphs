@@ -1755,28 +1755,24 @@ function renderMyStats(g, T){
 }
 
 /* ---------------- what's new ----------------
-   Newest first. Add an entry at the top whenever an update goes live; "id" must be new each time. */
+   Public changelog: anyone using the app can read it. Newest entry first; "id" must be new
+   each time (a new id shows the one-time banner to returning players).
+   Style for every line:
+   - A short title (2-4 words) and one short sentence about what players can now do.
+   - Plain, professional wording. Describe the feature, not how it was built.
+   - Never name a person (no owner, friends or testers) and no internal details
+     (database, servers, test version, bugs by name). Group small fixes into one
+     "Fixes and improvements" line.
+   - Keep each update to about 3-6 lines. */
 const CHANGES = [
-  { id: "2026-11-10b", date: "Nov 10, later", items: [
-    ["Two new games", "This or that and Rate it 1–10, next to the daily graph. Both share one theme a day."],
-    ["Play solo", "the games and the graph work without a group. Your answers count in every group you join."],
-    ["Group bonus", "a group's winning question idea is now an extra Bonus question, and the daily graph stays the same for everyone."],
-    ["Answers lock", "once you submit. Tap Unlock or Change my answers to redo it."],
-    ["One Menu", "group chat, summary, ideas, reminders, stats and feedback are now under Menu."],
-    ["Two new color themes", "Blossom and Ocean, under Theme."],
-    ["Smaller fixes", "Sign in is easier to find, example text is darker, and a slow start no longer opens Groups & profile."],
-  ] },
-  { id: "2026-11-10", date: "Nov 10", items: [
-    ["Your stats", "a personal page with your streak, best match, how often you're the odd one out, and your hottest takes."],
-    ["Results are in", "a notification when the last person in your group answers."],
-    ["Pick any color", "use the color wheel or a hex code under Groups & profile."],
-    ["Feedback", "now goes straight to Garrett."],
-    ["Group streak", "how many days in a row everyone answered."],
-    ["Nudge", "poke a friend who hasn't answered yet, with your own message."],
-    ["Themes", "Notebook, Lab, Sunset, Grape, Terminal and more, under Theme."],
-    ["New question at midnight Central", "for everyone, wherever you are."],
-    ["Calendar", "tap the date to jump to any day."],
-    ["Group summary and weekly wrap", "plus question ideas you can vote on."],
+  { id: "2026-11-10b", date: "Nov 10", items: [
+    ["New games", "This or that and Rate it, alongside the daily graph."],
+    ["Solo play", "Play without a group. Your answers count in every group you join."],
+    ["Group bonus", "Each group can add its own bonus question."],
+    ["Your stats", "See your streak, best match and hottest takes."],
+    ["Notifications", "Get notified when your group's results are ready, and nudge friends who haven't answered."],
+    ["Themes and colors", "New color themes and a custom color picker."],
+    ["Fixes and improvements", "A simpler menu, answer locking, a calendar and smaller polish."],
   ] },
 ];
 function newsSeen(){ try { return localStorage.getItem("gg-news") || ""; } catch (e) { return ""; } }
