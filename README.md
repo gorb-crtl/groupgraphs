@@ -13,9 +13,9 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - **Results are in:** when the last person in a group answers today's question, everyone else gets a notification.
 - **Your stats:** a personal page with your streak, best match, how often you're the odd one out, and your hottest takes.
 - **Groups:** the Groups screen in the menu lists your groups and members. Hosts add people, pick the Fun Friday theme, rename the group, hand over hosting or delete it.
-- **Preferences:** color theme, the seasonal background (leaves, snow, petals or fireflies behind the home screen) and the daily reminder.
+- **Settings (in Profile):** color theme, the seasonal background (leaves, snow, petals or fireflies behind the home screen) and the daily reminder.
 - **Feedback:** members send bugs and ideas from the Feedback box. It all goes to the app owner's inbox (the host of the oldest group when `feedback.sql` is run; change it with `update gg_settings set v = 'username' where k = 'owner';`).
-- **Daily reminder:** under Preferences, pick an hour and turn on phone notifications (iPhone: add the site to your Home Screen first), or add a repeating event to Apple/Outlook/Google Calendar. Notifications skip days you've already answered.
+- **Daily reminder:** under Profile, pick an hour and turn on phone notifications (iPhone: add the site to your Home Screen first), or add a repeating event to Apple/Outlook/Google Calendar. Notifications skip days you've already answered.
 
 ## Files
 
