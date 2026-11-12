@@ -477,6 +477,26 @@ body.scr-auth header.top .daynav, body.scr-code header.top .daynav { visibility:
 body.v-home #appMain, body.v-focus #homeView { display: none !important; }
 #appMain { display: flex; flex-direction: column; gap: 16px; }
 #homeView { display: flex; flex-direction: column; gap: 16px; }
+/* Seasonal background: one canvas under the page, only on the home screen */
+#seasonBg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; display: none; }
+body.season-on #seasonBg { display: block; }
+.wrap { position: relative; z-index: 1; }
+/* Profile / Groups / Preferences panes */
+.prefrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; }
+.prefrow .pt { display: flex; flex-direction: column; min-width: 0; }
+.prefrow .pt b { font-size: 16px; }
+.prefrow .pt span { font-size: 13px; color: var(--ink-2); }
+.prefbtn { border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 10px; min-height: 44px; padding: 0 14px; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.sw2 { position: relative; flex: none; width: 52px; height: 32px; border-radius: 99px; border: 0; background: var(--grid-major); cursor: pointer; padding: 0; transition: background .15s; }
+.sw2::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .15s; }
+.sw2[aria-checked="true"] { background: var(--pen); }
+.sw2[aria-checked="true"]::after { transform: translateX(20px); }
+@media (prefers-reduced-motion: reduce) { .sw2, .sw2::after { transition: none; } }
+.gcard { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+.gcard + .gcard { margin-top: 12px; }
+.gcard h4.gsub { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.gcard .ffbox { padding: 0; }
+
 #homeView[hidden] { display: none !important; }
 
 .icbtn { position: relative; flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); display: grid; place-items: center; padding: 0; cursor: pointer; }
@@ -662,6 +682,7 @@ h1.prompt { min-height: 2.24em; }
 <body>
 <div class="betabadge" style="background:#e34948;color:#fff;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;text-align:center;padding:calc(6px + env(safe-area-inset-top, 0px)) 12px 6px">Test version · <a href="../" style="color:#fff">open the live app</a></div>
 
+<canvas id="seasonBg" aria-hidden="true"></canvas>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -769,7 +790,8 @@ h1.prompt { min-height: 2.24em; }
   </div>
   <div class="mlist">
     <button type="button" id="mCal"><span>Past days</span><span class="mv">Calendar</span></button>
-    <button type="button" id="mTheme"><span>Color theme</span><span class="mv" id="mThemeName"></span></button>
+    <button type="button" id="mGroupsRow"><span>Groups</span><span class="mv">Members, Fun Friday</span></button>
+    <button type="button" id="mPrefs"><span>Preferences</span><span class="mv" id="mThemeName"></span></button>
     <button type="button" id="mNews"><span>What's new<span class="newsdot" id="newsDot" hidden></span></span><span class="mv">Changelog</span></button>
   </div>
   <button type="button" class="btn" id="mClose">Close</button>
@@ -819,12 +841,12 @@ h1.prompt { min-height: 2.24em; }
   </section>
 
   <section class="panel" id="groupsPanel" hidden>
-    <div class="row" style="justify-content:space-between;align-items:center"><h2>Groups &amp; profile</h2><button class="btn ghost" id="closeGroups">Done</button></div>
-    <div>
+    <div class="row" style="justify-content:space-between;align-items:center"><h2 id="gpTitle">Groups</h2><button class="btn ghost" id="closeGroups">Done</button></div>
+    <div data-pane="profile">
       <h3>Your username</h3>
       <p>Send <b id="myUser"></b> to a group's host so they can add you.</p>
     </div>
-    <div>
+    <div data-pane="profile">
       <h3>Your color</h3>
       <p class="cphint">You'll be this color on every chart. Tap the circle for the color wheel, or type a hex code.</p>
       <div class="cprow">
@@ -836,24 +858,28 @@ h1.prompt { min-height: 2.24em; }
       <div class="cpprev" id="colorPrev"><svg viewBox="0 0 120 24" aria-hidden="true"><path d="M2 20 C 30 20, 40 4, 64 8 S 100 18, 118 4" fill="none" stroke-width="3" stroke-linecap="round"/></svg><span id="colorNote"></span></div>
       <div class="err" id="colorErr" role="alert"></div>
     </div>
-    <div class="divider"></div>
-    <div class="remind" id="remindBox" style="display:flex;flex-direction:column;gap:10px">
+    <div data-pane="prefs" style="display:flex;flex-direction:column;gap:4px">
+      <h3>Look</h3>
+      <div class="prefrow"><div class="pt"><b>Color theme</b><span id="prefThemeName"></span></div><button class="prefbtn" id="prefTheme" type="button">Change</button></div>
+      <div class="prefrow"><div class="pt"><b id="seasonLbl">Seasonal background</b><span id="seasonNote"></span></div><button class="sw2" id="seasonSw" type="button" role="switch" aria-checked="true" aria-labelledby="seasonLbl"></button></div>
+    </div>
+    <div class="divider" data-pane="prefs"></div>
+    <div class="remind" id="remindBox" data-pane="prefs" style="display:flex;flex-direction:column;gap:10px">
       <h3>Daily reminder</h3>
       <div class="row" style="align-items:center"><label for="remindHour" style="font-weight:700;font-size:14px;color:var(--ink-2)">Remind me at</label><select id="remindHour"></select><span class="hint2">Notifications skip days you've already answered.</span></div>
       <div class="row" style="align-items:center"><button class="btn primary" id="pushBtn" type="button">Turn on notifications</button><span class="hint2" id="pushState"></span></div>
       <p class="hint2" id="pushHelp" hidden></p>
       <div class="row" style="align-items:center"><span class="hint2">Or use your calendar:</span><a class="btn" id="icsBtn" href="#">Apple / Outlook</a><a class="btn" id="gcalBtn" target="_blank" rel="noopener" href="#">Google Calendar</a></div>
     </div>
-    <div class="divider"></div>
-    <div id="groupDetail"></div>
-    <div class="divider"></div>
-    <form id="newGroupForm" class="row">
+    <div id="groupDetail" data-pane="groups"></div>
+    <div class="divider" data-pane="groups"></div>
+    <form id="newGroupForm" class="row" data-pane="groups">
       <div class="field"><label for="ngName">Start a new group (you'll be the host)</label><input id="ngName" maxlength="40" placeholder="The Nerds"></div>
       <button class="btn" type="submit">Create group</button>
     </form>
     <div class="err" id="groupErr" role="alert"></div>
-    <div class="divider"></div>
-    <div class="row" style="align-items:center">
+    <div class="divider" data-pane="profile"></div>
+    <div class="row" data-pane="profile" style="align-items:center">
       <span style="color:var(--ink-2);font-size:14px">Personal code: <b id="myCode" style="font-family:var(--f-mono)">••••••</b></span>
       <button class="btn ghost" id="revealCode">Show</button>
       <span class="spacer" style="flex:1"></span>
@@ -1507,7 +1533,7 @@ $("pushBtn").addEventListener("click", async () => {
   btn.disabled = false; renderRemind();
 });
 $("remindHour").addEventListener("change", async () => { ls.set("gg-remind-hour", remindHour()); const sub = await currentSub(); if (sub) { try { await savePush(sub); } catch (e) {} } renderRemind(); });
-$("notifJump").addEventListener("click", () => { showScreen("groups"); setTimeout(() => $("remindBox").scrollIntoView({ behavior: "smooth", block: "start" }), 50); });
+$("notifJump").addEventListener("click", () => { showScreen("groups", "prefs"); setTimeout(() => $("remindBox").scrollIntoView({ behavior: "smooth", block: "start" }), 50); });
 
 $("chatJump").addEventListener("click", () => { if (S.view !== "focus" || S.game !== "graph") openFocus("graph"); $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }); setTimeout(() => $("chatInput").focus({ preventScroll: true }), 400); });
 
@@ -1851,7 +1877,7 @@ function renderThemes(){ const g = $("themeGrid"); g.innerHTML = ""; const cur =
   THEMES.forEach(t => { const b = document.createElement("button"); b.type = "button"; b.className = "thopt"; b.dataset.t = t.id || "auto"; b.setAttribute("aria-pressed", String(t.id === cur));
     const sw = document.createElement("span"); sw.className = "sw"; t.sw.forEach(c => { const i = document.createElement("i"); i.style.background = c; sw.appendChild(i); });
     const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = t.name; const sm = document.createElement("small"); sm.textContent = t.note; nm.appendChild(sm);
-    b.append(sw, nm); b.addEventListener("click", () => { try { if (t.id) localStorage.setItem("gg-theme", t.id); else localStorage.removeItem("gg-theme"); } catch (e) {} applyTheme(t.id); renderThemes(); renderAll(true); });
+    b.append(sw, nm); b.addEventListener("click", () => { try { if (t.id) localStorage.setItem("gg-theme", t.id); else localStorage.removeItem("gg-theme"); } catch (e) {} applyTheme(t.id); renderThemes(); renderAll(true); if (typeof renderPrefs === "function") renderPrefs(); seasonRefresh(); });
     g.appendChild(b); }); }
 $("themeBtn").addEventListener("click", () => { renderThemes(); $("themeBack").hidden = false; });
 $("themeClose").addEventListener("click", () => { $("themeBack").hidden = true; });
@@ -2451,13 +2477,16 @@ function renderRateRes(box, items, list, me, solo){
 document.addEventListener("visibilitychange", () => { if (document.hidden && S.gedit) { S.gedit = null; S.gdraft = {}; renderGame(); } });
 
 /* ---------------- screens: sign in, groups ---------------- */
-function showScreen(name){
+const PANE_TITLES = { profile: "Profile", groups: "Groups", prefs: "Preferences" };
+function showScreen(name, pane){
+  if (name === "groups") { S.pane = PANE_TITLES[pane] ? pane : "groups"; $("gpTitle").textContent = PANE_TITLES[S.pane]; document.querySelectorAll("#groupsPanel [data-pane]").forEach(el => el.hidden = el.dataset.pane !== S.pane); }
   $("authPanel").hidden = name !== "auth"; $("codePanel").hidden = name !== "code"; $("groupsPanel").hidden = name !== "groups";
   $("appMain").hidden = name !== "app"; $("homeView").hidden = name !== "app"; $("bankBox").hidden = true;
   ["auth", "code", "groups", "app"].forEach(n => document.body.classList.toggle("scr-" + n, n === name));
   if (name === "app") { S.view = "home"; } setMenu(false); applyView(); if (name === "groups") window.scrollTo({ top: 0 });
   $("groupbar").hidden = name === "auth" || name === "code" || !S.me;
-  if (name === "groups") { renderGroupsPanel(); renderRemind(); }
+  if (name === "groups") { renderGroupsPanel(); renderRemind(); renderPrefs(); }
+  seasonSync();
   if (typeof renderGame === "function") renderGame();
   renderInstall();
 }
@@ -2507,13 +2536,14 @@ function renderGroupsPanel(){
   const h = document.createElement("h3"); h.textContent = S.groups.length ? "Your groups" : "You're not in a group yet"; box.appendChild(h);
   if (!S.groups.length) { const p = document.createElement("p"); p.textContent = "Send your username to a friend who hosts a group, or start one below and add your friends."; box.appendChild(p); return; }
   S.groups.forEach(g => {
-    const wrap = document.createElement("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:8px;padding:10px 0";
+    const wrap = document.createElement("div"); wrap.className = "gcard";
     const isHost = g.host === S.me.username;
     const title = document.createElement("div"); title.className = "row"; title.style.alignItems = "center";
     const nm = document.createElement("b"); nm.textContent = g.name; nm.style.fontSize = "18px"; title.appendChild(nm);
     const sub = document.createElement("span"); sub.style.cssText = "color:var(--ink-3);font-size:13px"; sub.textContent = isHost ? "you're the host" : "host: @" + g.host; title.appendChild(sub);
     if (g.id !== S.gid) { const sw = document.createElement("button"); sw.className = "btn ghost"; sw.textContent = "Switch to this group"; sw.addEventListener("click", () => { S.gid = g.id; ls.set("gg-group", g.id); renderGroupbar(); renderGroupsPanel(); go(); }); title.appendChild(sw); }
     wrap.appendChild(title);
+    { const mh = document.createElement("h4"); mh.className = "gsub"; mh.textContent = "Members (" + g.members.length + ")"; wrap.appendChild(mh); }
     const mem = document.createElement("div"); mem.className = "members";
     g.members.forEach((m, i) => {
       const c = document.createElement("span"); c.className = "member";
@@ -2525,8 +2555,9 @@ function renderGroupsPanel(){
       mem.appendChild(c);
     });
     wrap.appendChild(mem);
-    { const cur = S.gthemes[g.id] || "", box = document.createElement("div"); box.className = "ffbox";
-      const h4 = document.createElement("h4"); h4.textContent = "Fun Friday theme";
+    let ffEl; { const cur = S.gthemes[g.id] || "", box = document.createElement(isHost ? "details" : "div"); box.className = "ffbox gtools";
+      const curName = cur && PACKS[cur] ? PACKS[cur].name : "None";
+      const h4 = document.createElement(isHost ? "summary" : "h4"); h4.textContent = "Fun Friday theme: " + curName;
       const nt = document.createElement("p"); nt.className = "gthint"; nt.textContent = (isHost ? "Only you can change this. " : "The host picks this. ") + "Every Friday the group gets one extra graph, This or that and Rate it on this theme, under the Fun Friday switch.";
       const list = document.createElement("div"); list.className = "ffpick"; list.setAttribute("role", "radiogroup"); list.setAttribute("aria-label", "Fun Friday theme for " + g.name);
       [["", "None", "Just today's questions"], ...PACK_IDS.map(k => [k, PACKS[k].name, PACKS[k].desc])].forEach(([k, nm, ds]) => {
@@ -2538,7 +2569,7 @@ function renderGroupsPanel(){
           try { await rpc("set_group_theme", { p_secret: S.secret, p_group: g.id, p_theme: k }); await loadGroupThemes(); renderGroupsPanel(); go(); }
           catch (e) { $("groupErr").textContent = errText(e); renderGroupsPanel(); } });
         list.appendChild(b); });
-      box.append(h4, nt, list); wrap.appendChild(box); }
+      if (isHost) box.append(h4, nt, list); else box.append(h4, nt); ffEl = box; }
     if (isHost) {
       const f = document.createElement("div"); f.className = "field";
       const lab = document.createElement("label"); lab.textContent = "Add someone by username"; lab.htmlFor = "find-" + g.id;
@@ -2556,9 +2587,9 @@ function renderGroupsPanel(){
             row.append(l, b); found.appendChild(row); });
         } catch (e) { found.textContent = errText(e); }
       }, 250); });
-      f.append(lab, inp); wrap.append(f, found);
+      f.append(lab, inp); wrap.append(f, found, ffEl);
       const tools = document.createElement("details"); tools.className = "gtools";
-      const sm = document.createElement("summary"); sm.textContent = "Manage this group"; tools.appendChild(sm);
+      const sm = document.createElement("summary"); sm.textContent = "Group settings: name, host, delete"; tools.appendChild(sm);
       const rn = document.createElement("div"); rn.className = "gtrow";
       const ri = document.createElement("input"); ri.value = g.name; ri.maxLength = 40; ri.setAttribute("aria-label", "Group name");
       const rb = document.createElement("button"); rb.className = "btn"; rb.textContent = "Rename"; rb.addEventListener("click", () => { const n = ri.value.trim(); if (n && n !== g.name) groupAction("rename_group", { p_group: g.id, p_name: n }); });
@@ -2578,6 +2609,7 @@ function renderGroupsPanel(){
       tools.appendChild(db);
       wrap.appendChild(tools);
     } else {
+      wrap.appendChild(ffEl);
       const lv = document.createElement("button"); lv.className = "btn ghost"; lv.style.alignSelf = "flex-start"; lv.textContent = "Leave this group";
       let armed = false;
       lv.addEventListener("click", () => { if (!armed) { armed = true; lv.textContent = "Tap again to leave " + g.name; lv.style.color = "var(--danger)"; return; } groupAction("remove_member", { p_group: g.id, p_username: S.me.username }); });
@@ -3371,8 +3403,8 @@ $("newForm").addEventListener("submit", async (ev) => { ev.preventDefault(); $("
 $("backForm").addEventListener("submit", async (ev) => { ev.preventDefault(); $("authErr").textContent = ""; $("siBtn").disabled = true;
   try { const sess = await rpc("sign_in", { p_username: $("siUser").value, p_personal_code: $("siCode").value }); storeLogin(sess.username, sess.personal_code); afterSignIn(sess, false); } catch (e) { $("authErr").textContent = errText(e); } $("siBtn").disabled = false; });
 $("codeForm").addEventListener("submit", (ev) => { ev.preventDefault(); storeLogin($("cfUser").value, $("cfCode").value); boot(); });
-$("manageBtn").addEventListener("click", () => showScreen("groups"));
-$("openGroups2").addEventListener("click", () => { showScreen("groups"); window.scrollTo({ top: 0, behavior: "smooth" }); });
+$("manageBtn").addEventListener("click", () => showScreen("groups", "groups"));
+$("openGroups2").addEventListener("click", () => { showScreen("groups", "groups"); window.scrollTo({ top: 0, behavior: "smooth" }); });
 $("closeGroups").addEventListener("click", () => { showScreen("app"); go(); });
 $("groupSel").addEventListener("change", (ev) => { S.gid = ev.target.value || null; ls.set("gg-group", S.gid); renderGroupbar(); go(); });
 $("newGroupForm").addEventListener("submit", async (ev) => { ev.preventDefault(); $("groupErr").textContent = "";
@@ -3421,7 +3453,114 @@ function gameDone(k){
   const qid = gQid(k, d); return !!gValid(k, S.mine[qid], gItems(k, d));
 }
 function homeSoon(){ clearTimeout(homeSoon.t); homeSoon.t = setTimeout(() => { renderHome(); renderFocus(); }, 0); }
-function applyView(){ document.body.classList.toggle("v-home", S.view !== "focus"); document.body.classList.toggle("v-focus", S.view === "focus"); }
+
+/* ---------- Seasonal background ---------- */
+const SEASON_NAMES = { fall: "Falling leaves", winter: "Snow", spring: "Spring petals", summer: "Fireflies" };
+function seasonNow(d){ d = d || new Date(); const md = (d.getMonth() + 1) * 100 + d.getDate();
+  return md >= 1221 || md < 320 ? "winter" : md < 621 ? "spring" : md < 922 ? "summer" : "fall"; }
+function seasonPref(){ return ls.get("gg-season", "on") !== "off"; }
+const SB = { on: false, raf: 0, ps: [], t: 0, last: 0, season: "", theme: "" };
+const rnd = (a, b) => a + Math.random() * (b - a);
+const SB_DARK = { dark: 1, grape: 1, terminal: 1, ocean: 1 };
+function sbTheme(){ const t = document.documentElement.dataset.theme || ""; return t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); }
+function sbPalette(season, th){
+  if (th === "terminal") return ["#5be39a", "#3fbf7a", "#2c8f5a", "#8af0b8"];
+  const dark = !!SB_DARK[th];
+  if (season === "fall") return dark ? ["#e0874a", "#d9a441", "#c25a3a", "#b88a3e"] : ["#d0702f", "#d99a2b", "#b04a2c", "#a7802f"];
+  if (season === "winter") return dark ? ["#ffffff", "#dfe8f2", "#c9d8e8"] : ["#a9bdd3", "#bccbdc", "#93abc6"];
+  if (season === "spring") return dark ? ["#f4b8cc", "#f7d3df", "#ffffff", "#e98fb0"] : ["#ec9ab7", "#f2b9cb", "#e47fa5", "#f6cdd9"];
+  return dark ? ["#ffe58a", "#fff1b0", "#ffd35c"] : ["#f2b632", "#f5c84f", "#e8a420"];
+}
+function sbLobed(lobes, valley){ const pts = [], n = lobes.length;
+  for (let i = 0; i < n; i++) { const a = lobes[i], b = lobes[(i + 1) % n], A = a.ang * Math.PI / 180;
+    pts.push([Math.cos(A - .34) * a.len * .74, Math.sin(A - .34) * a.len * .74], [Math.cos(A - .14) * a.len * .66, Math.sin(A - .14) * a.len * .66], [Math.cos(A) * a.len, Math.sin(A) * a.len], [Math.cos(A + .14) * a.len * .66, Math.sin(A + .14) * a.len * .66], [Math.cos(A + .34) * a.len * .74, Math.sin(A + .34) * a.len * .74]);
+    let B = b.ang; if (B < a.ang) B += 360; const mid = (a.ang + B) / 2 * Math.PI / 180;
+    if (i < n - 1) pts.push([Math.cos(mid) * valley, Math.sin(mid) * valley]); }
+  return pts; }
+const SB_MAPLE = sbLobed([{ ang: 150, len: .62 }, { ang: 205, len: .95 }, { ang: 270, len: 1.15 }, { ang: 335, len: .95 }, { ang: 30, len: .62 }], .32);
+const SB_MAPLE_V = [[150, .55], [205, .85], [270, 1.05], [335, .85], [30, .55]];
+const SB_OVAL = (() => { const r = []; for (let i = 0; i <= 14; i++) { const t = i / 14, y = -1.2 + t * 2; let w = Math.sin(Math.pow(t, .75) * Math.PI) * .58; if (t < .35) w *= Math.pow(t / .35, 2.2); r.push([w + (i % 2 && i > 1 && i < 14 ? .06 : 0), y]); } return r.concat(r.slice(0, -1).reverse().map(([x, y]) => [-x, y])); })();
+const SB_PIX = { maple: [[0,-2],[-1,-1],[0,-1],[1,-1],[-2,0],[-1,0],[0,0],[1,0],[2,0],[0,1],[0,2]], oval: [[0,-2],[0,-1],[-1,0],[0,0],[1,0],[0,1]], petal: [[0,-1],[0,0],[1,0]], dot: [[0,0]] };
+function sbSpawn(season, w, h, fresh){
+  const p = { x: rnd(0, w), y: fresh ? rnd(0, h) : rnd(-40, -12), rot: rnd(0, 6.28), phase: rnd(0, 6.28) };
+  if (season === "fall") Object.assign(p, { shape: Math.random() < .55 ? "maple" : "oval", s: rnd(9, 14), vy: rnd(16, 30), sway: rnd(14, 28), swayF: rnd(.5, 1), spin: rnd(-1, 1), flipF: rnd(.6, 1.3) });
+  else if (season === "winter") { const d = Math.random(); Object.assign(p, { s: 1 + d * 2.6, vy: 10 + d * 22, sway: rnd(6, 14), swayF: rnd(.3, .7), a: .45 + d * .5 }); }
+  else if (season === "spring") Object.assign(p, { s: rnd(6, 9), vy: rnd(10, 20), vx: rnd(18, 34), sway: rnd(8, 16), swayF: rnd(.8, 1.4), spin: rnd(-1.6, 1.6), flipF: rnd(1, 2), x: fresh ? rnd(0, w) : rnd(-60, w * .6) });
+  else Object.assign(p, { y: rnd(h * .25, h), s: rnd(2, 3), vx: rnd(-6, 6), vy: rnd(-6, 6), glowF: rnd(.4, .9), wander: rnd(0, 100) });
+  return p; }
+function sbReset(){
+  const c = $("seasonBg"), d = Math.min(window.devicePixelRatio || 1, 2), w = innerWidth, h = innerHeight;
+  c.width = Math.round(w * d); c.height = Math.round(h * d); SB.ctx = c.getContext("2d"); SB.ctx.setTransform(d, 0, 0, d, 0, 0); SB.w = w; SB.h = h;
+  SB.season = seasonNow(); SB.theme = sbTheme(); const cols = sbPalette(SB.season, SB.theme);
+  const base = { fall: 14, winter: 40, spring: 18, summer: 16 }[SB.season], k = Math.min(1.6, Math.max(.7, (w * h) / (390 * 844)));
+  SB.ps = Array.from({ length: Math.round(base * k) }, () => { const p = sbSpawn(SB.season, w, h, true); p.col = cols[(Math.random() * cols.length) | 0]; return p; });
+}
+function sbStep(dt){
+  const { w, h, season } = SB; SB.t += dt; const t = SB.t, gust = season === "spring" ? .55 + .45 * Math.sin(t * .35) + .25 * Math.sin(t * 1.1) : 1, cols = sbPalette(season, SB.theme);
+  for (const p of SB.ps) {
+    if (season === "summer") { p.wander += dt; p.vx = Math.max(-9, Math.min(9, p.vx + Math.sin(p.wander * .7 + p.phase) * 4 * dt)); p.vy = Math.max(-9, Math.min(9, p.vy + Math.cos(p.wander * .5 + p.phase) * 4 * dt)); p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.x < -10) p.x = w + 10; if (p.x > w + 10) p.x = -10; if (p.y < h * .15) p.vy = Math.abs(p.vy); if (p.y > h + 10) p.y = h * .3; continue; }
+    p.y += p.vy * dt * (season === "spring" ? .6 + gust * .5 : 1);
+    p.x += Math.cos(t * p.swayF + p.phase) * p.sway * dt + (p.vx || 0) * gust * dt;
+    if (p.spin) p.rot += p.spin * dt * (season === "spring" ? gust : 1);
+    if (p.y > h + 24 || p.x > w + 40) { Object.assign(p, sbSpawn(season, w, h, false)); p.col = cols[(Math.random() * cols.length) | 0]; }
+  } }
+function sbPath(ctx, pts, k){ ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x * k, y * k) : ctx.moveTo(x * k, y * k)); ctx.closePath(); }
+function sbDraw(){
+  const { ctx, w, h, season, t } = SB, term = SB.theme === "terminal", dark = !!SB_DARK[SB.theme], alpha = dark ? .55 : .6;
+  ctx.clearRect(0, 0, w, h);
+  for (const p of SB.ps) {
+    ctx.save();
+    if (term) {
+      const u = season === "winter" ? Math.max(2.5, Math.round(p.s * 1.3)) : 3, sx = Math.round(p.x / u) * u, sy = Math.round(p.y / u) * u;
+      ctx.globalAlpha = season === "summer" ? .25 + .5 * Math.max(0, Math.sin(t * p.glowF * 2 + p.phase)) : season === "winter" ? p.a * .8 : alpha; ctx.fillStyle = p.col;
+      const px = season === "fall" ? SB_PIX[p.shape] : season === "spring" ? SB_PIX.petal : SB_PIX.dot;
+      for (const [dx, dy] of px) ctx.fillRect(sx + dx * u, sy + dy * u, u - .5, u - .5);
+      ctx.restore(); continue; }
+    ctx.translate(p.x, p.y);
+    if (season === "fall") {
+      ctx.rotate(p.rot); const f = Math.cos(t * p.flipF + p.phase); ctx.scale(Math.sign(f || 1) * Math.max(.2, Math.abs(f)), 1);
+      ctx.globalAlpha = alpha; ctx.fillStyle = p.col; sbPath(ctx, p.shape === "maple" ? SB_MAPLE : SB_OVAL, p.s); ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,.28)"; ctx.lineWidth = .8; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(0, p.s * (p.shape === "maple" ? .55 : .45) + p.s * .12); ctx.lineTo(0, 0);
+      if (p.shape === "maple") for (const [a, l] of SB_MAPLE_V) { const A = a * Math.PI / 180; ctx.moveTo(0, 0); ctx.lineTo(Math.cos(A) * l * p.s * .85, Math.sin(A) * l * p.s * .85); }
+      else { ctx.lineTo(0, -p.s); for (let i = 0; i < 4; i++) { const y = (-.75 + i * .38) * p.s; ctx.moveTo(0, y + .25 * p.s); ctx.lineTo(.32 * p.s, y); ctx.moveTo(0, y + .25 * p.s); ctx.lineTo(-.32 * p.s, y); } }
+      ctx.stroke();
+    } else if (season === "winter") {
+      ctx.globalAlpha = p.a * (dark ? .75 : .85); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(0, 0, p.s, 0, 6.2832); ctx.fill();
+    } else if (season === "spring") {
+      ctx.rotate(p.rot); ctx.scale(.45 + .55 * Math.abs(Math.cos(t * p.flipF + p.phase)), 1); ctx.globalAlpha = alpha; ctx.fillStyle = p.col; const s = p.s;
+      ctx.beginPath(); ctx.moveTo(0, -s); ctx.bezierCurveTo(s * .8, -s * .6, s * .6, s * .6, 0, s * .8); ctx.bezierCurveTo(-s * .6, s * .6, -s * .8, -s * .6, 0, -s); ctx.fill();
+    } else {
+      const g = Math.max(0, Math.sin(t * p.glowF * 2 + p.phase)), a = (dark ? .2 : .12) + g * (dark ? .7 : .55), r = p.s * 5, gr = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+      gr.addColorStop(0, p.col); gr.addColorStop(.25, p.col + "99"); gr.addColorStop(1, p.col + "00");
+      ctx.globalAlpha = a; ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = Math.min(1, a + .2); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(0, 0, p.s * .6, 0, 6.2832); ctx.fill();
+    }
+    ctx.restore();
+  } }
+const sbReduced = matchMedia("(prefers-reduced-motion: reduce)");
+function sbFrame(now){
+  SB.raf = 0; if (!SB.on) return;
+  const dt = Math.min(.05, (now - (SB.last || now)) / 1000); SB.last = now;
+  sbStep(dt); sbDraw(); SB.raf = requestAnimationFrame(sbFrame); }
+function seasonSync(){
+  const b = document.body, want = seasonPref() && b.classList.contains("scr-app") && b.classList.contains("v-home") && !document.hidden;
+  b.classList.toggle("season-on", want);
+  if (!want) { SB.on = false; if (SB.raf) cancelAnimationFrame(SB.raf); SB.raf = 0; return; }
+  if (!SB.ctx || SB.season !== seasonNow() || SB.theme !== sbTheme() || SB.w !== innerWidth || SB.h !== innerHeight) sbReset();
+  if (sbReduced.matches) { SB.on = false; sbDraw(); return; }
+  SB.on = true; if (!SB.raf) { SB.last = 0; SB.raf = requestAnimationFrame(sbFrame); } }
+function seasonRefresh(){ SB.ctx = null; seasonSync(); }
+document.addEventListener("visibilitychange", seasonSync);
+let sbRz; addEventListener("resize", () => { clearTimeout(sbRz); sbRz = setTimeout(seasonRefresh, 200); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", seasonRefresh);
+sbReduced.addEventListener("change", seasonRefresh);
+function renderPrefs(){
+  const t = THEMES.find(x => x.id === curTheme()); $("prefThemeName").textContent = t ? t.name : "Auto";
+  const on = seasonPref(); $("seasonSw").setAttribute("aria-checked", String(on));
+  $("seasonNote").textContent = "Right now: " + SEASON_NAMES[seasonNow()].toLowerCase() + ". Changes with the seasons." + (sbReduced.matches ? " Stays still with reduced motion." : ""); }
+$("seasonSw").addEventListener("click", () => { ls.set("gg-season", seasonPref() ? "off" : "on"); renderPrefs(); seasonSync(); });
+function applyView(){ document.body.classList.toggle("v-home", S.view !== "focus"); document.body.classList.toggle("v-focus", S.view === "focus"); if (typeof seasonSync === "function") seasonSync(); }
 function checkEl(cls){ const s = document.createElement("span"); s.className = cls; s.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>'; return s; }
 function listNames(ms){ const n = ms.map(m => m.display_name); return n.length <= 2 ? n.join(" and ") : n.slice(0, -1).join(", ") + " and " + n[n.length - 1]; }
 function renderHome(){
@@ -3541,11 +3680,13 @@ function renderMenu(){
     b.addEventListener("click", () => { setMenu(false); if (x.id === S.gid) return; S.gid = x.id; ls.set("gg-group", S.gid); renderGroupbar(); go(); }); box.appendChild(b); });
   const add = document.createElement("button"); add.type = "button"; add.className = "add"; add.textContent = S.groups.length ? "+ New group" : "Start or join a group";
   add.addEventListener("click", () => { setMenu(false); showScreen("groups"); }); box.appendChild(add);
-  const t = THEMES.find(x => x.id === curTheme()); $("mThemeName").textContent = t ? t.name : "Auto";
+  $("mThemeName").textContent = "Theme, background";
 }
-$("mProfile").addEventListener("click", () => { setMenu(false); showScreen("groups"); });
+$("mProfile").addEventListener("click", () => { setMenu(false); showScreen("groups", "profile"); });
+$("mGroupsRow").addEventListener("click", () => { setMenu(false); showScreen("groups", "groups"); });
+$("mPrefs").addEventListener("click", () => { setMenu(false); showScreen("groups", "prefs"); });
+$("prefTheme").addEventListener("click", () => $("themeBtn").click());
 $("mCal").addEventListener("click", () => { setMenu(false); openCal(); });
-$("mTheme").addEventListener("click", () => { setMenu(false); $("themeBtn").click(); });
 $("mNews").addEventListener("click", () => { setMenu(false); openNews(); });
 applyView();
 
