@@ -909,7 +909,7 @@ const Q = (() => { const out = CURVES.slice(0, 3); let ri = 0, mi = 0; for (let 
 /* "who in the group is most likely to…": rank your friends (items come from the group's members) */
 const W = (id, likely, sub) => ({ id, cat: "Group", kind: "rank", people: true, likely, title: "Who's most likely to " + likely + "?", sub, items: ["Garrett","Emily","Maddie","Michaela","Faith","Ian"], best: "most likely", worst: "least likely" });
 const WHO = [
- W("who-lab-fire", "cause a lab fire", "Not if. When. Rank the whole group, yourself included."),
+ W("who-smoke-alarm", "set off the smoke alarm cooking", "Toast counts. Rank the whole group, yourself included."),
  W("who-famous", "become famous", "Reality TV counts. Being a meme counts."),
  W("who-zombies", "survive a zombie apocalypse", "Day one, the power goes out. Who's still standing in a month?"),
  W("who-nobel", "win a Nobel Prize", "And thank everyone in this group by name in the speech. Probably."),

@@ -1125,7 +1125,7 @@ const Q = (() => { const out = CURVES.slice(0, 3); let ri = 0, mi = 0; for (let 
 /* "who in the group is most likely to…": rank your friends (items come from the group's members) */
 const W = (id, likely, sub) => ({ id, cat: "Group", kind: "rank", people: true, likely, title: "Who's most likely to " + likely + "?", sub, items: ["Garrett","Emily","Maddie","Michaela","Faith","Ian"], best: "most likely", worst: "least likely" });
 const WHO = [
- W("who-lab-fire", "cause a lab fire", "Not if. When. Rank the whole group, yourself included."),
+ W("who-smoke-alarm", "set off the smoke alarm cooking", "Toast counts. Rank the whole group, yourself included."),
  W("who-famous", "become famous", "Reality TV counts. Being a meme counts."),
  W("who-zombies", "survive a zombie apocalypse", "Day one, the power goes out. Who's still standing in a month?"),
  W("who-nobel", "win a Nobel Prize", "And thank everyone in this group by name in the speech. Probably."),
@@ -1153,6 +1153,63 @@ Q.unshift(
   M("grocery-style", "Life", "What kind of grocery shopper are you?", "Be honest about the list you left on the counter.", { lo: "Strict list", hi: "Pure vibes" }, { lo: "In and out in 5 min", hi: "Lives in the store" }),
   R("late-excuses", "Social", "Rank the excuses for being late", "Most believable to least believable. We've heard all of them.", ["Traffic","Couldn't find parking","My alarm didn't go off","The bus was late","I was already on my way","Couldn't find my keys","My cat was sick","Lost track of time","My experiment ran over","I thought it was tomorrow"], "most believable", "least believable"),
   DRINKS);
+/* ---------------- everyday questions (from Nov 13 2026) ----------------
+   The lab and "most likely to" lab questions are swapped for everyday ones of the same type,
+   so the mix of graphs, rankings and maps stays the same. Days before GEN_FROM keep what people answered. */
+const GEN_FROM = 10; // rotation day of Nov 13 2026
+const GEN = {
+ curve: [
+  {id:"shower-temp", cat:"Body", title:"Happiness vs shower temperature", sub:"Somebody else used all the hot water. Or did they?", x:{label:"water temp (°F)", min:50, max:115, step:10, fmt:"deg"}, y:{label:"happiness", lo:"screaming", hi:"spa day"}},
+  {id:"snooze", cat:"Body", title:"How awake you feel vs times you hit snooze", sub:"Each snooze is nine minutes of lying to yourself.", x:{label:"snoozes", min:0, max:10, step:1}, y:{label:"awake", bands:B([[0,2,"zombie"],[2,4,"groggy"],[4,6,"functional"],[6,8,"awake"],[8,10,"ready to go"]])}},
+  {id:"friday-hype", cat:"Life", title:"Excitement through a Friday", sub:"From the morning alarm to whatever happens after midnight.", x:{label:"time of day", min:8, max:26, step:2, fmt:"hour"}, y:{label:"excitement", bands:MOOD}},
+  {id:"trip-countdown", cat:"Life", title:"Excitement as a trip gets closer", sub:"Booked a month out. Do you peak early or at the airport?", x:{label:"days until the trip", min:30, max:0, step:5}, y:{label:"excitement", lo:"forgot I booked it", hi:"already packed"}},
+  {id:"birthday-age", cat:"Life", title:"Excitement for your birthday, by age", sub:"From 'I'm five and a half' to 'please don't sing'.", x:{label:"age", min:0, max:80, step:10}, y:{label:"excitement", lo:"ignore it", hi:"birthday month"}},
+  {id:"line-wait", cat:"Food", title:"Willingness to wait vs people in line", sub:"The brunch place everyone posts about. No reservations.", x:{label:"people ahead of you", min:0, max:50, step:10}, y:{label:"willingness", lo:"leaving", hi:"worth it"}},
+  {id:"ice-cream-temp", cat:"Food", title:"How much you want ice cream vs the temperature", sub:"Outside temperature. Is ice cream in a snowstorm a power move?", x:{label:"temperature (°F)", min:0, max:110, step:10, fmt:"deg"}, y:{label:"ice cream urge", lo:"no thanks", hi:"two scoops"}},
+  {id:"nap-length", cat:"Body", title:"How you feel after a nap, by its length", sub:"A nap in the afternoon. At some point it stops being a nap.", x:{label:"nap length (minutes)", min:0, max:180, step:30}, y:{label:"how you feel", bands:B([[0,2,"what year is it"],[2,4,"groggy"],[4,6,"same as before"],[6,8,"refreshed"],[8,10,"new person"]])}},
+  {id:"star-rating", cat:"Food", title:"Trust in a restaurant vs its star rating", sub:"A place you've never tried. Four point two stars from 3,000 reviews.", x:{label:"stars", min:1, max:5, step:0.5}, y:{label:"trust", lo:"not eating there", hi:"booking now"}},
+  {id:"haircut", cat:"Body", title:"How good your hair looks vs days since a haircut", sub:"Day one is never the best day. Or is it?", x:{label:"days since the haircut", min:0, max:60, step:10}, y:{label:"hair", bands:B([[0,2,"hat time"],[2,4,"rough"],[4,6,"fine"],[6,8,"good"],[8,10,"perfect"]])}},
+  {id:"airport-early", cat:"Life", title:"Stress vs how early you get to the airport", sub:"Minutes before your flight boards. Security line unknown.", x:{label:"minutes before boarding", min:180, max:0, step:30}, y:{label:"stress", bands:B([[0,2,"calm"],[2,4,"fine"],[4,6,"checking the time"],[6,8,"sprinting"],[8,10,"missed it"]])}},
+  {id:"walk-distance", cat:"Life", title:"Willingness to walk somewhere vs how far", sub:"Nice weather, no rush, comfy shoes.", x:{label:"miles", min:0, max:3, step:0.5}, y:{label:"willingness", lo:"calling a ride", hi:"lovely walk"}},
+  {id:"sequels", cat:"Media", title:"How good each movie in a series is", sub:"The original, then the sequel, then the one nobody asked for.", x:{label:"movie in the series", min:1, max:8, step:1}, y:{label:"quality", lo:"straight to streaming", hi:"masterpiece"}},
+  {id:"cook-time", cat:"Food", title:"Will to cook dinner vs how long it takes", sub:"A weeknight. You're tired. There's a frozen pizza in the freezer.", x:{label:"minutes of cooking", min:0, max:120, step:15}, y:{label:"will to cook", lo:"cereal for dinner", hi:"chef mode"}},
+  {id:"plant-water", cat:"Life", title:"How alive your plants are vs days since watering", sub:"Your houseplants. Be honest about the one by the window.", x:{label:"days since watering", min:0, max:30, step:5}, y:{label:"plant health", lo:"crispy", hi:"thriving"}},
+  {id:"gift-price", cat:"Social", title:"How much you like a gift vs what it cost", sub:"A gift from a friend. It's the thought that counts. Supposedly.", x:{label:"price", min:0, max:200, step:25, fmt:"money"}, y:{label:"love for it", lo:"regifting", hi:"keeping forever"}},
+  {id:"cold-days", cat:"Body", title:"How dramatic you are on each day of a cold", sub:"A regular cold. Not the flu. Everyone can hear you sniffling.", x:{label:"day of the cold", min:0, max:10, step:1}, y:{label:"drama", bands:B([[0,2,"totally fine"],[2,4,"bit sniffly"],[4,6,"need soup"],[6,8,"bedridden"],[8,10,"writing my will"]])}},
+  {id:"phone-age", cat:"Media", title:"Love for your phone vs how long you've had it", sub:"From unboxing day to the cracked screen era.", x:{label:"months owned", min:0, max:48, step:6}, y:{label:"love", lo:"ancient brick", hi:"my baby"}},
+ ],
+ rank: [
+  R("fast-food", "Food", "Rank the fast food", "Best to worst. Road trip rules apply.", ["McDonald's","Chick-fil-A","Taco Bell","Wendy's","Chipotle","Subway","Five Guys","Popeyes","In-N-Out","Panda Express"]),
+  R("condiments", "Food", "Rank the condiments", "Best to worst. Mayo people, this is your trial.", ["Ketchup","Mustard","Mayo","Ranch","BBQ sauce","Hot sauce","Sriracha","Honey mustard","Relish","Soy sauce"]),
+  R("board-games", "Social", "Rank the board games", "Best game night to worst. Monopoly has ended friendships.", ["Monopoly","Scrabble","Clue","Catan","Uno","Jenga","Sorry!","Risk","Codenames","Twister"]),
+  R("potatoes", "Food", "Rank the potatoes", "Every form a potato can take. Best to worst.", ["Fries","Tater tots","Hash browns","Mashed","Baked","Chips","Potato salad","Wedges","Curly fries","Scalloped"]),
+  R("sounds", "Life", "Rank the sounds", "Most soothing to most annoying. Close your eyes and imagine each one.", ["Rain on a window","Crackling fire","Ocean waves","Birds in the morning","Cat purring","Thunder","Coffee shop chatter","Wind chimes","Lawn mower at 8am","Nails on a chalkboard"], "most soothing", "most annoying"),
+  R("party-spots", "Social", "Rank the places to stand at a party", "Best spot to worst. Everyone ends up in the kitchen anyway.", ["Kitchen","Couch","Near the snacks","Next to the dog","Backyard","Balcony","Stairs","Dance floor","By the door","Hiding in the bathroom"]),
+  R("fruits", "Food", "Rank the fruits", "Best to worst. Cantaloupe is filler and we all know it.", ["Strawberry","Mango","Banana","Apple","Watermelon","Grapes","Pineapple","Blueberry","Kiwi","Cantaloupe"]),
+  R("pasta", "Food", "Rank the pasta shapes", "Same sauce, different shape. It matters. It really does.", ["Spaghetti","Penne","Rigatoni","Bowtie","Fusilli","Mac","Lasagna","Ravioli","Tortellini","Orzo"]),
+  R("dog-breeds", "Life", "Rank the dog breeds by vibes", "Pure vibes. All dogs are good dogs, but some are better at parties.", ["Golden retriever","Corgi","Pug","Husky","Dachshund","Chihuahua","Poodle","Great Dane","Border collie","Pit bull"]),
+  R("rainy-day", "Life", "Rank the ways to spend a rainy day", "Nowhere to be. Best plan to worst.", ["Movie marathon","Nap","Baking","Reading","Video games","Cleaning","Online shopping","Board games","Puddle jumping","Doomscrolling"]),
+  R("school-subjects", "Life", "Rank the school subjects", "Best class to worst, back in the day. Lunch counts.", ["Math","English","History","Science","Art","Gym","Music","Foreign language","Lunch","Recess"]),
+  R("sandwiches", "Food", "Rank the sandwiches", "Best to worst. A hot dog is not on this list, and we're not discussing it.", ["Grilled cheese","BLT","PB&J","Club","Reuben","Cuban","Philly cheesesteak","Italian sub","Egg salad","Tuna melt"]),
+ ],
+ map: [
+  M("vacation-style", "Life", "What's your vacation style?", "Your dream week off, not the one you can afford.", { lo: "Lying by the pool", hi: "Every hour planned" }, { lo: "Close to home", hi: "Other side of the world" }),
+  M("restaurant", "Food", "How do you eat at a restaurant?", "Your usual dinner out with friends.", { lo: "Same order every time", hi: "Tries something new" }, { lo: "Done in 5 minutes", hi: "Last one still eating" }),
+  M("gift-giver", "Social", "What kind of gift giver are you?", "Birthdays, holidays, all of it. Your friends know.", { lo: "Last-minute gift card", hi: "Planned for months" }, { lo: "Practical", hi: "Sentimental" }),
+  M("tv-style", "Media", "How do you watch TV?", "A normal night on the couch.", { lo: "Full attention", hi: "Phone in hand" }, { lo: "Same comfort show", hi: "Always something new" }),
+  M("mornings", "Life", "What are your mornings like?", "A regular weekday. The snooze button is listening.", { lo: "Snooze, snooze, snooze", hi: "Up before the alarm" }, { lo: "Out the door in 5", hi: "Hour-long routine" }),
+  M("arguing", "Social", "How do you argue?", "With friends, about something that doesn't matter at all.", { lo: "Avoids it", hi: "Loves a debate" }, { lo: "Admits when wrong", hi: "Never wrong" }),
+ ],
+};
+const GEN_WHO = {
+ "who-nobel": W("who-millionaire", "become a millionaire", "Lottery, startup or a very lucky garage sale. All count."),
+ "who-element-baby": W("who-kid-name", "give their kid a really unusual name", "The kind you have to spell out every single time."),
+ "who-taste-test": W("who-five-second", "eat food off the floor", "Five-second rule, ten-second rule, no rule at all."),
+};
+const Q_OLD = Q.slice();
+{ const n = { curve: 0, rank: 0, map: 0 }; for (let i = 0; i < Q.length; i++) { const q = Q[i];
+  if (GEN_WHO[q.id]) Q[i] = GEN_WHO[q.id];
+  else if (q.cat === "Lab") { const k = q.kind || "curve"; Q[i] = GEN[k][n[k]++]; } } }
 const CATS = ["All", ...Array.from(new Set(Q.map(q=>q.cat)))];
 const ROT_START = Date.UTC(2026,10,3); // day 0 of the rotation (Nov 3 2026): grocery map, late excuses, drinks, numbers on Nov 6, hunger on Nov 9
 const ROT_OFFSET = 0;
@@ -1226,8 +1283,8 @@ const S = {
 const ctParts = () => { const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "numeric", day: "numeric", weekday: "short" }).formatToParts(new Date()); const g = (t) => (p.find(x => x.type === t) || {}).value; return { y: +g("year"), m: +g("month"), d: +g("day"), wd: g("weekday") }; };
 const todayIndex = () => { const c = ctParts(); return Math.round((Date.UTC(c.y, c.m - 1, c.d) - ROT_START) / 864e5); };
 const ctISO = () => { const c = ctParts(); return c.y + "-" + String(c.m).padStart(2, "0") + "-" + String(c.d).padStart(2, "0"); };
-const qForDay = (d) => Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
-const qById = (id) => Q.find(q => q.id === id) || (S.ideas && S.ideas.gid === S.gid ? Object.values(S.ideas.byDay).find(q => q.id === id) : null) || null;
+const qForDay = (d) => d >= 0 && d < GEN_FROM ? Q_OLD[d] : Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
+const qById = (id) => Q.find(q => q.id === id) || Q_OLD.find(q => q.id === id) || (S.ideas && S.ideas.gid === S.gid ? Object.values(S.ideas.byDay).find(q => q.id === id) : null) || null;
 function baseQ(){ if (S.game === "bonus" && !S.qid && bonusQ(todayIndex() + S.dayOffset)) return bonusQ(todayIndex() + S.dayOffset); if (S.qid) return qById(S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
 /* "most likely to" questions rank the current group's members, so each group gets its own copy of the question */
 function withPeople(q){
@@ -1541,7 +1598,7 @@ function sumQuips(R){
   const out = [], nm = (k) => R.names[k] || k, seed = hashStr(R.g.id + R.played.length + ":" + R.pairs.length), P = (arr, sh) => pick(arr, seed >>> (sh || 0));
   const pct = (v) => Math.round(v * 100) + "%";
   if (!R.played.length) return [R.mode === "week" ? "Quiet week. Nobody answered the same question as anyone else. Suspicious." : "Nothing to report yet. Answer a few questions together and the gossip writes itself."];
-  if (R.mode === "week") out.push(P([`Week in review: ${R.played.length} questions, ${R.qs.reduce((t, x) => t + x.list.length, 0)} answers, and a lot of opinions.`, `This week the group answered ${R.played.length} questions together. Science marches on.`, `${R.played.length} questions this week. Here's who embarrassed themselves.`], 14));
+  if (R.mode === "week") out.push(P([`Week in review: ${R.played.length} questions, ${R.qs.reduce((t, x) => t + x.list.length, 0)} answers, and a lot of opinions.`, `This week the group answered ${R.played.length} questions together. The data speaks for itself.`, `${R.played.length} questions this week. Here's who embarrassed themselves.`], 14));
   if (R.sync != null) {
     if (R.sync >= 0.72) out.push(P([`Overall the group is ${pct(R.sync)} in sync. That's not a friend group, that's a hive mind.`, `${pct(R.sync)} group sync. Somebody check whether you all share one group chat brain.`, `The group agrees ${pct(R.sync)} of the time. Peer review has never been this friendly.`]));
     else if (R.sync >= 0.6) out.push(P([`Overall sync: ${pct(R.sync)}. Close enough to be friends, far enough apart to keep the group chat spicy.`, `The group is ${pct(R.sync)} in sync. Healthy disagreement, mostly.`, `${pct(R.sync)} in sync. You'd pass a vibe check, but not a reproducibility check.`]));
@@ -1844,7 +1901,7 @@ function renderPulse(){
 
 /* ---------------- nudges ---------------- */
 let nudgeTo = null;
-const NUDGE_PICKS = (n) => [`Draw your graph, ${n}`, "The group average misses you", "Reviewer 2 is waiting", "We can't see the results until you answer", "Streak's on the line"];
+const NUDGE_PICKS = (n) => [`Draw your graph, ${n}`, "The group average misses you", "Your friends are waiting", "We can't see the results until you answer", "Streak's on the line"];
 function openNudge(m){
   nudgeTo = m; $("nudgeTitle").textContent = "Nudge " + m.display_name; $("nudgeMsg").value = ""; $("nudgeErr").textContent = ""; $("nudgeSend").disabled = false;
   const p = $("nudgePicks"); p.innerHTML = "";
@@ -2089,13 +2146,23 @@ const GTHEMES = [
   { name: "Sports", tot: [["Play", "Watch"], ["Basketball", "Football"], ["Gym", "Run outside"], ["Team sport", "Solo sport"], ["Game day snacks", "Game day itself"]],
     rate: ["Golf", "Pickleball", "Fantasy football", "The wave", "Overtime"] },
 ];
+/* from Nov 13 2026 the lab, grad school and chemistry themes are swapped for everyday ones (earlier days keep theirs) */
+const GT_BASE = GTHEMES.length;
+GTHEMES.push(
+  { name: "Home", tot: [["House", "Apartment"], ["Big city", "Small town"], ["Bath", "Shower"], ["Carpet", "Hardwood"], ["Minimalist", "Cozy clutter"]],
+    rate: ["IKEA furniture", "Roommates", "Throw pillows", "Houseplants", "Moving day"] },
+  { name: "School days", tot: [["Front row", "Back row"], ["Pen", "Pencil"], ["Group project", "Solo project"], ["Morning class", "Night class"], ["Study alone", "Study group"]],
+    rate: ["Group projects", "Pop quizzes", "Cafeteria food", "Summer break", "Homework"] },
+  { name: "Shopping", tot: [["Online", "In store"], ["Brand name", "Store brand"], ["Cash", "Card"], ["Shop alone", "Shop with friends"], ["Mall", "Outlet"]],
+    rate: ["Black Friday", "Free samples", "Costco", "Thrift stores", "Carts with a wobbly wheel"] });
+const GT_SWAP = { 1: GT_BASE, 7: GT_BASE + 1, 9: GT_BASE + 2 };
 const TOT = GTHEMES.flatMap(t => t.tot), RATE = GTHEMES.flatMap(t => t.rate);
 const GAMES = { tot: { name: "This or that", list: TOT }, rate: { name: "Rate it", list: RATE } }, GN = 5;
 S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph";
 S.gres = {}; S.gedit = null; S.gdraft = {};
 const isGameQid = (k) => /^(tot|rate)-/.test(k);
 const gDayIdx = () => S.qid ? todayIndex() : todayIndex() + S.dayOffset;
-const gThemeIdx = (d) => ((d % GTHEMES.length) + GTHEMES.length) % GTHEMES.length;
+const gThemeIdx = (d) => { const t = ((d % GT_BASE) + GT_BASE) % GT_BASE; return d >= GEN_FROM && GT_SWAP[t] != null ? GT_SWAP[t] : t; };
 function gItems(kind, d){ const t = gThemeIdx(d), out = []; for (let k = 0; k < GN; k++) out.push(t * GN + k); return out; }
 const bonusQ = (d) => (S.gid && S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || null;
 const gQid = (kind, d) => kind + "-" + idxISO(d);
