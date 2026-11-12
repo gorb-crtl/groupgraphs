@@ -493,9 +493,30 @@ body.season-on #seasonBg { display: block; }
 .sw2[aria-checked="true"]::after { transform: translateX(20px); }
 @media (prefers-reduced-motion: reduce) { .sw2, .sw2::after { transition: none; } }
 .gcard { display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
-.gcard + .gcard { margin-top: 12px; }
 .gcard h4.gsub { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
 .gcard .ffbox { padding: 0; }
+#groupDetail { display: flex; flex-direction: column; gap: 12px; }
+#groupDetail > h3 { margin-bottom: 2px; }
+.gcard .gtools { border-top: 1px solid var(--line); padding: 0; margin: 0; }
+.gcard .gtools summary { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0; list-style: none; }
+.gcard .gtools summary::-webkit-details-marker { display: none; }
+.gcard .gtools summary::before { content: ""; flex: none; width: 0; height: 0; border-style: solid; border-width: 5px 0 5px 7px; border-color: transparent transparent transparent currentColor; transition: transform .15s; }
+.gcard .gtools[open] summary::before { transform: rotate(90deg); }
+.gcard .gtools[open] { padding-bottom: 14px; }
+@media (prefers-reduced-motion: reduce) { .gcard .gtools summary::before { transition: none; } }
+.gcard .gtools + .gtools { margin-top: -12px; }
+.gcard div.ffbox { border-top: 1px solid var(--line); padding-top: 12px; }
+#newGroupForm { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; }
+#newGroupForm label { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); font-weight: 700; }
+#newGroupForm input { font: inherit; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; padding: 9px 11px; min-width: 0; min-height: 44px; }
+#newGroupForm .btn { min-height: 44px; white-space: nowrap; }
+#newGroupForm .gthint { grid-column: 1 / -1; }
+.gcard div.ffbox h4 { font-size: 15px; }
+.gcard .btn.ghost { border: 1px solid var(--line); min-height: 40px; padding: 0 14px; }
+.gcard > .btn.ghost { align-self: flex-start; }
+#groupsPanel .btn.ghost:not(#closeGroups) { border: 1px solid var(--line); min-height: 40px; padding: 0 14px; }
+#closeGroups { border: 0; }
+#groupsPanel .err:empty { display: none; }
 
 #homeView[hidden] { display: none !important; }
 
@@ -873,9 +894,11 @@ h1.prompt { min-height: 2.24em; }
     </div>
     <div id="groupDetail" data-pane="groups"></div>
     <div class="divider" data-pane="groups"></div>
-    <form id="newGroupForm" class="row" data-pane="groups">
-      <div class="field"><label for="ngName">Start a new group (you'll be the host)</label><input id="ngName" maxlength="40" placeholder="The Nerds"></div>
+    <form id="newGroupForm" data-pane="groups">
+      <label for="ngName">Start a new group</label>
+      <input id="ngName" maxlength="40" placeholder="The Nerds">
       <button class="btn" type="submit">Create group</button>
+      <p class="gthint">You'll be the host, so you can add people and pick the Fun Friday theme.</p>
     </form>
     <div class="err" id="groupErr" role="alert"></div>
     <div class="divider" data-pane="profile"></div>
@@ -3464,7 +3487,6 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const SB_DARK = { dark: 1, grape: 1, terminal: 1, ocean: 1 };
 function sbTheme(){ const t = document.documentElement.dataset.theme || ""; return t || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); }
 function sbPalette(season, th){
-  if (th === "terminal") return ["#5be39a", "#3fbf7a", "#2c8f5a", "#8af0b8"];
   const dark = !!SB_DARK[th];
   if (season === "fall") return dark ? ["#e0874a", "#d9a441", "#c25a3a", "#b88a3e"] : ["#d0702f", "#d99a2b", "#b04a2c", "#a7802f"];
   if (season === "winter") return dark ? ["#ffffff", "#dfe8f2", "#c9d8e8"] : ["#a9bdd3", "#bccbdc", "#93abc6"];
@@ -3480,7 +3502,6 @@ function sbLobed(lobes, valley){ const pts = [], n = lobes.length;
 const SB_MAPLE = sbLobed([{ ang: 150, len: .62 }, { ang: 205, len: .95 }, { ang: 270, len: 1.15 }, { ang: 335, len: .95 }, { ang: 30, len: .62 }], .32);
 const SB_MAPLE_V = [[150, .55], [205, .85], [270, 1.05], [335, .85], [30, .55]];
 const SB_OVAL = (() => { const r = []; for (let i = 0; i <= 14; i++) { const t = i / 14, y = -1.2 + t * 2; let w = Math.sin(Math.pow(t, .75) * Math.PI) * .58; if (t < .35) w *= Math.pow(t / .35, 2.2); r.push([w + (i % 2 && i > 1 && i < 14 ? .06 : 0), y]); } return r.concat(r.slice(0, -1).reverse().map(([x, y]) => [-x, y])); })();
-const SB_PIX = { maple: [[0,-2],[-1,-1],[0,-1],[1,-1],[-2,0],[-1,0],[0,0],[1,0],[2,0],[0,1],[0,2]], oval: [[0,-2],[0,-1],[-1,0],[0,0],[1,0],[0,1]], petal: [[0,-1],[0,0],[1,0]], dot: [[0,0]] };
 function sbSpawn(season, w, h, fresh){
   const p = { x: rnd(0, w), y: fresh ? rnd(0, h) : rnd(-40, -12), rot: rnd(0, 6.28), phase: rnd(0, 6.28) };
   if (season === "fall") Object.assign(p, { shape: Math.random() < .55 ? "maple" : "oval", s: rnd(9, 14), vy: rnd(16, 30), sway: rnd(14, 28), swayF: rnd(.5, 1), spin: rnd(-1, 1), flipF: rnd(.6, 1.3) });
@@ -3507,16 +3528,10 @@ function sbStep(dt){
   } }
 function sbPath(ctx, pts, k){ ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x * k, y * k) : ctx.moveTo(x * k, y * k)); ctx.closePath(); }
 function sbDraw(){
-  const { ctx, w, h, season, t } = SB, term = SB.theme === "terminal", dark = !!SB_DARK[SB.theme], alpha = dark ? .55 : .6;
+  const { ctx, w, h, season, t } = SB, dark = !!SB_DARK[SB.theme], alpha = dark ? .55 : .6;
   ctx.clearRect(0, 0, w, h);
   for (const p of SB.ps) {
     ctx.save();
-    if (term) {
-      const u = season === "winter" ? Math.max(2.5, Math.round(p.s * 1.3)) : 3, sx = Math.round(p.x / u) * u, sy = Math.round(p.y / u) * u;
-      ctx.globalAlpha = season === "summer" ? .25 + .5 * Math.max(0, Math.sin(t * p.glowF * 2 + p.phase)) : season === "winter" ? p.a * .8 : alpha; ctx.fillStyle = p.col;
-      const px = season === "fall" ? SB_PIX[p.shape] : season === "spring" ? SB_PIX.petal : SB_PIX.dot;
-      for (const [dx, dy] of px) ctx.fillRect(sx + dx * u, sy + dy * u, u - .5, u - .5);
-      ctx.restore(); continue; }
     ctx.translate(p.x, p.y);
     if (season === "fall") {
       ctx.rotate(p.rot); const f = Math.cos(t * p.flipF + p.phase); ctx.scale(Math.sign(f || 1) * Math.max(.2, Math.abs(f)), 1);
