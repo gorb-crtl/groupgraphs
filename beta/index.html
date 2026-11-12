@@ -2146,7 +2146,7 @@ const GTHEMES = [
   { name: "Sports", tot: [["Play", "Watch"], ["Basketball", "Football"], ["Gym", "Run outside"], ["Team sport", "Solo sport"], ["Game day snacks", "Game day itself"]],
     rate: ["Golf", "Pickleball", "Fantasy football", "The wave", "Overtime"] },
 ];
-/* from Nov 13 2026 the lab, grad school and chemistry themes are swapped for everyday ones (earlier days keep theirs) */
+/* Nov 12 2026 gets Fall instead of Chemistry; from Nov 13 the lab, grad school and chemistry themes are swapped for everyday ones (earlier days keep theirs) */
 const GT_BASE = GTHEMES.length;
 GTHEMES.push(
   { name: "Home", tot: [["House", "Apartment"], ["Big city", "Small town"], ["Bath", "Shower"], ["Carpet", "Hardwood"], ["Minimalist", "Cozy clutter"]],
@@ -2154,7 +2154,9 @@ GTHEMES.push(
   { name: "School days", tot: [["Front row", "Back row"], ["Pen", "Pencil"], ["Group project", "Solo project"], ["Morning class", "Night class"], ["Study alone", "Study group"]],
     rate: ["Group projects", "Pop quizzes", "Cafeteria food", "Summer break", "Homework"] },
   { name: "Shopping", tot: [["Online", "In store"], ["Brand name", "Store brand"], ["Cash", "Card"], ["Shop alone", "Shop with friends"], ["Mall", "Outlet"]],
-    rate: ["Black Friday", "Free samples", "Costco", "Thrift stores", "Carts with a wobbly wheel"] });
+    rate: ["Black Friday", "Free samples", "Costco", "Thrift stores", "Carts with a wobbly wheel"]  },
+  { name: "Fall", tot: [["Pumpkin spice", "Apple cider"], ["Sweater", "Flannel"], ["Hayride", "Corn maze"], ["Apple picking", "Pumpkin patch"], ["Bonfire", "Hot cocoa"]],
+    rate: ["Leaf peeping", "Daylight saving time", "Football Sundays", "Raking leaves", "Cozy socks"] });
 const GT_SWAP = { 1: GT_BASE, 7: GT_BASE + 1, 9: GT_BASE + 2 };
 const TOT = GTHEMES.flatMap(t => t.tot), RATE = GTHEMES.flatMap(t => t.rate);
 const GAMES = { tot: { name: "This or that", list: TOT }, rate: { name: "Rate it", list: RATE } }, GN = 5;
@@ -2162,7 +2164,7 @@ S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph";
 S.gres = {}; S.gedit = null; S.gdraft = {};
 const isGameQid = (k) => /^(tot|rate)-/.test(k);
 const gDayIdx = () => S.qid ? todayIndex() : todayIndex() + S.dayOffset;
-const gThemeIdx = (d) => { const t = ((d % GT_BASE) + GT_BASE) % GT_BASE; return d >= GEN_FROM && GT_SWAP[t] != null ? GT_SWAP[t] : t; };
+const gThemeIdx = (d) => { if (d === 9) return GT_BASE + 3; const t = ((d % GT_BASE) + GT_BASE) % GT_BASE; return d >= GEN_FROM && GT_SWAP[t] != null ? GT_SWAP[t] : t; };
 function gItems(kind, d){ const t = gThemeIdx(d), out = []; for (let k = 0; k < GN; k++) out.push(t * GN + k); return out; }
 const bonusQ = (d) => (S.gid && S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || null;
 const gQid = (kind, d) => kind + "-" + idxISO(d);
