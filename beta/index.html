@@ -497,7 +497,7 @@ svg text { font-family: var(--f-body); }
 <style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 <style id="boldLayout">
 /* Bold layout: home shows today's games and who's in; tapping one opens it full screen ("focus"). Colors come from the theme tokens, plus one color per game. */
-:root { --g-graph: var(--pen); --g-tot: var(--s3); --g-rate: var(--s4); --g-bonus: var(--s7); --r-card: 22px; --shadow: 0 1px 2px rgba(10,14,22,.07), 0 6px 20px rgba(10,14,22,.06); }
+:root { --g-graph: var(--pen); --g-tot: var(--s3); --g-rate: var(--s4); --g-bonus: var(--s7); --g-draw: var(--s5); --r-card: 22px; --shadow: 0 1px 2px rgba(10,14,22,.07), 0 6px 20px rgba(10,14,22,.06); }
 header.top, #groupbar, .gamenav, #pulse, footer { display: none !important; }
 body.scr-auth header.top, body.scr-code header.top { display: flex !important; }
 body.scr-auth header.top .daynav, body.scr-code header.top .daynav { visibility: hidden; }
@@ -563,6 +563,7 @@ button.hav:disabled { opacity: .55; cursor: default; }
 .htiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .htile { --gc: var(--g-tot); min-width: 0; min-height: 148px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; border: 0; border-radius: var(--r-card); padding: 16px; background: var(--sheet); background: color-mix(in srgb, var(--gc) 17%, var(--sheet)); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .htile.rate { --gc: var(--g-rate); }
+.htile.gdraw { --gc: var(--g-draw); grid-column: 1 / -1; min-height: 0; }
 .htile.bonus { --gc: var(--g-bonus); grid-column: 1 / -1; min-height: 0; }
 .htile .lab { width: 100%; min-height: 22px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); color: color-mix(in srgb, var(--gc) 50%, var(--ink)); }
 .htile .sp { flex: 1; min-height: 10px; }
@@ -897,6 +898,7 @@ body.gm .eyebrow .today { color: inherit; }
       <button type="button" class="htile bonus" id="hBonus" hidden><span class="lab">Group bonus<span class="okc" id="hBonusOk" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><b id="hBonusT"></b><span class="st" id="hBonusSt"></span></button>
       <button type="button" class="htile tot" id="hTot"><span class="lab">This or that<span class="okc" id="hTotOk" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="sp"></span><b id="hTotT"></b><span class="st" id="hTotSt"></span></button>
       <button type="button" class="htile rate" id="hRate"><span class="lab">Rate it<span class="okc" id="hRateOk" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="sp"></span><b id="hRateT"></b><span class="st" id="hRateSt"></span></button>
+      <button type="button" class="htile gdraw" id="hDraw" hidden><span class="lab">GroupDraw<span class="okc" id="hDrawOk" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><b id="hDrawT"></b><span class="st" id="hDrawSt"></span></button>
     </div>
     <button type="button" class="hchat" id="hChat" hidden><span class="av"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span><span class="tx" id="hChatTx"></span><span class="n" id="hChatN" hidden>0</span></button>
   </section>
@@ -2309,9 +2311,12 @@ async function loadDraw(force){
   const gid = S.gid, day = idxISO(gDayIdx()), k = gid + "|" + day; if (!gid) return;
   const old = S.draw[k];
   if (!force && old && (old.err || Date.now() - old.at < 20000)) return;
+  if (!force && S.dloading === k) return; S.dloading = k;
   try { const r = await rpc("get_draw", { p_secret: S.secret, p_group: gid, p_day: day }); r.at = Date.now(); S.draw[k] = r; }
   catch (e) { if (e.message === "not_signed_in") return signOut(); S.draw[k] = { err: errText(e), at: Date.now() }; }
+  finally { if (S.dloading === k) S.dloading = null; }
   if (S.game === "gdraw" && dKey() === k && !S.dpen) renderGame();
+  homeSoon();
 }
 /* strokes are in a 600 x 600 square; the eraser cuts through to transparent */
 function dDraw(ctx, strokes){
@@ -3464,16 +3469,17 @@ $("submit").addEventListener("click", async ()=>{
    Home lists today's games (graph, This or that, Rate it, and a group bonus when there is one) with who in the group is in.
    Tapping one opens it in "focus": just that game, a progress bar of today's games, and a Next button once it's answered. */
 S.view = "home";
-const GAME_NAMES = { graph: "Graph", tot: "This or that", rate: "Rate it", bonus: "Group bonus" };
-const GAME_COLOR = { graph: "var(--g-graph)", tot: "var(--g-tot)", rate: "var(--g-rate)", bonus: "var(--g-bonus)" };
+const GAME_NAMES = { graph: "Graph", tot: "This or that", rate: "Rate it", bonus: "Group bonus", gdraw: "GroupDraw" };
+const GAME_COLOR = { graph: "var(--g-graph)", tot: "var(--g-tot)", rate: "var(--g-rate)", bonus: "var(--g-bonus)", gdraw: "var(--g-draw)" };
 const initialOf = (s) => (String(s || "?").trim()[0] || "?").toUpperCase();
 const homeDay = () => todayIndex() + S.dayOffset;
 const dayGraphQ = () => withPeople(qForDay(homeDay()));
-const gamesToday = () => bonusQ(homeDay()) ? ["graph", "bonus", "tot", "rate"] : ["graph", "tot", "rate"];
+const gamesToday = () => (bonusQ(homeDay()) ? ["graph", "bonus", "tot", "rate"] : ["graph", "tot", "rate"]).concat(group() ? ["gdraw"] : []);
 function gameDone(k){
   const d = homeDay();
   if (k === "graph") { const q = dayGraphQ(); return !!(q && S.mine[q.id]); }
   if (k === "bonus") { const b = bonusQ(d), q = b && withPeople(b); return !!(q && S.mine[q.id]); }
+  if (k === "gdraw") { const R = S.draw && S.draw[S.gid + "|" + idxISO(d)]; return !!(R && !R.err && (R.mine || R.revealed)); }
   const qid = gQid(k, d); return !!gValid(k, S.mine[qid], gItems(k, d));
 }
 function homeSoon(){ clearTimeout(homeSoon.t); homeSoon.t = setTimeout(() => { renderHome(); renderFocus(); }, 0); }
@@ -3529,6 +3535,13 @@ function renderHome(){
   $("hTotOk").hidden = !td; $("hRateOk").hidden = !rd;
   $("hTotSt").textContent = td ? "Done · See results" : GN + " quick picks";
   $("hRateSt").textContent = rd ? "Done · See results" : "Rate " + GN + " things";
+  /* GroupDraw: only with a group */
+  const dt2 = $("hDraw"); dt2.hidden = !g;
+  if (g) { const R = S.draw[S.gid + "|" + idxISO(d)], sc = dScene(d), mineI = R && !R.err && !R.none ? R.my_slot : null;
+    if (!R) loadDraw(false);
+    $("hDrawT").textContent = sc.t; $("hDrawOk").hidden = !gameDone("gdraw");
+    $("hDrawSt").textContent = !R || R.err ? "Everyone draws one thing in the scene" : R.none ? "No scene this day" : R.revealed ? "Revealed · See the scene"
+      : R.mine ? R.slots.filter(x => x.drawn).length + " of " + R.slots.length + " drawn · reveal when everyone's in" : mineI != null ? "You're drawing " + dObj(sc, mineI).name : "Everyone draws one thing in the scene"; }
 
   /* chat preview for today's graph */
   const ch = $("hChat"); ch.hidden = !g;
@@ -3544,11 +3557,11 @@ function renderFocus(){
     b.appendChild(document.createElement("i")); b.addEventListener("click", () => { if (k !== cur) openFocus(k); }); segs.appendChild(b); });
   $("fCount").textContent = (list.indexOf(cur) + 1) + "/" + list.length;
   const isGraph = cur === "graph" || cur === "bonus", fn = $("fNext");
-  fn.hidden = !gameDone(cur) || (isGraph ? S.tab !== "res" : !!S.gedit);
+  fn.hidden = !gameDone(cur) || (isGraph ? S.tab !== "res" : cur === "gdraw" ? !!S.dedit : !!S.gedit);
   if (fn.hidden) return;
   const i = list.indexOf(cur); let nx = null;
   for (let j = 1; j < list.length; j++) { const k = list[(i + j) % list.length]; if (!gameDone(k)) { nx = k; break; } }
-  const b = $("fNextBtn"); b.style.setProperty("--gc", nx ? GAME_COLOR[nx] : "var(--ink)"); b.style.color = nx === "tot" || nx === "rate" ? "#10151d" : "var(--sheet)";
+  const b = $("fNextBtn"); b.style.setProperty("--gc", nx ? GAME_COLOR[nx] : "var(--ink)"); b.style.color = nx === "tot" || nx === "rate" || nx === "gdraw" ? "#10151d" : "var(--sheet)";
   b.dataset.g = nx || ""; $("fNextT").textContent = nx ? "Next: " + GAME_NAMES[nx] : "Back to today";
 }
 function openFocus(k){
@@ -3572,6 +3585,7 @@ $("hHero").addEventListener("click", () => openFocus("graph"));
 $("hBonus").addEventListener("click", () => openFocus("bonus"));
 $("hTot").addEventListener("click", () => openFocus("tot"));
 $("hRate").addEventListener("click", () => openFocus("rate"));
+$("hDraw").addEventListener("click", () => openFocus("gdraw"));
 $("hChat").addEventListener("click", () => { openFocus("graph"); setTimeout(() => $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }), 60); });
 $("hCal").addEventListener("click", openCal);
 $("hToday").addEventListener("click", () => { S.dayOffset = 0; S.qid = null; go(); });
