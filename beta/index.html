@@ -143,6 +143,7 @@ button { cursor: pointer; }
 .gamenav { flex-wrap: nowrap !important; }
 .gamenav button { padding: 8px 12px; min-height: 40px; white-space: nowrap; font-size: 14px; }
 @media (max-width: 420px) { .gamenav button { padding: 8px 9px; font-size: 13.5px; } }
+@media (max-width: 420px) { .gamenav:has(> button[data-g="bonus"]:not([hidden])) button { padding: 8px 6px; font-size: 13px; } }
 body.gm .q-head:not(.gq), body.gm div:has(> #graphTabs), body.gm #panelDraw, body.gm #panelRes, body.gm #chatBox, body.gm #rulesBox { display: none !important; }
 .game { display: flex; flex-direction: column; gap: 14px; }
 .game .q-head { margin-bottom: 2px; }
@@ -178,6 +179,30 @@ body.gm .q-head:not(.gq), body.gm div:has(> #graphTabs), body.gm #panelDraw, bod
 .gchip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 99px; padding: 2px 8px 2px 5px; }
 .gchip i { width: 9px; height: 9px; border-radius: 50%; }
 .gchip.me { color: var(--ink); font-weight: 700; }
+/* GroupDraw */
+.dsheet { gap: 10px; }
+.dcanvas { width: 100%; max-width: 560px; align-self: center; }
+.dcanvas canvas { display: block; width: 100%; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+.dcanvas canvas.live { touch-action: none; cursor: crosshair; -webkit-user-select: none; user-select: none; }
+.dtools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
+.dpal { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.dpal button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--sheet); box-shadow: 0 0 0 1px var(--line); padding: 0; cursor: pointer; }
+.dpal button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
+.dpal .derase { width: auto; height: 28px; border-radius: 99px; padding: 0 10px; background: var(--sheet); color: var(--ink-2); font: inherit; font-size: 12px; font-weight: 700; border: 1px solid var(--line); box-shadow: none; }
+.dpal .derase[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--sheet); box-shadow: none; }
+.dsize { display: flex; gap: 4px; }
+.dsize button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: var(--sheet); display: grid; place-items: center; padding: 0; cursor: pointer; }
+.dsize button i { display: block; background: var(--ink); border-radius: 50%; }
+.dsize button[aria-pressed="true"] { border-color: var(--pen); box-shadow: 0 0 0 1px var(--pen); }
+.dwait { font-size: 13px; color: var(--ink-2); margin: 0; }
+.dmapbox { margin-top: 4px; }
+.dmaph { font-size: 11px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.dmap { position: relative; width: 100%; max-width: 340px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.dcell { position: absolute; box-sizing: border-box; border: 1px solid var(--line); padding: 6px 7px; display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; line-height: 1.25; color: var(--ink-3); overflow: hidden; }
+.dcell b { display: flex; align-items: center; gap: 5px; color: var(--ink); font-size: 12.5px; }
+.dcell b i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dcell.me { background: var(--pen-soft); box-shadow: inset 0 0 0 2px var(--pen); }
+.dcell.done span { color: var(--ink-2); }
 .rateres { display: flex; flex-direction: column; gap: 4px; }
 .rr-top { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
 .rr-top .avg { font-family: var(--f-mono); font-size: 13px; color: var(--ink-2); white-space: nowrap; }
@@ -678,6 +703,7 @@ svg text { font-family: var(--f-body); }
     <button type="button" data-g="graph" aria-pressed="true">Graph</button>
     <button type="button" data-g="tot" aria-pressed="false">This or that</button>
     <button type="button" data-g="rate" aria-pressed="false">Rate it</button>
+    <button type="button" data-g="gdraw" aria-pressed="false">Draw</button>
     <button type="button" data-g="bonus" aria-pressed="false" hidden>Bonus</button>
   </nav>
   <section class="game" id="gameView" hidden></section>
@@ -1876,7 +1902,7 @@ const GTHEMES = [
 ];
 const TOT = GTHEMES.flatMap(t => t.tot), RATE = GTHEMES.flatMap(t => t.rate);
 const GAMES = { tot: { name: "This or that", list: TOT }, rate: { name: "Rate it", list: RATE } }, GN = 5;
-S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph";
+S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game] && S.game !== "gdraw") S.game = "graph";
 S.gres = {}; S.gedit = null; S.gdraft = {};
 const isGameQid = (k) => /^(tot|rate)-/.test(k);
 const gDayIdx = () => S.qid ? todayIndex() : todayIndex() + S.dayOffset;
@@ -1899,11 +1925,12 @@ function renderGame(){
   const ok = !!(S.me && !$("appMain").hidden);
   $("gameNav").hidden = !ok;
   const bq = !S.qid && bonusQ(gDayIdx()); $("gameNav").querySelector('[data-g="bonus"]').hidden = !bq;
-  if (S.game === "bonus" && !bq) { S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph"; S.drawnFor = null; setTimeout(go, 0); }
+  if (S.game === "bonus" && !bq) { S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game] && S.game !== "gdraw") S.game = "graph"; S.drawnFor = null; setTimeout(go, 0); }
   let g = ok ? S.game : "graph"; if (g === "bonus") g = "graph";
   $("gameNav").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === (S.game === "bonus" ? "bonus" : g))));
   document.body.classList.toggle("gm", g !== "graph");
   const V = $("gameView"); V.hidden = g === "graph"; if (g === "graph") { V.innerHTML = ""; return; }
+  if (g === "gdraw") { renderGroupDraw(V); return; }
   const d = gDayIdx(), qid = gQid(g, d), items = gItems(g, d), L = GAMES[g].list;
   const mine = gValid(g, S.mine[qid], items) ? S.mine[qid] : null, editing = S.gedit === qid || !mine;
   V.innerHTML = "";
@@ -2032,6 +2059,273 @@ function renderRateRes(box, items, list, me, solo){
   if (!solo) box.appendChild(gEl("p", "gfoot", "The thin line on each row is the group average. " + n + (n === 1 ? " answer" : " answers") + " from your group so far."));
 }
 document.addEventListener("visibilitychange", () => { if (document.hidden && S.gedit) { S.gedit = null; S.gdraft = {}; renderGame(); } });
+
+/* ---------------- GroupDraw ----------------
+   One picture a day per group. The picture is split into one piece per member; you draw only yours and see
+   a thin strip of the pieces next to it so lines can join up. The whole picture shows once everyone has drawn,
+   when the host reveals it, or at midnight Central. Same prompt for everyone that day.
+   Database: supabase/groupdraw.sql (draw_rounds, draw_parts, get_draw, save_draw, reveal_draw). */
+const DPROMPTS = [
+  { t: "A monster", parts: ["horns or hair", "face", "arms and body", "belly", "legs", "feet"] },
+  { t: "A robot", parts: ["antenna", "head", "shoulders and arms", "control panel chest", "legs", "wheels or feet"] },
+  { t: "A haunted house", parts: ["night sky", "roof and attic", "windows", "front door", "porch", "spooky yard"] },
+  { t: "A city skyline at night", parts: ["sky and moon", "rooftops", "tall towers", "lit-up windows", "street", "cars and people"] },
+  { t: "Under the sea", parts: ["waves and boat", "fish", "jellyfish", "a big sea creature", "coral and seaweed", "sea floor"] },
+  { t: "A wizard", parts: ["hat", "face and beard", "robe and arms", "magic staff", "robe bottom", "shoes"] },
+  { t: "A dragon", parts: ["horns", "head", "wings", "scaly body", "legs and claws", "tail and treasure"] },
+  { t: "A treehouse", parts: ["sky and birds", "treetop", "the house", "ladder and rope swing", "trunk", "ground"] },
+  { t: "A rocket launch", parts: ["stars and planets", "rocket nose", "rocket body", "windows and crew", "engines and flames", "launch pad"] },
+  { t: "A food truck", parts: ["sky and sign", "roof and menu", "serving window", "the cook", "wheels", "line of customers"] },
+  { t: "A superhero nobody has heard of", parts: ["mask and hair", "face", "cape and chest logo", "power in action", "legs", "boots"] },
+  { t: "A castle", parts: ["flags and sky", "towers", "walls", "gate", "moat", "something in the moat"] },
+  { t: "A pirate ship", parts: ["sky and flag", "sails", "crow's nest and mast", "deck and crew", "hull", "the sea"] },
+  { t: "A dinosaur", parts: ["head", "neck", "back and spikes", "belly and tiny arms", "legs", "feet and tail"] },
+  { t: "A snowman with a secret", parts: ["hat", "face", "scarf and arms", "middle snowball", "bottom snowball", "what's hiding below"] },
+  { t: "An alien visiting Earth", parts: ["spaceship", "beam of light", "alien head", "alien body", "alien legs", "the human who sees it"] },
+  { t: "The world's biggest sandwich", parts: ["top bun", "lettuce and tomato", "the fillings", "more fillings", "cheese and sauce", "bottom bun and plate"] },
+  { t: "A cat in a costume", parts: ["ears and hat", "face", "costume top", "paws", "costume bottom", "tail and feet"] },
+  { t: "A volcano island", parts: ["smoke and sky", "volcano top", "lava", "jungle", "beach", "ocean"] },
+  { t: "A mad scientist's lab", parts: ["ceiling and lights", "the scientist's hair", "the scientist", "bubbling glassware", "lab bench", "the creature on the floor"] },
+  { t: "A wedding cake gone wrong", parts: ["cake topper", "top tier", "middle tier", "the disaster", "bottom tier", "table and guests"] },
+  { t: "A carnival", parts: ["sky and balloons", "Ferris wheel", "rides", "game booths", "snack stands", "crowd"] },
+  { t: "A knight", parts: ["helmet plume", "helmet", "armor and shield", "sword", "legs", "horse or boots"] },
+  { t: "A frog king", parts: ["crown", "face", "royal cape", "belly", "legs", "lily pad throne"] },
+  { t: "A camping trip", parts: ["stars", "mountains", "trees", "tent", "campfire", "the campers"] },
+  { t: "A totem pole of animals", parts: ["bird on top", "first animal", "second animal", "third animal", "fourth animal", "base"] },
+  { t: "A dream bedroom", parts: ["ceiling", "shelves and posters", "the bed", "a pet", "the floor", "secret under the bed"] },
+  { t: "A sea monster attacking a boat", parts: ["storm clouds", "lightning", "the boat", "the monster's head", "tentacles", "deep water"] },
+];
+const DCOLORS = ["#1b1b1b", "#e23b3b", "#f28c28", "#f5c400", "#2fa84f", "#2a78d6", "#7b4fd6", "#8b5a2b", "#f49ac1", "#9aa3ad"];
+const DWIDTHS = [4, 9, 20], DCW = 600, DCH = 450, DBAND = 40, DPAPER = "#ffffff", DERASE = 99;
+const dPrompt = (d) => DPROMPTS[((d % DPROMPTS.length) + DPROMPTS.length) % DPROMPTS.length];
+S.draw = {}; S.ddraft = ls.get("gg-ddraft", {}); S.dedit = null; S.dtool = { c: 0, w: 1 };
+/* drop unsent drafts from before yesterday */
+Object.keys(S.ddraft).forEach(k => { if ((k.split("|")[1] || "") < idxISO(todayIndex() - 1)) delete S.ddraft[k]; });
+/* split the picture into n pieces, in 1 column up to 3 people, 2 columns up to 8, then 3. The fullest column has
+   4:3 pieces; a column with one piece fewer gets taller pieces, so the picture stays a rectangle with no gaps. */
+function dLayout(n){
+  n = Math.max(1, n); const cols = n <= 3 ? 1 : n <= 8 ? 2 : 3, base = Math.floor(n / cols), extra = n % cols, most = base + (extra ? 1 : 0), H = most * DCH, cells = [];
+  for (let c = 0; c < cols; c++) { const k = base + (c < extra ? 1 : 0), h = H / k; for (let r = 0; r < k; r++) cells.push({ x: c * DCW, y: Math.round(r * h), w: DCW, h: Math.round((r + 1) * h) - Math.round(r * h), col: c, cols }); }
+  /* number pieces top to bottom, left to right, so piece order reads like the picture */
+  cells.sort((a, b) => a.y - b.y || a.x - b.x);
+  return { W: cols * DCW, H, cells };
+}
+function dPartName(pr, L, i){
+  if (L.cells.length === 1) return "the whole picture";
+  const c = L.cells[i], P = pr.parts.length, a = Math.min(P - 1, Math.floor(c.y / L.H * P + 1e-6)), b = Math.max(a + 1, Math.round((c.y + c.h) / L.H * P));
+  let s = pr.parts.slice(a, b).join(", ");
+  if (c.cols > 1) s += c.col === 0 ? " (left side)" : c.col === c.cols - 1 ? " (right side)" : " (middle)";
+  return s;
+}
+/* canvas can't read CSS variables, so look the member color up */
+function dCss(c){ const m = /^var\((--[\w-]+)\)$/.exec(String(c || "").trim()); return m ? (getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim() || "#555") : (c || "#555"); }
+const dKey = () => S.gid + "|" + idxISO(gDayIdx());
+async function loadDraw(force){
+  const gid = S.gid, day = idxISO(gDayIdx()), k = gid + "|" + day; if (!gid) return;
+  const old = S.draw[k];
+  if (!force && old && (old.err || Date.now() - old.at < 20000)) return;
+  try { const r = await rpc("get_draw", { p_secret: S.secret, p_group: gid, p_day: day }); r.at = Date.now(); S.draw[k] = r; }
+  catch (e) { if (e.message === "not_signed_in") return signOut(); S.draw[k] = { err: errText(e), at: Date.now() }; }
+  if (S.game === "gdraw" && dKey() === k && !S.dpen) renderGame();
+}
+function dDraw(ctx, strokes){
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  (strokes || []).forEach(s => {
+    if (!s || !Array.isArray(s.p) || s.p.length < 2) return;
+    ctx.strokeStyle = ctx.fillStyle = s.c === DERASE ? DPAPER : (DCOLORS[s.c] || DCOLORS[0]); ctx.lineWidth = +s.w || DWIDTHS[1];
+    if (s.p.length === 2) { ctx.beginPath(); ctx.arc(s.p[0], s.p[1], ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fill(); return; }
+    ctx.beginPath(); ctx.moveTo(s.p[0], s.p[1]);
+    for (let i = 2; i < s.p.length; i += 2) ctx.lineTo(s.p[i], s.p[i + 1]);
+    ctx.stroke();
+  });
+}
+/* the bits of my strokes within DBAND of a shared edge: that's all the neighbors get to see before the reveal */
+function dEdges(strokes, c, L){
+  const sides = [c.x > 0, c.y > 0, c.x + c.w < L.W - 1, c.y + c.h < L.H - 1];
+  const near = (x, y) => (sides[0] && x < c.x + DBAND) || (sides[1] && y < c.y + DBAND) || (sides[2] && x > c.x + c.w - DBAND) || (sides[3] && y > c.y + c.h - DBAND);
+  const out = [];
+  strokes.forEach(s => {
+    if (s.c === DERASE) return; let cur = null;
+    for (let i = 0; i < s.p.length; i += 2) {
+      const x = s.p[i], y = s.p[i + 1];
+      if (near(x, y)) { if (!cur) { cur = { c: s.c, w: s.w, p: [] }; if (i > 0) cur.p.push(s.p[i - 2], s.p[i - 1]); out.push(cur); } cur.p.push(x, y); }
+      else if (cur) { cur.p.push(x, y); cur = null; }
+    }
+  });
+  return out;
+}
+function dSaveDrafts(){ ls.set("gg-ddraft", S.ddraft); }
+function renderGroupDraw(V){
+  const d = gDayIdx(), day = idxISO(d), pr = dPrompt(d), grp = group(), me = S.me.username;
+  V.innerHTML = "";
+  const head = gEl("div", "q-head gq"), eb = gEl("div", "eyebrow");
+  if (!S.qid && S.dayOffset === 0) eb.appendChild(gEl("span", "today", "Today's picture"));
+  eb.appendChild(gEl("span", null, "GroupDraw")); eb.appendChild(gEl("span", null, "Day " + (d + 1)));
+  const sub = gEl("p", "sub");
+  head.append(eb, gEl("h1", "prompt", pr.t), sub); V.appendChild(head);
+  const sheet = gEl("div", "sheet gsheet dsheet"); V.appendChild(sheet);
+  if (!grp) {
+    sub.textContent = "Everyone in a group draws one piece of the same picture without seeing the rest. Once all the pieces are in, the whole thing is revealed.";
+    sheet.appendChild(gEl("p", "note", "GroupDraw is played with a group. Make one or join one under Groups & profile. A group of one works too: you just draw the whole picture yourself."));
+    const b = gEl("button", "btn primary", "Groups & profile"); b.type = "button"; b.style.alignSelf = "flex-start";
+    b.addEventListener("click", () => showScreen("groups")); sheet.appendChild(b); return;
+  }
+  const k = S.gid + "|" + day, R = S.draw[k];
+  if (!R || R.err) {
+    sub.textContent = "Each person in " + grp.name + " draws one piece of the picture.";
+    sheet.appendChild(gEl("p", "note", R ? R.err : "Loading today's picture…"));
+    if (R) { const b = gEl("button", "btn", "Try again"); b.type = "button"; b.style.alignSelf = "flex-start"; b.addEventListener("click", () => { delete S.draw[k]; loadDraw(true); renderGame(); }); sheet.appendChild(b); }
+    else loadDraw(false);
+    return;
+  }
+  if (Date.now() - R.at > 20000) loadDraw(false);
+  if (R.none) { sub.textContent = "Nobody in " + grp.name + " drew this one."; sheet.appendChild(gEl("p", "note", "There's no GroupDraw picture for this day. Head back to today to draw.")); return; }
+  const L = dLayout(R.slots.length), mineI = R.my_slot, done = R.slots.filter(s => s.drawn).length;
+  const nameOf = (s) => s.username === me ? "You" : s.display_name;
+  if (R.revealed) { sub.textContent = done === R.slots.length ? "Everyone drew their piece. Here's the whole thing." : done + " of " + R.slots.length + " pieces got drawn. Here's what came together."; dReveal(sheet, R, L, pr); return; }
+  const editing = mineI != null && (S.dedit === k || !R.mine);
+  if (mineI == null) {
+    sub.textContent = "You joined after today's picture was handed out. You'll see it when it's revealed.";
+    sheet.appendChild(dMap(R, L, pr, null)); return;
+  }
+  const part = dPartName(pr, L, mineI);
+  sub.textContent = L.cells.length === 1 ? "It's just you in this group, so the whole picture is yours." : "Your piece: " + part + ". Draw right up to the edges; the faint lines at the border are where your neighbors' drawings end.";
+  if (!editing) {
+    const lb = gEl("div", "lockbar"); lb.innerHTML = '<svg viewBox="0 0 16 18" aria-hidden="true"><rect x="2" y="8" width="12" height="9" rx="2" fill="currentColor"/><path d="M5 8V5.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+    lb.appendChild(gEl("span", null, "Your piece is in."));
+    const ch = gEl("button", "btn", "Change my drawing"); ch.type = "button"; ch.style.marginLeft = "auto";
+    ch.addEventListener("click", () => { S.dedit = k; if (!S.ddraft[k]) S.ddraft[k] = JSON.parse(JSON.stringify(R.mine)); renderGame(); }); lb.appendChild(ch);
+    sheet.appendChild(lb);
+    const cv = dCanvas(R, L, mineI, R.mine, false); sheet.appendChild(cv.wrap);
+    sheet.appendChild(gEl("p", "dwait", done + " of " + R.slots.length + " pieces drawn. The picture shows once everyone's done" + (R.host ? ", or when you reveal it." : " or at midnight.")));
+    sheet.appendChild(dMap(R, L, pr, mineI));
+    if (R.host) dRevealBtn(sheet, k, day, done);
+    return;
+  }
+  const strokes = S.ddraft[k] = S.ddraft[k] || (R.mine ? JSON.parse(JSON.stringify(R.mine)) : []);
+  const tools = gEl("div", "dtools");
+  const pal = gEl("div", "dpal"); pal.setAttribute("role", "group"); pal.setAttribute("aria-label", "Pen color");
+  DCOLORS.forEach((c, i) => { const b = gEl("button"); b.type = "button"; b.style.background = c; b.setAttribute("aria-label", "Color " + (i + 1)); b.setAttribute("aria-pressed", String(S.dtool.c === i)); b.addEventListener("click", () => { S.dtool.c = i; syncT(); }); pal.appendChild(b); });
+  const er = gEl("button", "derase", "Eraser"); er.type = "button"; er.addEventListener("click", () => { S.dtool.c = DERASE; syncT(); }); pal.appendChild(er);
+  const sz = gEl("div", "dsize"); sz.setAttribute("role", "group"); sz.setAttribute("aria-label", "Pen size");
+  DWIDTHS.forEach((w, i) => { const b = gEl("button"); b.type = "button"; b.setAttribute("aria-label", ["Thin", "Medium", "Thick"][i]); const dot = gEl("i"); dot.style.width = dot.style.height = (4 + i * 5) + "px"; b.appendChild(dot); b.addEventListener("click", () => { S.dtool.w = i; syncT(); }); sz.appendChild(b); });
+  function syncT(){ pal.querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-pressed", String(i < DCOLORS.length ? S.dtool.c === i : S.dtool.c === DERASE))); sz.querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-pressed", String(S.dtool.w === i))); }
+  syncT(); tools.append(pal, sz); sheet.appendChild(tools);
+  const cv = dCanvas(R, L, mineI, strokes, true, () => { dSaveDrafts(); syncB(); }); sheet.appendChild(cv.wrap);
+  const ctr = gEl("div", "controls");
+  const undo = gEl("button", "btn", "Undo"); undo.type = "button"; undo.addEventListener("click", () => { strokes.pop(); cv.paint(); dSaveDrafts(); syncB(); });
+  const clr = gEl("button", "btn ghost", "Clear"); clr.type = "button"; clr.addEventListener("click", () => { if (!strokes.length || !confirm("Erase your whole piece?")) return; strokes.length = 0; cv.paint(); dSaveDrafts(); syncB(); });
+  ctr.append(undo, clr, gEl("span", "spacer"));
+  if (R.mine) { const c = gEl("button", "btn ghost", "Cancel"); c.type = "button"; c.addEventListener("click", () => { S.dedit = null; delete S.ddraft[k]; dSaveDrafts(); renderGame(); }); ctr.appendChild(c); }
+  const submit = gEl("button", "btn primary", R.mine ? "Resubmit" : "Submit my piece"); submit.type = "button"; ctr.appendChild(submit);
+  function syncB(){ undo.disabled = !strokes.length; clr.disabled = !strokes.length; submit.disabled = !strokes.some(s => s.c !== DERASE); }
+  syncB(); sheet.appendChild(ctr);
+  const st = gEl("div", "status"); st.setAttribute("role", "status"); sheet.appendChild(st);
+  submit.addEventListener("click", async () => {
+    submit.disabled = true; st.className = "status"; st.textContent = "Saving…";
+    try {
+      await rpc("save_draw", { p_secret: S.secret, p_group: S.gid, p_day: day, p_strokes: strokes, p_edges: dEdges(strokes, L.cells[mineI], L) });
+      S.dedit = null; delete S.ddraft[k]; dSaveDrafts(); R.mine = strokes; await loadDraw(true); renderGame();
+    } catch (e) { if (e.message === "not_signed_in") return signOut(); st.className = "status err"; st.textContent = errText(e); submit.disabled = false; }
+  });
+  if (L.cells.length > 1) { sheet.appendChild(dMap(R, L, pr, mineI)); if (R.host) dRevealBtn(sheet, k, day, done); }
+}
+/* my piece plus a DBAND margin showing where the neighbors' lines reach the border */
+function dCanvas(R, L, i, strokes, live, onChange){
+  const c = L.cells[i], rx = Math.max(0, c.x - DBAND), ry = Math.max(0, c.y - DBAND), rw = Math.min(L.W, c.x + c.w + DBAND) - rx, rh = Math.min(L.H, c.y + c.h + DBAND) - ry;
+  const wrap = gEl("div", "dcanvas"), cv = document.createElement("canvas"); wrap.appendChild(cv);
+  cv.style.aspectRatio = rw + " / " + rh; cv.setAttribute("aria-label", live ? "Drawing area for your piece" : "Your piece");
+  const others = (R.edges || []).flatMap(e => e.edges || []);
+  let scale = 1;
+  function paint(){
+    const cssW = cv.clientWidth || Math.min(560, (cv.parentNode && cv.parentNode.clientWidth) || 340), dpr = Math.min(3, window.devicePixelRatio || 1);
+    scale = cssW / rw; cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssW * rh / rw * dpr);
+    const x = cv.getContext("2d"); x.setTransform(scale * dpr, 0, 0, scale * dpr, -rx * scale * dpr, -ry * scale * dpr);
+    x.fillStyle = "#eef0f3"; x.fillRect(rx, ry, rw, rh);
+    x.save(); x.globalAlpha = .45; dDraw(x, others); x.restore();
+    x.fillStyle = DPAPER; x.fillRect(c.x, c.y, c.w, c.h);
+    x.save(); x.beginPath(); x.rect(c.x, c.y, c.w, c.h); x.clip(); dDraw(x, strokes); x.restore();
+    x.save(); x.setLineDash([8, 6]); x.strokeStyle = "rgba(27,36,48,.35)"; x.lineWidth = 1.5 / scale; x.strokeRect(c.x, c.y, c.w, c.h); x.restore();
+  }
+  requestAnimationFrame(paint);
+  if (typeof ResizeObserver === "function") { let lw = 0; new ResizeObserver(() => { if (cv.clientWidth !== lw) { lw = cv.clientWidth; paint(); } }).observe(cv); }
+  if (live) {
+    cv.classList.add("live"); let cur = null;
+    const pt = (e) => { const b = cv.getBoundingClientRect(), s = rw / b.width; return [Math.round(Math.min(c.x + c.w, Math.max(c.x, rx + (e.clientX - b.left) * s))), Math.round(Math.min(c.y + c.h, Math.max(c.y, ry + (e.clientY - b.top) * s)))]; };
+    cv.addEventListener("pointerdown", (e) => { if (e.button > 0) return; e.preventDefault(); cv.setPointerCapture(e.pointerId); S.dpen = true; const [x, y] = pt(e); cur = { c: S.dtool.c, w: DWIDTHS[S.dtool.w] * (S.dtool.c === DERASE ? 1.6 : 1), p: [x, y] }; strokes.push(cur); paint(); });
+    cv.addEventListener("pointermove", (e) => { if (!cur) return; e.preventDefault(); const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]; (evs.length ? evs : [e]).forEach(ev => { const [x, y] = pt(ev), n = cur.p.length; if (Math.hypot(x - cur.p[n - 2], y - cur.p[n - 1]) >= 2.5) cur.p.push(x, y); }); paint(); });
+    const end = () => { if (!cur) return; if (cur.p.length > 2000) cur.p.length = 2000; cur = null; S.dpen = false; onChange && onChange(); };
+    cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end); cv.addEventListener("lostpointercapture", end);
+  }
+  return { wrap, paint };
+}
+/* a little map of the whole picture: who has which piece, and who's done */
+function dMap(R, L, pr, mineI){
+  const box = gEl("div", "dmapbox"); box.appendChild(gEl("div", "dmaph", "Who's drawing what"));
+  const m = gEl("div", "dmap"); m.style.aspectRatio = L.W + " / " + L.H;
+  R.slots.forEach((s, i) => {
+    const c = L.cells[i], cell = gEl("div", "dcell" + (i === mineI ? " me" : "") + (s.drawn ? " done" : ""));
+    Object.assign(cell.style, { left: (c.x / L.W * 100) + "%", top: (c.y / L.H * 100) + "%", width: (c.w / L.W * 100) + "%", height: (c.h / L.H * 100) + "%" });
+    const nm = gEl("b"); const dot = gEl("i"); dot.style.background = colorOf(s.username).c; nm.append(dot, document.createTextNode(s.username === S.me.username ? "You" : s.display_name));
+    cell.append(nm, gEl("span", null, (s.drawn ? "✓ " : "") + dPartName(pr, L, i)));
+    if (s.gone) cell.title = "Left the group";
+    m.appendChild(cell);
+  });
+  box.appendChild(m); return box;
+}
+function dRevealBtn(sheet, k, day, done){
+  const b = gEl("button", "btn ghost", "Reveal it now"); b.type = "button"; b.style.alignSelf = "flex-start";
+  b.addEventListener("click", async () => {
+    if (!confirm(done ? "Show everyone the picture now, even though not everyone has drawn?" : "Nobody has drawn yet. Reveal anyway?")) return;
+    b.disabled = true; try { await rpc("reveal_draw", { p_secret: S.secret, p_group: S.gid, p_day: day }); await loadDraw(true); renderGame(); } catch (e) { b.disabled = false; alert(errText(e)); }
+  });
+  sheet.appendChild(b);
+}
+function dReveal(sheet, R, L, pr){
+  const wrap = gEl("div", "dcanvas dfull"), cv = document.createElement("canvas"); wrap.appendChild(cv); cv.style.aspectRatio = L.W + " / " + L.H;
+  wrap.style.maxWidth = "min(560px, calc(80vh * " + (L.W / L.H).toFixed(3) + "))";
+  cv.setAttribute("role", "img"); cv.setAttribute("aria-label", "The group's finished picture: " + pr.t);
+  const byslot = {}; (R.parts || []).forEach(p => { byslot[p.slot] = p.strokes; });
+  let who = false;
+  function paintTo(x, s, withNames){
+    x.fillStyle = DPAPER; x.fillRect(0, 0, L.W, L.H);
+    L.cells.forEach((c, i) => {
+      if (!byslot[i]) { x.fillStyle = "#f1f2f4"; x.fillRect(c.x, c.y, c.w, c.h); x.fillStyle = "#9aa3ad"; x.font = "600 22px system-ui, sans-serif"; x.textAlign = "center"; x.fillText((R.slots[i] || {}).display_name + " didn't draw", c.x + c.w / 2, c.y + c.h / 2); return; }
+      x.save(); x.beginPath(); x.rect(c.x, c.y, c.w, c.h); x.clip(); dDraw(x, byslot[i]); x.restore();
+    });
+    if (withNames) L.cells.forEach((c, i) => {
+      const sl = R.slots[i]; if (!sl) return;
+      x.save(); x.setLineDash([10, 8]); x.strokeStyle = "rgba(27,36,48,.45)"; x.lineWidth = 2 / s; x.strokeRect(c.x, c.y, c.w, c.h); x.restore();
+      x.font = "700 " + Math.round(13 / s) + "px system-ui, sans-serif"; const t = sl.display_name, tw = x.measureText(t).width, pad = 6 / s;
+      const dot = 8 / s; x.fillStyle = "rgba(255,255,255,.9)"; x.fillRect(c.x + pad, c.y + pad, tw + dot + pad * 3, 22 / s);
+      x.fillStyle = dCss(colorOf(sl.username).c); x.beginPath(); x.arc(c.x + pad * 2 + dot / 2, c.y + pad + 11 / s, dot / 2, 0, Math.PI * 2); x.fill();
+      x.fillStyle = "#1b2430"; x.textAlign = "left"; x.textBaseline = "middle"; x.fillText(t, c.x + pad * 2 + dot + pad, c.y + pad + 11 / s);
+    });
+  }
+  function paint(){
+    const cssW = cv.clientWidth || 340, dpr = Math.min(3, window.devicePixelRatio || 1), s = cssW / L.W;
+    cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssW * L.H / L.W * dpr);
+    const x = cv.getContext("2d"); x.setTransform(s * dpr, 0, 0, s * dpr, 0, 0); x.lineCap = "round"; paintTo(x, s, who);
+  }
+  requestAnimationFrame(paint);
+  if (typeof ResizeObserver === "function") { let lw = 0; new ResizeObserver(() => { if (cv.clientWidth !== lw) { lw = cv.clientWidth; paint(); } }).observe(cv); }
+  sheet.appendChild(wrap);
+  const ctr = gEl("div", "controls");
+  const wb = gEl("button", "btn", "Show who drew what"); wb.type = "button"; wb.setAttribute("aria-pressed", "false");
+  wb.addEventListener("click", () => { who = !who; wb.setAttribute("aria-pressed", String(who)); wb.textContent = who ? "Hide names" : "Show who drew what"; paint(); });
+  const sv = gEl("button", "btn", "Save picture"); sv.type = "button";
+  sv.addEventListener("click", () => {
+    const c2 = document.createElement("canvas"), s = Math.min(1, 1600 / Math.max(L.W, L.H)); c2.width = Math.round(L.W * s); c2.height = Math.round(L.H * s);
+    const x = c2.getContext("2d"); x.scale(s, s); paintTo(x, 1, who);
+    c2.toBlob(async (blob) => {
+      if (!blob) return; const name = "groupdraw-" + R.day + ".png";
+      try { const f = new File([blob], name, { type: "image/png" }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: pr.t }); return; } } catch (e) { if (e && e.name === "AbortError") return; }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    }, "image/png");
+  });
+  ctr.append(wb, gEl("span", "spacer"), sv); sheet.appendChild(ctr);
+}
+Object.assign(ERRS, { not_your_turn: "You're not in today's picture. You'll see it when it's revealed.", draw_revealed: "The picture has already been revealed, so it can't be changed.", drawing_too_big: "That drawing is too detailed to save. Try undoing a few strokes.", bad_drawing: "Couldn't read that drawing. Try again." });
 
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
