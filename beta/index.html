@@ -615,7 +615,25 @@ body.gm .eyebrow .today { color: inherit; }
 .mlist button { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 0 2px; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; }
 .mlist .mv { color: var(--ink-2); font-weight: 500; }
 #mClose { align-self: stretch; min-height: 48px; }
+
+/* fixed sizes: cards and answer rows keep the same size every day, long text is trimmed to fit */
+.clamp1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.htoday { flex: none; min-height: 44px; padding: 0 16px; font-size: 14px; }
+.hdate { min-height: 20px; }
+.hday h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hwho p { min-height: 2.8em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.hhero { height: 264px; min-height: 0; }
+.hhero .t, .hhero .s { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.htile { height: 148px; min-height: 0; }
+.htile.bonus { height: 104px; }
+.htile b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-width: 100%; }
+.htile .st { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+h1.prompt { min-height: 2.24em; }
+.q-head .sub { min-height: 3em; }
+.totbtn { height: 64px; min-height: 0; padding: 0 10px; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; line-height: 1.2; }
+.ratepick .rl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
+
 
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -831,8 +849,9 @@ body.gm .eyebrow .today { color: inherit; }
       <div class="hday">
         <div class="hgroup"><button type="button" id="hGroup"><span id="hGroupName"></span><svg id="hGroupChev" width="10" height="7" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><select id="hGroupSel" aria-label="Switch group" hidden></select></div>
         <h1 id="hDay">Today</h1>
-        <div class="hdate"><span id="hDate"></span><button type="button" class="htoday" id="hToday" hidden>Back to today</button></div>
+        <div class="hdate"><span id="hDate"></span></div>
       </div>
+      <button type="button" class="htoday" id="hToday" hidden>Today</button>
       <button type="button" class="icbtn" id="hCal" aria-label="Pick a day"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
       <div id="qMenu" hidden><button type="button" class="icbtn hme" id="qMenuBtn" aria-label="Menu" aria-haspopup="dialog" aria-expanded="false"><span id="hMeTxt"></span><span class="count" id="qMenuCount" hidden>0</span></button></div>
     </div>
@@ -3235,7 +3254,7 @@ function renderHome(){
   const bq = bonusQ(d), bt = $("hBonus"); bt.hidden = !bq;
   if (bq) { const q = withPeople(bq), done = !!S.mine[q.id]; $("hBonusT").textContent = q.title; $("hBonusOk").hidden = !done; $("hBonusSt").textContent = done ? "Done · See results" : "Just for " + (g ? g.name : "your group"); }
   const theme = GTHEMES[gThemeIdx(d)].name, td = gameDone("tot"), rd = gameDone("rate");
-  $("hTotT").textContent = theme + " picks"; $("hRateT").textContent = theme + ", 1 to 10";
+  $("hTotT").textContent = theme + " picks"; $("hRateT").textContent = theme + " ratings";
   $("hTotOk").hidden = !td; $("hRateOk").hidden = !rd;
   $("hTotSt").textContent = td ? "Done · See results" : GN + " quick picks";
   $("hRateSt").textContent = rd ? "Done · See results" : "Rate " + GN + " things";
