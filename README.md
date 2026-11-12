@@ -39,7 +39,7 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 
 1. A new feature goes into `beta/` first (`python3 scripts/make-beta.py path/to/new-index.html`). Merge that PR and try it at `/beta/`.
 2. When it looks good, ship it to everyone: `python3 scripts/make-beta.py --promote` copies the test version over `index.html`.
-3. Add a line to `CHANGES` (the "What's new" list near the end of the script) so people see what changed.
+3. Add an entry to `CHANGES` (the "What's new" list near the end of the script) so people see what changed. The changelog is public: keep it short and professional, describe what players can do, and never name a person or mention internal details. The comment above `CHANGES` has the full style rules.
 
 Database changes are only ever additions (new tables and functions), so the live app keeps working while the test version uses them.
 
