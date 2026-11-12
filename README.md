@@ -13,6 +13,7 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - **Results are in:** when the last person in a group answers today's question, everyone else gets a notification.
 - **Your stats:** a personal page with your streak, best match, how often you're the odd one out, and your hottest takes.
 - **Feedback:** members send bugs and ideas from the Feedback box. It all goes to the app owner's inbox (the host of the oldest group when `feedback.sql` is run; change it with `update gg_settings set v = 'username' where k = 'owner';`).
+- **GroupDraw:** a daily drawing game for each group. Everyone gets the same scene (a day at the beach, a dragon attacking a castle…) and each member draws a different thing in it (the sandcastle, the crab…) on their own blank square, without seeing the others. At the reveal every drawing is dropped into its spot on the scene's background. Revealed once everyone has drawn, when the host reveals it early, or at midnight. Needs `supabase/groupdraw.sql`.
 - **Daily reminder:** under 🔔 Reminder, pick an hour and turn on phone notifications (iPhone: add the site to your Home Screen first), or add a repeating event to Apple/Outlook/Google Calendar. Notifications skip days you've already answered.
 
 ## Files
@@ -20,7 +21,7 @@ A daily question for a friend group. Each day everyone draws a curve (energy thr
 - `index.html`: the whole app (no build step).
 - `config.js`: your Supabase project URL and anon key.
 - `supabase/setup.sql`: run once in Supabase's SQL Editor to create the tables and functions.
-- `supabase/comments.sql`, `supabase/reminders.sql`, `supabase/summary.sql`, `supabase/ideas.sql`, `supabase/feedback.sql`, `supabase/groups-extra.sql`, `supabase/social.sql`, `supabase/results-alert.sql`: the same additions on their own, for a database set up before they existed.
+- `supabase/comments.sql`, `supabase/reminders.sql`, `supabase/summary.sql`, `supabase/ideas.sql`, `supabase/feedback.sql`, `supabase/groups-extra.sql`, `supabase/social.sql`, `supabase/results-alert.sql`, `supabase/groupdraw.sql`: the same additions on their own, for a database set up before they existed.
 - `beta/index.html` + `scripts/make-beta.py`: the test version (see below).
 - `keys.html`: one-time page that makes the notification key pair in your browser.
 - `sw.js`, `manifest.webmanifest`, icons: let the site install to a home screen and receive notifications.
