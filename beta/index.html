@@ -467,6 +467,156 @@ svg text { font-family: var(--f-body); }
 </style>
 <script>try{var t=localStorage.getItem("gg-theme");if(/^(light|dark|notebook|lab|sunset|grape|terminal|blossom|ocean)$/.test(t||""))document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<style id="boldLayout">
+/* Bold layout: home shows today's games and who's in; tapping one opens it full screen ("focus"). Colors come from the theme tokens, plus one color per game. */
+:root { --g-graph: var(--pen); --g-tot: var(--s3); --g-rate: var(--s4); --g-bonus: var(--s7); --r-card: 22px; --shadow: 0 1px 2px rgba(10,14,22,.07), 0 6px 20px rgba(10,14,22,.06); }
+header.top, #groupbar, .gamenav, #pulse, footer { display: none !important; }
+body.scr-auth header.top, body.scr-code header.top { display: flex !important; }
+body.scr-auth header.top .daynav, body.scr-code header.top .daynav { visibility: hidden; }
+.wrap { max-width: 560px; gap: 16px; padding-block: 12px 56px; }
+body.v-home #appMain, body.v-focus #homeView { display: none !important; }
+#appMain { display: flex; flex-direction: column; gap: 16px; }
+#homeView { display: flex; flex-direction: column; gap: 16px; }
+#homeView[hidden] { display: none !important; }
+
+.icbtn { position: relative; flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); display: grid; place-items: center; padding: 0; cursor: pointer; }
+.icbtn svg { width: 20px; height: 20px; }
+.icbtn:hover { border-color: var(--ink-3); }
+
+.hhead { display: flex; align-items: center; gap: 8px; min-height: 60px; }
+.hday { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hgroup { position: relative; align-self: flex-start; max-width: 100%; }
+.hgroup button { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; max-width: 100%; border: 0; background: none; padding: 0; color: var(--ink-2); font-size: 14px; font-weight: 700; cursor: pointer; }
+.hgroup button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hgroup select { position: absolute; inset: 0; width: 100%; opacity: 0; font-size: 16px; cursor: pointer; }
+.hday h1 { margin: 0; font-size: 32px; line-height: 1.1; font-weight: 800; letter-spacing: -.03em; }
+.hdate { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.htoday { min-height: 28px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); border-radius: 99px; padding: 0 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.hme { border: 0; color: #fff; font-weight: 800; font-size: 16px; background: var(--s1); }
+.hme .count { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px; border: 2px solid var(--paper); background: var(--danger); color: var(--sheet); font-size: 11px; font-weight: 800; line-height: 16px; text-align: center; }
+
+#homeView .install, #homeView .nudgebar, #homeView .newsbar { margin: 0; border-radius: 18px; }
+#homeView .nudgebar .btn, #homeView .newsbar .btn, #homeView .install .btn { min-height: 40px; }
+
+.hwho { background: var(--sheet); border-radius: var(--r-card); box-shadow: var(--shadow); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.hwho .row1 { display: flex; align-items: center; gap: 12px; }
+.havs { flex: 1; min-width: 0; display: flex; gap: 8px; overflow-x: auto; padding: 4px; margin: -4px; scrollbar-width: none; }
+.havs::-webkit-scrollbar { display: none; }
+.hav { position: relative; flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; color: #fff; font: inherit; font-size: 15px; font-weight: 800; }
+.hav.todo { background: transparent; color: var(--ink-2); border: 2px dashed var(--ink-3); }
+button.hav.todo { cursor: pointer; }
+button.hav.todo:hover { border-color: var(--pen); color: var(--pen); }
+button.hav:disabled { opacity: .55; cursor: default; }
+.hav .ok { position: absolute; right: -3px; bottom: -3px; width: 17px; height: 17px; border-radius: 50%; background: var(--s3); color: #fff; border: 2px solid var(--sheet); display: grid; place-items: center; box-sizing: border-box; }
+.hav .ok svg { width: 10px; height: 10px; }
+.hstreak { flex: none; display: flex; flex-direction: column; align-items: flex-end; }
+.hstreak b { font-family: var(--f-mono); font-size: 26px; line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hstreak.hot b { color: var(--s2); }
+.hstreak span { font-size: 12px; color: var(--ink-2); }
+.hwho p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--ink-2); }
+.hsolo { flex-direction: row; align-items: center; gap: 12px; }
+.hsolo p { flex: 1; font-size: 14px; }
+.hsolo p b { color: var(--ink); }
+
+.hhero { position: relative; overflow: hidden; width: 100%; min-height: 236px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; border: 0; border-radius: 26px; padding: 18px; background: var(--g-graph); color: var(--sheet); font: inherit; text-align: left; cursor: pointer; }
+.hhero .art { position: absolute; right: -6px; top: 10px; width: 80%; height: 132px; pointer-events: none; }
+.hhero .art line { stroke: currentColor; stroke-width: 1; opacity: .16; }
+.hhero .art path { fill: none; stroke: currentColor; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 2 9; opacity: .55; }
+.hhero > span { position: relative; }
+.hhero .lab { font-family: var(--f-mono); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+.hhero .sp { flex: 1; min-height: 8px; }
+.hhero .t { font-size: 26px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; max-width: 95%; text-wrap: balance; }
+.hhero .s { font-size: 14px; line-height: 1.4; opacity: .85; max-width: 95%; }
+.hhero .crow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+.hhero .cta { min-height: 48px; padding: 0 20px; border-radius: 24px; background: var(--sheet); color: var(--g-graph); font-size: 15px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; }
+.hhero .meta { font-size: 13px; font-weight: 600; opacity: .9; }
+.hhero:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+.htiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.htile { --gc: var(--g-tot); min-width: 0; min-height: 148px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; border: 0; border-radius: var(--r-card); padding: 16px; background: var(--sheet); background: color-mix(in srgb, var(--gc) 17%, var(--sheet)); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.htile.rate { --gc: var(--g-rate); }
+.htile.bonus { --gc: var(--g-bonus); grid-column: 1 / -1; min-height: 0; }
+.htile .lab { width: 100%; min-height: 22px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); color: color-mix(in srgb, var(--gc) 50%, var(--ink)); }
+.htile .sp { flex: 1; min-height: 10px; }
+.htile b { font-size: 17px; line-height: 1.2; font-weight: 800; overflow-wrap: anywhere; }
+.htile .st { font-size: 13px; color: var(--ink-2); }
+.okc { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--gc); color: #fff; display: grid; place-items: center; }
+.okc svg { width: 13px; height: 13px; }
+.htile:hover { box-shadow: inset 0 0 0 2px var(--gc); }
+
+.hchat { width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 20px; padding: 10px 14px; background: var(--sheet); box-shadow: var(--shadow); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.hchat .av { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--pen-soft); color: var(--pen); display: grid; place-items: center; }
+.hchat .av svg { width: 18px; height: 18px; }
+.hchat .tx { flex: 1; min-width: 0; font-size: 14px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hchat .tx b { color: var(--ink); }
+.hchat .n { flex: none; min-width: 24px; height: 24px; padding: 0 7px; box-sizing: border-box; border-radius: 12px; background: var(--pen-soft); color: var(--pen); font-family: var(--f-mono); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+
+.fhead { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; margin: -12px 0 -4px; padding: 10px 0 8px; background: var(--paper); }
+.fsegs { flex: 1; min-width: 0; display: flex; gap: 4px; }
+.fsegs button { flex: 1; min-width: 0; min-height: 44px; border: 0; background: none; padding: 0; display: flex; align-items: center; cursor: pointer; }
+.fsegs button i { display: block; width: 100%; height: 6px; border-radius: 3px; background: var(--line); }
+.fsegs button.done i { background: var(--gc); }
+.fsegs button[aria-current="true"] i { height: 8px; border-radius: 4px; background: var(--gc); opacity: .55; }
+.fsegs button.done[aria-current="true"] i { opacity: 1; }
+.fcount { flex: none; min-width: 2.6em; text-align: right; font-family: var(--f-mono); font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.fnext { position: sticky; bottom: max(12px, env(safe-area-inset-bottom, 0px)); z-index: 20; }
+.fnext .btn { box-shadow: 0 8px 24px rgba(10,14,22,.22); width: 100%; min-height: 54px; font-size: 16px; font-weight: 800; background: var(--gc); border-color: var(--gc); }
+
+h1.prompt { font-size: clamp(28px, 7.4vw, 36px); }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; font-weight: 600; color: var(--ink-2); gap: 6px 12px; }
+.eyebrow .today { background: none; padding: 0; color: var(--g-graph); }
+body.gm .eyebrow .today { color: inherit; }
+.btn { min-height: 44px; border-radius: 99px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; }
+.btn.primary { min-height: 48px; padding: 0 24px; font-size: 15px; font-weight: 800; }
+.btn.ghost { padding: 0 12px; }
+.controls { gap: 8px; }
+.controls #submit, .gsheet .controls .btn.primary { flex: 1 1 140px; }
+.sheet { border: 0; border-radius: var(--r-card); box-shadow: var(--shadow); padding: 14px 12px 10px; }
+.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border: 0; border-radius: 99px; background: var(--line); }
+.tab { justify-content: center; min-height: 42px; margin: 0; border: 0; border-radius: 99px; color: var(--ink-2); font-size: 15px; }
+.tab[aria-selected="true"] { background: var(--sheet); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.14); }
+.totpick { gap: 8px; }
+.totbtn { min-height: 64px; border-width: 2px; border-radius: 18px; font-size: 16px; }
+.totbtn:hover { border-color: var(--g-tot); }
+.totbtn[aria-pressed="true"] { background: var(--sheet); background: color-mix(in srgb, var(--g-tot) 22%, var(--sheet)); border-color: var(--g-tot); color: var(--ink); }
+.ratepick { gap: 8px; padding-bottom: 10px; }
+.ratepick .rl { font-size: 16px; }
+.ratepick .scale { gap: 4px; }
+.ratepick .scale button { min-height: 44px; border-radius: 10px; }
+.ratepick .scale button:hover { border-color: var(--g-rate); }
+.ratepick .scale button[aria-pressed="true"] { background: var(--g-rate); border-color: var(--g-rate); color: #10151d; }
+.tr-bar { height: 10px; gap: 3px; }
+.tr-bar .a { background: var(--g-tot); }
+.tr-bar .b { background: var(--ink-3); }
+.chat { margin-top: 0; border: 0; border-radius: var(--r-card); box-shadow: var(--shadow); }
+.stat { border: 0; border-radius: 18px; box-shadow: var(--shadow); }
+.fun { border-radius: 18px; }
+.rules { border-radius: 16px; }
+.lockbar { font-size: 14px; }
+
+.mback { position: fixed; inset: 0; z-index: 65; background: rgba(8,12,20,.5); display: flex; align-items: flex-end; justify-content: center; }
+.mback[hidden] { display: none !important; }
+.msheet { width: 100%; max-width: 560px; max-height: calc(100% - 32px); overflow-y: auto; -webkit-overflow-scrolling: touch; box-sizing: border-box; background: var(--paper); border-radius: 26px 26px 0 0; padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 18px; box-shadow: 0 -10px 40px rgba(0,0,0,.25); }
+.mgrab { align-self: center; width: 40px; height: 5px; border-radius: 3px; background: var(--ink-3); opacity: .5; }
+.mprof { display: flex; align-items: center; gap: 12px; }
+.mav { flex: none; width: 48px; height: 48px; border-radius: 50%; color: #fff; font-size: 19px; font-weight: 800; display: grid; place-items: center; background: var(--s1); }
+.mprof > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mprof b { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mprof > div span { font-size: 13px; color: var(--ink-2); }
+.mh { margin-bottom: 8px; font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.mgroups { display: flex; flex-wrap: wrap; gap: 6px; }
+.mgroups button { min-height: 40px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.mgroups button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.mgroups button.add { border-style: dashed; color: var(--ink-2); }
+#qActions.mgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+#qActions .qbox { min-height: 60px; border: 0; border-radius: 16px; background: var(--sheet); box-shadow: var(--shadow); padding: 0 14px; font-size: 14px; }
+#qActions .qbox:hover { box-shadow: var(--shadow), inset 0 0 0 2px var(--pen); }
+.mlist { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.mlist button { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; border: 0; border-bottom: 1px solid var(--line); background: none; padding: 0 2px; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; }
+.mlist .mv { color: var(--ink-2); font-weight: 500; }
+#mClose { align-self: stretch; min-height: 48px; }
+</style>
+
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#e34948">
@@ -570,6 +720,25 @@ svg text { font-family: var(--f-body); }
     <div class="sumtop"><div><div class="k" id="statsGroup"></div><h2 id="statsTitle">Your stats</h2></div><button id="statsClose" type="button">Close</button></div>
     <div id="statsBody"><p class="note">Loading…</p></div>
   </div></div>
+<div class="mback" id="menuBack" hidden><div class="msheet" role="dialog" aria-modal="true" aria-label="Menu">
+  <span class="mgrab" aria-hidden="true"></span>
+  <div class="mprof"><span class="mav" id="mAv"></span><div><b id="mName"></b><span id="mUser"></span></div><button type="button" class="btn" id="mProfile">Profile</button></div>
+  <div><div class="mh">Group</div><div class="mgroups" id="mGroups"></div></div>
+  <div class="qactions mgrid" id="qActions" role="menu">
+      <button class="qbox" id="chatJump" type="button"><span>Group chat</span><span class="count" id="chatCount" hidden>0</span></button>
+      <button class="qbox" id="sumJump" type="button"><span id="sumLabel">Group summary</span></button>
+      <button class="qbox" id="ideaJump" type="button"><span>Question ideas</span><span class="count" id="ideaCount" hidden>0</span></button>
+      <button class="qbox" id="notifJump" type="button"><span id="notifLabel">Get reminders</span></button>
+      <button class="qbox" id="statsJump" type="button"><span>Your stats</span></button>
+      <button class="qbox" id="fbJump" type="button"><span>Feedback</span><span class="count" id="fbCount" hidden>0</span></button>
+  </div>
+  <div class="mlist">
+    <button type="button" id="mCal"><span>Past days</span><span class="mv">Calendar</span></button>
+    <button type="button" id="mTheme"><span>Color theme</span><span class="mv" id="mThemeName"></span></button>
+    <button type="button" id="mNews"><span>What's new<span class="newsdot" id="newsDot" hidden></span></span><span class="mv">Changelog</span></button>
+  </div>
+  <button type="button" class="btn" id="mClose">Close</button>
+</div></div>
   <div class="calback" id="calBack" hidden><div class="cal" role="dialog" aria-label="Pick a day">
     <div class="calhead"><button id="calPrev" aria-label="Previous month">&#8249;</button><b id="calTitle"></b><button id="calNext" aria-label="Next month">&#8250;</button></div>
     <div class="calgrid" id="calGrid"></div>
@@ -657,7 +826,16 @@ svg text { font-family: var(--f-body); }
     </div>
   </section>
 
-  <div id="appMain">
+  <section id="homeView" hidden aria-label="Today">
+    <div class="hhead">
+      <div class="hday">
+        <div class="hgroup"><button type="button" id="hGroup"><span id="hGroupName"></span><svg id="hGroupChev" width="10" height="7" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><select id="hGroupSel" aria-label="Switch group" hidden></select></div>
+        <h1 id="hDay">Today</h1>
+        <div class="hdate"><span id="hDate"></span><button type="button" class="htoday" id="hToday" hidden>Back to today</button></div>
+      </div>
+      <button type="button" class="icbtn" id="hCal" aria-label="Pick a day"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <div id="qMenu" hidden><button type="button" class="icbtn hme" id="qMenuBtn" aria-label="Menu" aria-haspopup="dialog" aria-expanded="false"><span id="hMeTxt"></span><span class="count" id="qMenuCount" hidden>0</span></button></div>
+    </div>
   <div class="install" id="installTip" hidden>
     <img src="../apple-touch-icon.png" alt="">
     <div class="txt"><b>Put GroupGraphs on your home screen</b><span id="installHow"></span></div>
@@ -674,6 +852,33 @@ svg text { font-family: var(--f-body); }
     <button class="btn" id="newsOpen" type="button">See what's new</button>
     <button class="xdel" id="newsX" type="button" aria-label="Dismiss">×</button>
   </div>
+    <div class="hwho" id="hWho" hidden>
+      <div class="row1"><div class="havs" id="hAvs"></div><div class="hstreak" id="hStreak"><b id="hStreakN">0</b><span>day streak</span></div></div>
+      <p id="hWhoTxt"></p>
+    </div>
+    <div class="hwho hsolo" id="hSolo" hidden><p><b>Play with your friends.</b> Start a group, or send your username to a friend who hosts one.</p><button type="button" class="btn" id="hSoloBtn">Groups</button></div>
+    <button type="button" class="hhero" id="hHero">
+      <svg class="art" viewBox="0 0 280 132" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="26" x2="280" y2="26"/><line x1="0" y1="66" x2="280" y2="66"/><line x1="0" y1="106" x2="280" y2="106"/><path d="M76 116 C 112 112, 132 66, 160 56 S 200 26, 222 22 S 262 46, 280 74"/></svg>
+      <span class="lab" id="hHeroLab">Today's graph</span>
+      <span class="sp"></span>
+      <span class="t" id="hHeroT"></span>
+      <span class="s" id="hHeroS"></span>
+      <span class="crow"><span class="cta"><span id="hHeroCta">Draw yours</span><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="meta" id="hHeroMeta"></span></span>
+    </button>
+    <div class="htiles">
+      <button type="button" class="htile bonus" id="hBonus" hidden><span class="lab">Group bonus<span class="okc" id="hBonusOk" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><b id="hBonusT"></b><span class="st" id="hBonusSt"></span></button>
+      <button type="button" class="htile tot" id="hTot"><span class="lab">This or that<span class="okc" id="hTotOk" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="sp"></span><b id="hTotT"></b><span class="st" id="hTotSt"></span></button>
+      <button type="button" class="htile rate" id="hRate"><span class="lab">Rate it<span class="okc" id="hRateOk" hidden><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span><span class="sp"></span><b id="hRateT"></b><span class="st" id="hRateSt"></span></button>
+    </div>
+    <button type="button" class="hchat" id="hChat" hidden><span class="av"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span><span class="tx" id="hChatTx"></span><span class="n" id="hChatN" hidden>0</span></button>
+  </section>
+
+  <div id="appMain">
+  <div class="fhead" id="fHead">
+    <button type="button" class="icbtn" id="fClose" aria-label="Back to today"><svg viewBox="0 0 14 14" style="width:14px;height:14px" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <nav class="fsegs" id="fSegs" aria-label="Today's games"></nav>
+    <span class="fcount" id="fCount"></span>
+  </div>
   <nav class="seg gamenav" id="gameNav" hidden aria-label="Games">
     <button type="button" data-g="graph" aria-pressed="true">Graph</button>
     <button type="button" data-g="tot" aria-pressed="false">This or that</button>
@@ -685,17 +890,6 @@ svg text { font-family: var(--f-body); }
     <div class="eyebrow" id="eyebrow"></div>
     <h1 class="prompt" id="prompt">Loading question…</h1>
     <p class="sub" id="sub"></p>
-    <div class="qmenu" id="qMenu" hidden>
-    <button class="qmenubtn" id="qMenuBtn" type="button" aria-expanded="false" aria-controls="qActions"><span>Menu</span><span class="count" id="qMenuCount" hidden>0</span><svg class="chev" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <div class="qactions" id="qActions" hidden role="menu">
-      <button class="qbox" id="chatJump" type="button"><span>Group chat</span><span class="count" id="chatCount" hidden>0</span></button>
-      <button class="qbox" id="sumJump" type="button"><span id="sumLabel">Group summary</span></button>
-      <button class="qbox" id="ideaJump" type="button"><span>Question ideas</span><span class="count" id="ideaCount" hidden>0</span></button>
-      <button class="qbox" id="notifJump" type="button"><span id="notifLabel">Get reminders</span></button>
-      <button class="qbox" id="statsJump" type="button"><span>Your stats</span></button>
-      <button class="qbox" id="fbJump" type="button"><span>Feedback</span><span class="count" id="fbCount" hidden>0</span></button>
-    </div>
-    </div>
     <div class="pulse" id="pulse" hidden>
       <div class="streak" id="streakBox"><b id="streakN">0</b><span><span id="streakLbl">day group streak</span><small id="streakSub"></small></span></div>
       <div class="pwho"><div class="ptitle" id="pTitle"></div><div class="plist" id="pList"></div></div>
@@ -763,6 +957,8 @@ svg text { font-family: var(--f-body); }
     <details class="box" style="margin-top:14px"><summary>Data table</summary><div class="tablewrap"><table id="table"></table></div></details>
   </section>
 
+  <div class="fnext" id="fNext" hidden><button type="button" class="btn primary" id="fNextBtn"><span id="fNextT">Next</span><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+
   <section class="chat" id="chatBox" hidden aria-label="Group chat">
     <div class="chat-h">Group chat<small>only your group sees this</small></div>
     <ul class="chat-list" id="chatList"></ul>
@@ -778,7 +974,7 @@ svg text { font-family: var(--f-body); }
     <div class="filters" id="filters"></div>
     <div class="bank" id="bank"></div>
   </details>
-  <footer>A new graph every day. Results unlock once you've answered. <button type="button" class="newslink" id="newsLink">What's new<span class="newsdot" id="newsDot" hidden></span></button></footer>
+  <footer>A new graph every day. Results unlock once you've answered. <button type="button" class="newslink" id="newsLink">What's new</button></footer>
 </div>
 
 <script>
@@ -1135,6 +1331,7 @@ function agoText(t){ const s = (Date.now() - Date.parse(t)) / 1000; if (!(s >= 0
 function delBtn(c){ const b = document.createElement("button"); b.type = "button"; b.className = "xdel"; b.textContent = "×"; b.title = "Delete"; b.setAttribute("aria-label", "Delete");
   b.addEventListener("click", async () => { if (!confirm("Delete this " + (c.kind === "rule" ? "rule" : "comment") + "?")) return; try { await rpc("delete_comment", { p_secret: S.secret, p_id: c.id }); } catch (e) {} loadComments(true); }); return b; }
 function renderComments(){
+  homeSoon();
   const on = !!(S.secret && S.gid && S.me);
   $("chatBox").hidden = !on; $("qMenu").hidden = !S.me; if (!on) { $("rulesBox").hidden = true; $("chatJump").hidden = true; return; }
   const c = S.comments[rkey(currentQ().id)], list = c ? c.list : [];
@@ -1218,7 +1415,7 @@ $("pushBtn").addEventListener("click", async () => {
 $("remindHour").addEventListener("change", async () => { ls.set("gg-remind-hour", remindHour()); const sub = await currentSub(); if (sub) { try { await savePush(sub); } catch (e) {} } renderRemind(); });
 $("notifJump").addEventListener("click", () => { showScreen("groups"); setTimeout(() => $("remindBox").scrollIntoView({ behavior: "smooth", block: "start" }), 50); });
 
-$("chatJump").addEventListener("click", () => { $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }); setTimeout(() => $("chatInput").focus({ preventScroll: true }), 400); });
+$("chatJump").addEventListener("click", () => { if (S.view !== "focus" || S.game !== "graph") openFocus("graph"); $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }); setTimeout(() => $("chatInput").focus({ preventScroll: true }), 400); });
 
 /* ---------------- saved logins + home screen tip ---------------- */
 async function storeLogin(user, code){ try { if (window.PasswordCredential && navigator.credentials) await navigator.credentials.store(new PasswordCredential({ id: user, password: code, name: user })); } catch (e) {} }
@@ -1427,7 +1624,7 @@ async function loadIdeas(){
   if (!$("ideaBack").hidden) renderIdeas();
   if (S.gid === gid && before !== Object.keys(byDay).join()) go();
 }
-function renderIdeaPill(){ const n = S.ideas && S.ideas.gid === S.gid ? S.ideas.pending.length : 0; $("ideaCount").textContent = n; $("ideaCount").hidden = !n; }
+function renderIdeaPill(){ homeSoon(); const n = S.ideas && S.ideas.gid === S.gid ? S.ideas.pending.length : 0; $("ideaCount").textContent = n; $("ideaCount").hidden = !n; }
 let ideaKind = "curve";
 function setIdeaKind(k){ ideaKind = k; document.querySelectorAll("#ideaKinds button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k))); document.querySelectorAll("#ideaForm [data-for]").forEach(e => { e.hidden = !e.dataset.for.split(" ").includes(k); }); $("ideaMsg").textContent = ""; }
 document.querySelectorAll("#ideaKinds button").forEach(b => b.addEventListener("click", () => setIdeaKind(b.dataset.k)));
@@ -1598,6 +1795,7 @@ function streakInfo(){
   return { cur, best, todayDone, todayQ, answered: (u) => !!got[u], nudged: new Set(A.data.nudged || []) };
 }
 function renderPulse(){
+  homeSoon();
   const box = $("pulse"); if (!box) return;
   const g = group(), info = streakInfo();
   if (!g || !info || S.qid || S.dayOffset !== 0) { box.hidden = true; return; }
@@ -1655,6 +1853,7 @@ async function loadNudges(force){
   renderNudges();
 }
 function renderNudges(){
+  homeSoon();
   const L = (S.nudges.list || []).filter(n => !S.mine[n.qid]), bar = $("nudgeBar");
   if (!L.length) { bar.hidden = true; return; }
   const n = L[0], multiGroup = S.groups.length > 1;
@@ -1667,7 +1866,7 @@ $("nbX").addEventListener("click", dismissNudges);
 $("nbGo").addEventListener("click", () => {
   const n = (S.nudges.list || [])[0]; dismissNudges();
   if (n && n.group_id && n.group_id !== S.gid && S.groups.some(g => g.id === n.group_id)) { S.gid = n.group_id; ls.set("gg-group", S.gid); renderGroupbar(); }
-  S.dayOffset = 0; S.qid = null; setTab("draw"); go(); $("panelDraw").scrollIntoView({ behavior: "smooth", block: "start" });
+  S.dayOffset = 0; S.qid = null; go(); openFocus("graph");
 });
 
 /* ---------------- your stats ---------------- */
@@ -1788,7 +1987,7 @@ function renderNews(){
   const seen = newsSeen(), fresh = seen ? seen !== CHANGES[0].id : had;
   if (!seen && !had) { try { localStorage.setItem("gg-news", CHANGES[0].id); } catch (e) {} }
   $("newsDot").hidden = !fresh; $("newsBar").hidden = !fresh;
-  if (fresh) { const t = $("newsText"); t.innerHTML = ""; const b = document.createElement("b"); b.textContent = "Updated: "; t.append(b, CHANGES[0].items.map(i => i[0]).join(", ")); }
+  if (fresh) { const t = $("newsText"); t.innerHTML = ""; const b = document.createElement("b"); b.textContent = "Updated: "; const it = CHANGES[0].items; t.append(b, it[0][0] + (it.length > 1 ? " and " + (it.length - 1) + " more" : "")); }
 }
 function openNews(){
   const L = $("newsList"); L.innerHTML = "";
@@ -1806,11 +2005,12 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("news
 renderNews();
 
 /* ---------------- menu dropdown ---------------- */
-function setMenu(open){ $("qActions").hidden = !open; $("qMenuBtn").setAttribute("aria-expanded", String(open)); if (open) { const f = $("qActions").querySelector(".qbox:not([hidden])"); if (f) f.focus({ preventScroll: true }); } }
-$("qMenuBtn").addEventListener("click", (e) => { e.stopPropagation(); setMenu($("qActions").hidden); });
+function setMenu(open){ const was = !$("menuBack").hidden; $("menuBack").hidden = !open; $("qMenuBtn").setAttribute("aria-expanded", String(open)); if (open) { renderMenu(); const f = $("qActions").querySelector(".qbox:not([hidden])"); if (f) f.focus({ preventScroll: true }); } else if (was) $("qMenuBtn").focus({ preventScroll: true }); }
+$("qMenuBtn").addEventListener("click", (e) => { e.stopPropagation(); setMenu($("menuBack").hidden); });
 $("qActions").addEventListener("click", (e) => { if (e.target.closest(".qbox")) setMenu(false); });
-document.addEventListener("click", (e) => { if (!$("qActions").hidden && !e.target.closest("#qMenu")) setMenu(false); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("qActions").hidden) { setMenu(false); $("qMenuBtn").focus(); } });
+$("menuBack").addEventListener("click", (e) => { if (e.target === $("menuBack")) setMenu(false); });
+$("mClose").addEventListener("click", () => setMenu(false));
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("menuBack").hidden) setMenu(false); });
 /* the Menu button shows the total of the unread counts inside it */
 function syncMenuCount(){ let n = 0; $("qActions").querySelectorAll(".count").forEach(c => { if (!c.hidden && !(c.closest(".qbox") || {}).hidden) n += +c.textContent || 0; }); $("qMenuCount").textContent = n; $("qMenuCount").hidden = !n; }
 new MutationObserver(syncMenuCount).observe($("qActions"), { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["hidden"] });
@@ -1895,6 +2095,7 @@ function setGame(g){
 }
 $("gameNav").addEventListener("click", (e) => { const b = e.target.closest("button[data-g]"); if (b) setGame(b.dataset.g); });
 function renderGame(){
+  homeSoon();
   if (!S.gres) return;
   const ok = !!(S.me && !$("appMain").hidden);
   $("gameNav").hidden = !ok;
@@ -2036,7 +2237,9 @@ document.addEventListener("visibilitychange", () => { if (document.hidden && S.g
 /* ---------------- screens: sign in, groups ---------------- */
 function showScreen(name){
   $("authPanel").hidden = name !== "auth"; $("codePanel").hidden = name !== "code"; $("groupsPanel").hidden = name !== "groups";
-  $("appMain").hidden = name === "auth" || name === "code"; $("bankBox").hidden = true;
+  $("appMain").hidden = name !== "app"; $("homeView").hidden = name !== "app"; $("bankBox").hidden = true;
+  ["auth", "code", "groups", "app"].forEach(n => document.body.classList.toggle("scr-" + n, n === name));
+  if (name === "app") { S.view = "home"; } setMenu(false); applyView(); if (name === "groups") window.scrollTo({ top: 0 });
   $("groupbar").hidden = name === "auth" || name === "code" || !S.me;
   if (name === "groups") { renderGroupsPanel(); renderRemind(); }
   if (typeof renderGame === "function") renderGame();
@@ -2874,8 +3077,9 @@ function renderBank(){
     a.append(t, n); bank.appendChild(a);
   });
 }
-function setTab(t){ relock(); if (t === "res") loadResults(true); S.tab = t; $("tabDraw").setAttribute("aria-selected", String(t==="draw")); $("tabRes").setAttribute("aria-selected", String(t==="res")); $("panelDraw").hidden = t!=="draw"; $("panelRes").hidden = t!=="res"; if (t==="draw") renderDraw(); else renderResults(); }
+function setTab(t){ relock(); homeSoon(); if (t === "res") loadResults(true); S.tab = t; $("tabDraw").setAttribute("aria-selected", String(t==="draw")); $("tabRes").setAttribute("aria-selected", String(t==="res")); $("panelDraw").hidden = t!=="draw"; $("panelRes").hidden = t!=="res"; if (t==="draw") renderDraw(); else renderResults(); }
 function renderAll(full){
+  homeSoon();
   ensureIdeas();
   loadPtsForQ();
   $("tabDraw").textContent = { rank: "Rank yours", map: "Place yours" }[currentQ().kind] || "Draw yours";
@@ -2969,6 +3173,142 @@ $("submit").addEventListener("click", async ()=>{
   catch (e) { setStatus(errText(e), true); if (e.message === "not_signed_in") signOut(); }
   syncControls();
 });
+
+/* ---------------- home + focus ----------------
+   Home lists today's games (graph, This or that, Rate it, and a group bonus when there is one) with who in the group is in.
+   Tapping one opens it in "focus": just that game, a progress bar of today's games, and a Next button once it's answered. */
+S.view = "home";
+const GAME_NAMES = { graph: "Graph", tot: "This or that", rate: "Rate it", bonus: "Group bonus" };
+const GAME_COLOR = { graph: "var(--g-graph)", tot: "var(--g-tot)", rate: "var(--g-rate)", bonus: "var(--g-bonus)" };
+const initialOf = (s) => (String(s || "?").trim()[0] || "?").toUpperCase();
+const homeDay = () => todayIndex() + S.dayOffset;
+const dayGraphQ = () => withPeople(qForDay(homeDay()));
+const gamesToday = () => bonusQ(homeDay()) ? ["graph", "bonus", "tot", "rate"] : ["graph", "tot", "rate"];
+function gameDone(k){
+  const d = homeDay();
+  if (k === "graph") { const q = dayGraphQ(); return !!(q && S.mine[q.id]); }
+  if (k === "bonus") { const b = bonusQ(d), q = b && withPeople(b); return !!(q && S.mine[q.id]); }
+  const qid = gQid(k, d); return !!gValid(k, S.mine[qid], gItems(k, d));
+}
+function homeSoon(){ clearTimeout(homeSoon.t); homeSoon.t = setTimeout(() => { renderHome(); renderFocus(); }, 0); }
+function applyView(){ document.body.classList.toggle("v-home", S.view !== "focus"); document.body.classList.toggle("v-focus", S.view === "focus"); }
+function checkEl(cls){ const s = document.createElement("span"); s.className = cls; s.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>'; return s; }
+function listNames(ms){ const n = ms.map(m => m.display_name); return n.length <= 2 ? n.join(" and ") : n.slice(0, -1).join(", ") + " and " + n[n.length - 1]; }
+function renderHome(){
+  if (!S.me || !$("homeView")) return;
+  const d = homeDay(), dt = dayDate(d), g = group(), short = dt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  $("hDay").textContent = S.dayOffset === -1 ? "Yesterday" : dt.toLocaleDateString(undefined, { weekday: "long" });
+  $("hDate").textContent = short + " · Day " + (d + 1);
+  $("hToday").hidden = S.dayOffset === 0;
+  $("hGroupName").textContent = g ? g.name : "No group yet";
+  const sel = $("hGroupSel"); sel.hidden = S.groups.length < 2; $("hGroupChev").style.display = S.groups.length < 2 ? "none" : "";
+  if (!sel.hidden && sel.dataset.k !== S.groups.map(x => x.id + x.name).join() + S.gid) {
+    sel.innerHTML = ""; S.groups.forEach(x => { const o = document.createElement("option"); o.value = x.id; o.textContent = x.name; o.selected = x.id === S.gid; sel.appendChild(o); });
+    sel.dataset.k = S.groups.map(x => x.id + x.name).join() + S.gid; }
+  $("qMenuBtn").style.background = colorOf(S.me.username).c; $("hMeTxt").textContent = initialOf(S.me.display_name);
+
+  /* who's in today */
+  const info = streakInfo(), who = $("hWho");
+  $("hSolo").hidden = !!g || !S.loaded;
+  who.hidden = !(g && info && S.dayOffset === 0 && !S.qid && todayIndex() === S.act.t);
+  if (!who.hidden) {
+    const av = $("hAvs"); av.innerHTML = "";
+    const meU = S.me.username, rank = (m) => (info.answered(m.username) ? 0 : 2) + (m.username === meU ? 0 : 1);
+    g.members.slice().sort((a, b) => rank(a) - rank(b) || a.display_name.localeCompare(b.display_name)).forEach(m => {
+      const done = info.answered(m.username), isMe = m.username === meU, was = info.nudged.has(m.username), nm = isMe ? "You" : m.display_name;
+      const b = document.createElement(done || isMe ? "span" : "button"); b.className = "hav" + (done ? "" : " todo"); b.textContent = initialOf(m.display_name); b.title = nm;
+      if (done) { b.style.background = colorIn(g, m.username).c; b.appendChild(checkEl("ok")); b.setAttribute("aria-label", nm + " answered"); b.setAttribute("role", "img"); }
+      else if (isMe) { b.setAttribute("aria-label", "You haven't answered yet"); b.setAttribute("role", "img"); }
+      else { b.type = "button"; b.disabled = was; b.setAttribute("aria-label", (was ? "Already nudged " : "Nudge ") + m.display_name); b.addEventListener("click", () => openNudge(m)); }
+      av.appendChild(b); });
+    $("hStreakN").textContent = info.cur; $("hStreak").classList.toggle("hot", info.cur >= 3);
+    const others = g.members.filter(m => m.username !== meU && !info.answered(m.username));
+    $("hWhoTxt").textContent = info.todayDone ? "Everyone drew today's graph." + (info.best > info.cur ? " Best streak: " + info.best + "." : "")
+      : !others.length ? "Everyone else is in. Your turn." : listNames(others) + (others.length === 1 ? " hasn't" : " haven't") + " drawn today's graph yet." + (others.some(m => !info.nudged.has(m.username)) ? " Tap to nudge." : "")
+     ;
+  }
+
+  /* today's graph */
+  const gq = dayGraphQ(), gDone = !!S.mine[gq.id], n = g ? groupCount(gq.id) : 0;
+  $("hHeroLab").textContent = S.dayOffset === 0 ? "Today's graph" : "Graph · " + short;
+  $("hHeroT").textContent = gq.title; $("hHeroS").textContent = gq.sub || "";
+  $("hHeroCta").textContent = gDone ? "See results" : ({ rank: "Rank yours", map: "Place yours" }[gq.kind] || "Draw yours");
+  $("hHeroMeta").textContent = gDone ? (g ? "You're in" + (n > 1 ? " · " + n + " answered" : "") : "You're in") : n ? n + " answered" : "";
+
+  /* group bonus, This or that, Rate it */
+  const bq = bonusQ(d), bt = $("hBonus"); bt.hidden = !bq;
+  if (bq) { const q = withPeople(bq), done = !!S.mine[q.id]; $("hBonusT").textContent = q.title; $("hBonusOk").hidden = !done; $("hBonusSt").textContent = done ? "Done · See results" : "Just for " + (g ? g.name : "your group"); }
+  const theme = GTHEMES[gThemeIdx(d)].name, td = gameDone("tot"), rd = gameDone("rate");
+  $("hTotT").textContent = theme + " picks"; $("hRateT").textContent = theme + ", 1 to 10";
+  $("hTotOk").hidden = !td; $("hRateOk").hidden = !rd;
+  $("hTotSt").textContent = td ? "Done · See results" : GN + " quick picks";
+  $("hRateSt").textContent = rd ? "Done · See results" : "Rate " + GN + " things";
+
+  /* chat preview for today's graph */
+  const ch = $("hChat"); ch.hidden = !g;
+  if (g) { const c = S.comments[rkey(gq.id)], all = c ? c.list : [], said = all.filter(x => x.kind !== "rule"), last = said[said.length - 1], tx = $("hChatTx");
+    tx.innerHTML = ""; if (last) { const b = document.createElement("b"); b.textContent = last.name + ": "; tx.append(b, last.body); } else tx.textContent = "Group chat: nothing yet today";
+    $("hChatN").textContent = all.length; $("hChatN").hidden = !all.length; ch.setAttribute("aria-label", "Group chat" + (last ? ", latest from " + last.name : "") + (all.length ? ", " + all.length + " messages" : "")); }
+}
+function renderFocus(){
+  if (S.view !== "focus") return;
+  const list = gamesToday(), cur = S.game === "bonus" ? "bonus" : S.game || "graph", segs = $("fSegs"); segs.innerHTML = "";
+  list.forEach(k => { const b = document.createElement("button"), done = gameDone(k); b.type = "button"; b.className = done ? "done" : ""; b.style.setProperty("--gc", GAME_COLOR[k]);
+    if (k === cur) b.setAttribute("aria-current", "true"); b.setAttribute("aria-label", GAME_NAMES[k] + (done ? ", done" : ""));
+    b.appendChild(document.createElement("i")); b.addEventListener("click", () => { if (k !== cur) openFocus(k); }); segs.appendChild(b); });
+  $("fCount").textContent = (list.indexOf(cur) + 1) + "/" + list.length;
+  const isGraph = cur === "graph" || cur === "bonus", fn = $("fNext");
+  fn.hidden = !gameDone(cur) || (isGraph ? S.tab !== "res" : !!S.gedit);
+  if (fn.hidden) return;
+  const i = list.indexOf(cur); let nx = null;
+  for (let j = 1; j < list.length; j++) { const k = list[(i + j) % list.length]; if (!gameDone(k)) { nx = k; break; } }
+  const b = $("fNextBtn"); b.style.setProperty("--gc", nx ? GAME_COLOR[nx] : "var(--ink)"); b.style.color = nx === "tot" || nx === "rate" ? "#10151d" : "var(--sheet)";
+  b.dataset.g = nx || ""; $("fNextT").textContent = nx ? "Next: " + GAME_NAMES[nx] : "Back to today";
+}
+function openFocus(k){
+  setMenu(false); relock();
+  if (S.view !== "focus" && !(history.state && history.state.gf)) { try { history.pushState({ gf: 1 }, ""); } catch (e) {} }
+  S.view = "focus"; applyView();
+  if (k !== S.game) setGame(k); else renderGame();
+  if (k === "graph" || k === "bonus") setTab(S.mine[currentQ().id] ? "res" : "draw");
+  window.scrollTo({ top: 0 }); renderFocus();
+}
+function leaveFocus(){
+  if (S.view !== "focus") return; relock(); S.view = "home"; S.gedit = null;
+  if (S.game === "bonus") { S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph"; go(); }
+  applyView(); renderHome(); window.scrollTo({ top: 0 });
+}
+function closeFocus(){ if (history.state && history.state.gf) history.back(); else leaveFocus(); }
+window.addEventListener("popstate", () => { if (!$("menuBack").hidden) setMenu(false); if (S.view === "focus") leaveFocus(); });
+$("fClose").addEventListener("click", closeFocus);
+$("fNextBtn").addEventListener("click", (e) => { const k = e.currentTarget.dataset.g; if (k) openFocus(k); else closeFocus(); });
+$("hHero").addEventListener("click", () => openFocus("graph"));
+$("hBonus").addEventListener("click", () => openFocus("bonus"));
+$("hTot").addEventListener("click", () => openFocus("tot"));
+$("hRate").addEventListener("click", () => openFocus("rate"));
+$("hChat").addEventListener("click", () => { openFocus("graph"); setTimeout(() => $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }), 60); });
+$("hCal").addEventListener("click", openCal);
+$("hToday").addEventListener("click", () => { S.dayOffset = 0; S.qid = null; go(); });
+$("hGroup").addEventListener("click", () => { if (S.groups.length < 2) showScreen("groups"); });
+$("hGroupSel").addEventListener("change", (e) => { S.gid = e.target.value || null; ls.set("gg-group", S.gid); renderGroupbar(); go(); });
+$("hSoloBtn").addEventListener("click", () => showScreen("groups"));
+function renderMenu(){
+  if (!S.me) return;
+  const av = $("mAv"); av.textContent = initialOf(S.me.display_name); av.style.background = colorOf(S.me.username).c;
+  $("mName").textContent = S.me.display_name; $("mUser").textContent = "@" + S.me.username;
+  const box = $("mGroups"); box.innerHTML = "";
+  S.groups.forEach(x => { const b = document.createElement("button"); b.type = "button"; b.textContent = x.name; b.setAttribute("aria-pressed", String(x.id === S.gid));
+    b.addEventListener("click", () => { setMenu(false); if (x.id === S.gid) return; S.gid = x.id; ls.set("gg-group", S.gid); renderGroupbar(); go(); }); box.appendChild(b); });
+  const add = document.createElement("button"); add.type = "button"; add.className = "add"; add.textContent = S.groups.length ? "+ New group" : "Start or join a group";
+  add.addEventListener("click", () => { setMenu(false); showScreen("groups"); }); box.appendChild(add);
+  const t = THEMES.find(x => x.id === curTheme()); $("mThemeName").textContent = t ? t.name : "Auto";
+}
+$("mProfile").addEventListener("click", () => { setMenu(false); showScreen("groups"); });
+$("mCal").addEventListener("click", () => { setMenu(false); openCal(); });
+$("mTheme").addEventListener("click", () => { setMenu(false); $("themeBtn").click(); });
+$("mNews").addEventListener("click", () => { setMenu(false); openNews(); });
+applyView();
+
 function fromHash(){ S.qid = null; go(); } // one question a day: links to other questions are ignored
 window.addEventListener("hashchange", fromHash);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!S.loaded) return; if (S.tab === "draw") renderDraw(); else renderResults(); });
