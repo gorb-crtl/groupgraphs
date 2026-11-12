@@ -841,6 +841,36 @@ end $$;
 revoke all on function check_group_done(uuid, text), alerts_due(text), alerts_done(text, jsonb) from public, anon, authenticated;
 grant execute on function check_group_done(uuid, text), alerts_due(text), alerts_done(text, jsonb) to anon, authenticated;
 
+-- ---------- Fun Friday themes (also in group-themes.sql) ----------
+create table if not exists group_themes (
+  group_id uuid primary key references groups(id) on delete cascade,
+  theme text not null check (theme in ('science', 'gaming', 'nature', 'business', 'media', 'sports', 'food', 'custom', 'random')),
+  updated_at timestamptz not null default now()
+);
+alter table group_themes enable row level security;
+
+create or replace function get_group_themes(p_secret uuid) returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare p people := gg_me(p_secret);
+begin
+  return (select coalesce(jsonb_object_agg(t.group_id, t.theme), '{}'::jsonb)
+          from group_themes t join group_members gm on gm.group_id = t.group_id
+          where gm.person_id = p.id);
+end $$;
+
+create or replace function set_group_theme(p_secret uuid, p_group uuid, p_theme text) returns void
+language plpgsql security definer set search_path = public as $$
+declare p people := gg_me(p_secret);
+begin
+  if not exists (select 1 from groups where id = p_group and host_id = p.id) then raise exception 'host_only'; end if;
+  if p_theme is null or p_theme = '' then
+    delete from group_themes where group_id = p_group;
+  else
+    insert into group_themes (group_id, theme) values (p_group, p_theme)
+    on conflict (group_id) do update set theme = excluded.theme, updated_at = now();
+  end if;
+end $$;
+
 -- Only the public functions are callable from the app.
 revoke all on all functions in schema public from public, anon, authenticated;
 grant execute on function sign_up(text, text), sign_in(text, text), rename_me(uuid, text),
@@ -853,5 +883,6 @@ grant execute on function sign_up(text, text), sign_in(text, text), rename_me(uu
   rename_group(uuid, uuid, text), transfer_host(uuid, uuid, text), delete_group(uuid, uuid),
   set_color(uuid, int), set_color_hex(uuid, text), send_nudge(uuid, uuid, text, text, text), my_nudges(uuid), seen_nudges(uuid),
   nudges_due(text), nudges_done(text, jsonb), group_activity(uuid, uuid, text[]),
-  check_group_done(uuid, text), alerts_due(text), alerts_done(text, jsonb)
+  check_group_done(uuid, text), alerts_due(text), alerts_done(text, jsonb),
+  get_group_themes(uuid), set_group_theme(uuid, uuid, text)
   to anon, authenticated;
