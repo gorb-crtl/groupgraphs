@@ -518,6 +518,23 @@ button.hav:disabled { opacity: .55; cursor: default; }
 .hsolo p { flex: 1; font-size: 14px; }
 .hsolo p b { color: var(--ink); }
 
+.hsw { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--line); margin: 2px 0 4px; }
+.hsw button { min-height: 44px; border: 0; border-radius: 11px; background: transparent; color: var(--ink-2); font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.hsw button[aria-pressed="true"] { background: var(--sheet); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+body.ffm .hsw button[data-ff="1"] { background: var(--g-ff); color: #fff; }
+.hsw i { width: 7px; height: 7px; border-radius: 50%; background: var(--g-ff); }
+:root { --g-ff: #e8743f; }
+body.ffm { --g-graph: var(--g-ff); }
+.ffbox { display: flex; flex-direction: column; gap: 8px; padding: 12px 0 4px; }
+.ffbox h4 { margin: 0; font-size: 16px; }
+.ffpick { display: flex; flex-direction: column; gap: 8px; }
+.ffpick button { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--sheet); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.ffpick button b { display: block; font-size: 15px; }
+.ffpick button small { display: block; font-size: 12px; color: var(--ink-2); }
+.ffpick button .rd { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); }
+.ffpick button[aria-checked="true"] { border-color: var(--g-ff); background: color-mix(in srgb, var(--g-ff) 10%, var(--sheet)); }
+.ffpick button[aria-checked="true"] .rd { border: 6px solid var(--g-ff); }
+.ffpick button:disabled { cursor: default; color: var(--ink); }
 .hhero { position: relative; overflow: hidden; width: 100%; min-height: 236px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; border: 0; border-radius: 26px; padding: 18px; background: var(--g-graph); color: var(--sheet); font: inherit; text-align: left; cursor: pointer; }
 .hhero .art { position: absolute; right: -6px; top: 10px; width: 80%; height: 132px; pointer-events: none; }
 .hhero .art line { stroke: currentColor; stroke-width: 1; opacity: .16; }
@@ -660,7 +677,7 @@ h1.prompt { min-height: 2.24em; }
   </header>
   <div class="sumback" id="ideaBack" hidden role="dialog" aria-label="Question ideas"><div class="sumwrap">
     <div class="sumtop"><div><div class="k" id="ideaGroup"></div><h2>Question ideas</h2></div><button id="ideaClose" type="button">Close</button></div>
-    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight Central time, the idea with the most votes becomes the next day's bonus question, just for this group. The daily graph stays the same for everyone.</p>
+    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight Central time, the idea with the most votes becomes the next day's bonus question, just for this group. If your Fun Friday theme is Custom, Friday's winning idea becomes your Fun Friday graph instead. Today's questions stay the same for everyone.</p>
     <div class="sumcard" id="ideaNext" hidden></div>
     <div class="sumcard"><h3>Vote</h3><div class="idlist" id="ideaList"></div></div>
     <form class="sumcard idform" id="ideaForm" autocomplete="off">
@@ -855,6 +872,7 @@ h1.prompt { min-height: 2.24em; }
       <button type="button" class="icbtn" id="hCal" aria-label="Pick a day"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
       <div id="qMenu" hidden><button type="button" class="icbtn hme" id="qMenuBtn" aria-label="Menu" aria-haspopup="dialog" aria-expanded="false"><span id="hMeTxt"></span><span class="count" id="qMenuCount" hidden>0</span></button></div>
     </div>
+  <div class="hsw" id="hSw" hidden role="group" aria-label="Which questions"><button type="button" data-ff="0" aria-pressed="true">Today</button><button type="button" data-ff="1" aria-pressed="false">Fun Friday<i id="hSwDot" hidden></i></button></div>
   <div class="install" id="installTip" hidden>
     <img src="../apple-touch-icon.png" alt="">
     <div class="txt"><b>Put GroupGraphs on your home screen</b><span id="installHow"></span></div>
@@ -1277,15 +1295,15 @@ const S = {
   tab: "draw", peeked: false, hidden: new Set(),
   canWrite: true, sample: null, roasts: {}, funCtx: null,
   drawnFor: null, loaded: false,
-  secret: null, me: null, groups: [], gid: null, mine: {}, results: {}, store: null,
+  secret: null, me: null, groups: [], gid: null, mine: {}, results: {}, store: null, gthemes: {}, ff: false,
 };
 /* everyone gets the new question at midnight Central time, wherever they are */
 const ctParts = () => { const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "numeric", day: "numeric", weekday: "short" }).formatToParts(new Date()); const g = (t) => (p.find(x => x.type === t) || {}).value; return { y: +g("year"), m: +g("month"), d: +g("day"), wd: g("weekday") }; };
 const todayIndex = () => { const c = ctParts(); return Math.round((Date.UTC(c.y, c.m - 1, c.d) - ROT_START) / 864e5); };
 const ctISO = () => { const c = ctParts(); return c.y + "-" + String(c.m).padStart(2, "0") + "-" + String(c.d).padStart(2, "0"); };
 const qForDay = (d) => d >= 0 && d < GEN_FROM ? Q_OLD[d] : Q[(((d + ROT_OFFSET) % Q.length) + Q.length) % Q.length];
-const qById = (id) => Q.find(q => q.id === id) || Q_OLD.find(q => q.id === id) || (S.ideas && S.ideas.gid === S.gid ? Object.values(S.ideas.byDay).find(q => q.id === id) : null) || null;
-function baseQ(){ if (S.game === "bonus" && !S.qid && bonusQ(todayIndex() + S.dayOffset)) return bonusQ(todayIndex() + S.dayOffset); if (S.qid) return qById(S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
+const qById = (id) => Q.find(q => q.id === id) || Q_OLD.find(q => q.id === id) || PACK_IDS.map(k => PACKS[k].graphs.find(q => q.id === id)).find(Boolean) || (S.ideas && S.ideas.gid === S.gid ? Object.values(S.ideas.byDay).find(q => q.id === id) : null) || null;
+function baseQ(){ if (!S.qid && S.game === "graph" && ffMode(todayIndex() + S.dayOffset)) { const f = ffGraph(todayIndex() + S.dayOffset); if (f) return f; } if (S.game === "bonus" && !S.qid && bonusQ(todayIndex() + S.dayOffset)) return bonusQ(todayIndex() + S.dayOffset); if (S.qid) return qById(S.qid) || qForDay(todayIndex()); return qForDay(todayIndex() + S.dayOffset); }
 /* "most likely to" questions rank the current group's members, so each group gets its own copy of the question */
 function withPeople(q){
   if (!q || !q.people) return q; const g = group(); if (!g) return q;
@@ -1689,7 +1707,7 @@ function ideaQ(row){
 let ideasBusy = false;
 function ensureIdeas(){ if (!S.secret || !S.gid || ideasBusy) return; if (S.ideas && S.ideas.gid === S.gid && Date.now() - S.ideas.at < 60000) return; loadIdeas(); }
 async function loadIdeas(){
-  const gid = S.gid; ideasBusy = true; let d;
+  const gid = S.gid; ideasBusy = true; let d; loadGroupThemes();
   try { d = await rpc("get_ideas", { p_secret: S.secret, p_group: gid, p_today: ctISO() }); }
   catch (e) { ideasBusy = false; if (e.message === "not_signed_in") return signOut(); S.ideas = { gid, at: e.message === "offline" ? 0 : Date.now(), byDay: {}, pending: [], past: [], err: e.message === "offline" ? "offline" : true }; $("ideaJump").hidden = !S.gid; return; }
   ideasBusy = false;
@@ -1737,7 +1755,7 @@ function renderIdeas(){
     list.appendChild(row);
   });
   const nx = $("ideaNext"); nx.innerHTML = ""; const top = sorted[0];
-  if (top && top.votes > 0) { nx.hidden = false; nx.append(mk("h3", null, "Tomorrow's bonus question, if nothing overtakes it"), mk("div", "t", ideaTitle(top.spec)), mk("p", "note", "From " + top.author + " with " + top.votes + (top.votes === 1 ? " vote" : " votes") + ". Voting closes at midnight Central time.")); nx.querySelector(".t").style.cssText = "font-weight:800;font-size:17px"; }
+  if (top && top.votes > 0) { nx.hidden = false; nx.append(mk("h3", null, (isFriday(todayIndex() + 1) && packKey(S.gid, todayIndex() + 1) === "custom" ? "Tomorrow's Fun Friday graph" : "Tomorrow's bonus question") + ", if nothing overtakes it"), mk("div", "t", ideaTitle(top.spec)), mk("p", "note", "From " + top.author + " with " + top.votes + (top.votes === 1 ? " vote" : " votes") + ". Voting closes at midnight Central time.")); nx.querySelector(".t").style.cssText = "font-weight:800;font-size:17px"; }
   else nx.hidden = true;
   const past = $("ideaPast"); past.innerHTML = ""; past.hidden = !I.past.length;
   if (I.past.length) { past.appendChild(mk("h3", null, "Already played")); const rows = mk("div", "sumrows"); I.past.slice(0, 20).forEach(r => { const d = isoDay(r.day), rr = mk("div", "sumrow"); const dt = new Date(ROT_START + d * 864e5); rr.append(mk("span", null, dt.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }) + " · " + r.author), mk("span", null, ideaTitle(r.spec))); rows.appendChild(rr); }); past.appendChild(rows); }
@@ -2158,16 +2176,130 @@ GTHEMES.push(
   { name: "Fall", tot: [["Pumpkin spice", "Apple cider"], ["Sweater", "Flannel"], ["Hayride", "Corn maze"], ["Apple picking", "Pumpkin patch"], ["Bonfire", "Hot cocoa"]],
     rate: ["Leaf peeping", "Daylight saving time", "Football Sundays", "Raking leaves", "Cozy socks"] });
 const GT_SWAP = { 1: GT_BASE, 7: GT_BASE + 1, 9: GT_BASE + 2 };
+/* ---------------- Fun Friday ----------------
+   A group's host picks a theme. Every Friday that group gets one extra graph, This or that and Rate it
+   on the theme, under the Fun Friday switch. Today's questions stay the same for everyone. */
+const FF_GAMES = (list) => list.map(t => { GTHEMES.push(t); return GTHEMES.length - 1; });
+const PACKS = {
+ science: { name: "Science", desc: "Lab life, research, experiments", graphs: SCI.slice(1).concat(SCI[0]), games: [1, 7, 9] },
+ gaming: { name: "Gaming", desc: "Consoles, classics, game nights", graphs: [
+  {id:"ff-rage-quit", cat:"Gaming", title:"Rage vs times you've died on the same level", sub:"Same boss, same pattern, same mistake.", x:{label:"deaths", min:0, max:50, step:10}, y:{label:"rage", bands:B([[0,2,"zen"],[2,4,"focused"],[4,6,"muttering"],[6,8,"yelling"],[8,10,"controller at risk"]])}},
+  R("ff-consoles", "Gaming", "Rank the consoles", "Best to worst, all time. Nostalgia is allowed.", ["NES","SNES","N64","GameCube","Wii","Switch","PlayStation 2","PlayStation 5","Xbox 360","Game Boy"]),
+  {id:"ff-one-more", cat:"Gaming", title:"\"One more game\" energy through the night", sub:"You said you'd stop at 11.", x:{label:"time of night", min:20, max:28, step:1, fmt:"hour"}, y:{label:"just one more", lo:"logging off", hi:"sun is rising"}},
+  M("ff-gamer-type", "Gaming", "What kind of gamer are you?", "Your actual habits, not your Steam wishlist.", { lo: "Casual", hi: "Sweaty" }, { lo: "Solo story games", hi: "Online with friends" }),
+  {id:"ff-backlog", cat:"Gaming", title:"Guilt vs games in your backlog", sub:"Bought on sale, never opened. They're watching.", x:{label:"unplayed games", min:0, max:100, step:20}, y:{label:"guilt", lo:"none", hi:"crushing"}},
+  R("ff-party-games", "Gaming", "Rank the party games", "Best for a game night to worst.", ["Mario Kart","Smash Bros","Mario Party","Jackbox","Among Us","Just Dance","Overcooked","Rock Band","Wii Sports","Tetris 99"]),
+  {id:"ff-tutorial", cat:"Gaming", title:"Patience vs minutes of tutorial", sub:"You just want to play the game.", x:{label:"minutes of tutorial", min:0, max:60, step:10}, y:{label:"patience", lo:"skip skip skip", hi:"reading every tip"}},
+  M("ff-game-taste", "Gaming", "Map your game taste", "What you reach for on a free Saturday.", { lo: "Cozy farming", hi: "Horror" }, { lo: "Short and sweet", hi: "200-hour RPG" }),
+ ], games: FF_GAMES([
+  { name: "Game night", tot: [["Controller", "Keyboard"], ["Co-op", "Versus"], ["Retro", "New release"], ["Story mode", "Multiplayer"], ["Easy mode", "Hard mode"]], rate: ["Loading screens", "Microtransactions", "Speedruns", "Couch co-op", "Escort missions"] },
+  { name: "Arcade", tot: [["Pac-Man", "Tetris"], ["Pinball", "Skee-Ball"], ["Air hockey", "Claw machine"], ["Tickets", "High score"], ["Racing", "Shooting"]], rate: ["Claw machines", "Dance machines", "Prize counters", "Token prices", "Arcade bars"] },
+  { name: "Game worlds", tot: [["Open world", "Linear"], ["Fantasy", "Sci-fi"], ["Boss fight", "Puzzle"], ["Sword", "Bow"], ["Save often", "Live dangerously"]], rate: ["Water levels", "Side quests", "Fetch quests", "Plot twists", "Final bosses"] },
+ ]) },
+ nature: { name: "Nature", desc: "Outdoors, animals, the planet", graphs: [
+  {id:"ff-bugs", cat:"Nature", title:"Panic vs size of the bug", sub:"It's on the wall. Now it's not.", x:{label:"bug size (inches)", min:0, max:4, step:0.5}, y:{label:"panic", bands:B([[0,2,"cute"],[2,4,"noticing"],[4,6,"tracking it"],[6,8,"leaving the room"],[8,10,"moving out"]])}},
+  R("ff-biomes", "Nature", "Rank the places to live", "If you had to live in one, forever.", ["Beach","Mountains","Forest","Desert","Tundra","Rainforest","Prairie","Lake shore","Island","Swamp"]),
+  {id:"ff-camp-nights", cat:"Nature", title:"Happiness on each night of camping", sub:"No showers. The campfire smell is now part of you.", x:{label:"nights camping", min:0, max:10, step:1}, y:{label:"happiness", bands:MOOD}},
+  M("ff-outdoorsy", "Nature", "How outdoorsy are you?", "Be honest. A patio counts as outside.", { lo: "Indoor cat", hi: "Lives outside" }, { lo: "Glamping", hi: "Survival mode" }),
+  {id:"ff-sunset", cat:"Nature", title:"Beauty of the sky through the evening", sub:"From golden hour to full dark.", x:{label:"minutes around sunset", min:-60, max:60, step:20}, y:{label:"beauty", lo:"just sky", hi:"stop the car"}},
+  R("ff-wild-animals", "Nature", "Rank the wild animals you'd want to meet", "Best surprise encounter to worst.", ["Deer","Fox","Moose","Bear","Bald eagle","Raccoon","Owl","Wolf","Skunk","Mountain lion"]),
+  {id:"ff-garden", cat:"Nature", title:"Gardening motivation through the year", sub:"From seed catalog season to whatever survived.", x:{label:"month", min:0, max:12, step:1, fmt:"month"}, y:{label:"motivation", lo:"what garden", hi:"planting everything"}},
+  M("ff-weather-type", "Nature", "What's your ideal weather?", "Your perfect day off.", { lo: "Cold", hi: "Hot" }, { lo: "Dry", hi: "Stormy" }),
+ ], games: FF_GAMES([
+  { name: "Great outdoors", tot: [["Sunrise hike", "Sunset hike"], ["Tent", "Hammock"], ["Waterfall", "Hot spring"], ["Kayak", "Canoe"], ["Map", "Trail app"]], rate: ["Bug spray smell", "Wet socks", "Scenic overlooks", "Trail mix", "Outhouses"] },
+  { name: "Wildlife", tot: [["Owls", "Hawks"], ["Dolphins", "Whales"], ["Frogs", "Turtles"], ["Foxes", "Wolves"], ["Bees", "Butterflies"]], rate: ["Squirrels", "Seagulls", "Jellyfish", "Moths", "Opossums"] },
+  { name: "Seasons", tot: [["First snow", "First warm day"], ["Leaves changing", "Flowers blooming"], ["Fog", "Frost"], ["Rainy morning", "Windy night"], ["Stargazing", "Cloud watching"]], rate: ["Pollen season", "Black ice", "Heat lightning", "Leaf piles", "Spring cleaning"] },
+ ]) },
+ business: { name: "Business", desc: "Offices, meetings, money", graphs: [
+  {id:"ff-meeting-size", cat:"Business", title:"Meeting usefulness vs people invited", sub:"Same agenda, more people.", x:{label:"people in the meeting", min:2, max:30, step:4}, y:{label:"usefulness", lo:"waste of time", hi:"great meeting"}},
+  R("ff-office-perks", "Business", "Rank the office perks", "Best to worst. Pizza parties are not a raise.", ["Free lunch","Remote days","Gym membership","Unlimited PTO","Free snacks","Good coffee","Team offsite","Standing desks","Pizza party","Swag"]),
+  {id:"ff-friday-focus", cat:"Business", title:"Focus through a work Friday", sub:"From the 9am standup to the 4:59 email.", x:{label:"time of day", min:8, max:18, step:2, fmt:"hour"}, y:{label:"focus", bands:B([[0,2,"gone"],[2,4,"drifting"],[4,6,"okay"],[6,8,"locked in"],[8,10,"machine"]])}},
+  M("ff-work-style", "Business", "What's your work style?", "How you actually get things done.", { lo: "Deadline sprinter", hi: "Done early" }, { lo: "Heads down solo", hi: "Always collaborating" }),
+  {id:"ff-reply-all", cat:"Business", title:"Annoyance vs people on a reply-all thread", sub:"Someone replied 'please remove me'. Then everyone did.", x:{label:"people on the thread", min:0, max:500, step:100}, y:{label:"annoyance", lo:"fine", hi:"logging off"}},
+  R("ff-jargon", "Business", "Rank the office jargon", "Least annoying to most annoying.", ["Circle back","Synergy","Low-hanging fruit","Touch base","Bandwidth","Deep dive","Move the needle","Take it offline","Per my last email","Let's unpack that"], "least annoying", "most annoying"),
+  {id:"ff-raise", cat:"Business", title:"Happiness vs size of a raise", sub:"Your yearly review. HR is smiling.", x:{label:"raise", min:0, max:20, step:2, fmt:"pct"}, y:{label:"happiness", lo:"updating my resume", hi:"staying forever"}},
+  M("ff-boss", "Business", "What kind of boss would you be?", "Or are, if you already are one.", { lo: "Hands off", hi: "Micromanager" }, { lo: "All business", hi: "Everyone's friend" }),
+ ], games: FF_GAMES([
+  { name: "The office", tot: [["Morning meetings", "Afternoon meetings"], ["Slack", "Email"], ["Camera on", "Camera off"], ["Desk lunch", "Lunch out"], ["Inbox zero", "Inbox chaos"]], rate: ["Open offices", "Team lunches", "Performance reviews", "Office birthdays", "Casual Fridays"] },
+  { name: "Money", tot: [["Save", "Invest"], ["Stocks", "Real estate"], ["Budget app", "Spreadsheet"], ["Side hustle", "Free time"], ["Big salary", "Great team"]], rate: ["Taxes", "Payday", "Credit cards", "Crypto", "Coupons"] },
+  { name: "Career", tot: [["Startup", "Big company"], ["Be the boss", "Work for yourself"], ["Short commute", "Bigger paycheck"], ["Specialist", "Generalist"], ["Interview in person", "Interview on video"]], rate: ["Networking events", "LinkedIn", "Cover letters", "Job fairs", "Business cards"] },
+ ]) },
+ media: { name: "Media", desc: "Film, TV, music, the internet", graphs: [
+  {id:"ff-scroll", cat:"Media", title:"Joy vs minutes of scrolling", sub:"Short videos, one after another.", x:{label:"minutes scrolling", min:0, max:120, step:20}, y:{label:"joy", lo:"brain melting", hi:"having a blast"}},
+  R("ff-genres", "Media", "Rank the movie genres", "Best night in to worst.", ["Comedy","Horror","Action","Romance","Sci-fi","Documentary","Animated","Musical","Thriller","Western"]),
+  {id:"ff-trailer", cat:"Media", title:"Hype vs how much the trailer shows", sub:"Some trailers show the whole movie.", x:{label:"plot revealed", min:0, max:100, step:20, fmt:"pct"}, y:{label:"hype", lo:"skipping it", hi:"opening night"}},
+  M("ff-media-diet", "Media", "What's your media diet?", "A normal week.", { lo: "Podcasts", hi: "Video" }, { lo: "Old favorites", hi: "Whatever's new" }),
+  {id:"ff-season", cat:"Media", title:"How good a show is, by season", sub:"A long-running show you love. When should it have ended?", x:{label:"season", min:1, max:10, step:1}, y:{label:"quality", lo:"jumped the shark", hi:"peak TV"}},
+  R("ff-platforms", "Media", "Rank the apps", "Most fun to least fun.", ["YouTube","TikTok","Instagram","Reddit","Spotify","Netflix","Pinterest","Snapchat","X","LinkedIn"], "most fun", "least fun"),
+  {id:"ff-concert", cat:"Media", title:"Concert enjoyment by hour", sub:"Doors at 7. Headliner whenever they feel like it.", x:{label:"hours since doors", min:0, max:5, step:1}, y:{label:"enjoyment", bands:MOOD}},
+  M("ff-spoilers", "Media", "How do you handle spoilers?", "A big finale just aired.", { lo: "Spoil me", hi: "Muted every keyword" }, { lo: "Watch alone", hi: "Watch party" }),
+ ], games: FF_GAMES([
+  { name: "Streaming", tot: [["Netflix", "Hulu"], ["Subtitles on", "Subtitles off"], ["Skip intro", "Watch intro"], ["Rewatch", "Something new"], ["Movie", "Series"]], rate: ["Autoplay", "Cliffhangers", "Laugh tracks", "Recaps", "Ads"] },
+  { name: "The internet", tot: [["Memes", "Long reads"], ["Post", "Lurk"], ["Podcasts", "Audiobooks"], ["Reels", "Stories"], ["Comments", "No comments"]], rate: ["Viral challenges", "Influencers", "Comment sections", "Cat videos", "Life hacks"] },
+  { name: "Music scene", tot: [["Front row", "Back of the room"], ["Arena", "Small venue"], ["Old hits", "New album"], ["Live album", "Studio album"], ["Playlist", "Radio"]], rate: ["Encores", "Opening acts", "Merch lines", "Remixes", "Covers"] },
+ ]) },
+ sports: { name: "Sports", desc: "Playing, watching, game day", graphs: [
+  {id:"ff-game-tension", cat:"Sports", title:"Tension through a close game", sub:"Your team, a big game, tied going into the last quarter.", x:{label:"minutes played", min:0, max:60, step:10}, y:{label:"tension", bands:B([[0,2,"relaxed"],[2,4,"into it"],[4,6,"standing up"],[6,8,"can't watch"],[8,10,"cardiac event"]])}},
+  R("ff-sports", "Sports", "Rank the sports to watch", "Most fun to watch to least.", ["Football","Basketball","Baseball","Soccer","Hockey","Tennis","Golf","Gymnastics","Swimming","F1"]),
+  {id:"ff-workout", cat:"Sports", title:"Will to live through a workout", sub:"Minutes into a hard class. The instructor is smiling.", x:{label:"minutes in", min:0, max:60, step:10}, y:{label:"will to live", lo:"lying on the floor", hi:"unstoppable"}},
+  M("ff-fan-type", "Sports", "What kind of fan are you?", "On game day.", { lo: "Watches the score later", hi: "Face paint" }, { lo: "One team forever", hi: "Bandwagon" }),
+  {id:"ff-pickup", cat:"Sports", title:"Fun vs how competitive a pickup game gets", sub:"Friendly game at the park. Someone is keeping score.", x:{label:"competitiveness", min:0, max:10, step:2}, y:{label:"fun", lo:"miserable", hi:"best day"}},
+  R("ff-rec-sports", "Sports", "Rank the sports to play", "Best for a weekend with friends.", ["Pickleball","Basketball","Volleyball","Soccer","Ultimate frisbee","Bowling","Golf","Tennis","Kickball","Dodgeball"]),
+  {id:"ff-season-hope", cat:"Sports", title:"Hope for your team across the season", sub:"From opening day to 'there's always next year'.", x:{label:"month of the season", min:0, max:6, step:1}, y:{label:"hope", lo:"tanking", hi:"championship"}},
+  M("ff-athlete", "Sports", "What kind of athlete are you?", "In your own way.", { lo: "Couch", hi: "Trains daily" }, { lo: "Solo workouts", hi: "Team sports" }),
+ ], games: FF_GAMES([
+  { name: "Game day", tot: [["Home game", "Away game"], ["Stadium", "Sports bar"], ["Wings", "Nachos"], ["Halftime show", "Commercials"], ["Jersey", "Team hoodie"]], rate: ["Overtime", "Replay reviews", "Tailgates", "The Kiss Cam", "Stadium prices"] },
+  { name: "Working out", tot: [["Morning workout", "Night workout"], ["Weights", "Cardio"], ["Gym", "Home workout"], ["Yoga", "Spin"], ["Music", "Podcast"]], rate: ["Leg day", "Burpees", "Protein shakes", "Gym selfies", "Rest days"] },
+  { name: "Olympics", tot: [["Summer Games", "Winter Games"], ["Gymnastics", "Swimming"], ["Skiing", "Skating"], ["Gold", "World record"], ["Track", "Field"]], rate: ["Curling", "Speed walking", "Opening ceremonies", "Synchronized swimming", "Ski jumping"] },
+ ]) },
+ food: { name: "Food", desc: "Cooking, restaurants, kitchens", graphs: [
+  {id:"ff-recipe-steps", cat:"Food", title:"Will to cook vs steps in a recipe", sub:"A new recipe. The story before it was 2,000 words.", x:{label:"steps", min:1, max:20, step:3}, y:{label:"will to cook", lo:"ordering pizza", hi:"let's go"}},
+  R("ff-cuisines", "Food", "Rank the cuisines", "If you could only eat one for a year.", ["Italian","Mexican","Japanese","Chinese","Indian","Thai","Greek","Korean","American","French"]),
+  {id:"ff-buffet", cat:"Food", title:"Happiness through a buffet", sub:"Plates into an all-you-can-eat buffet.", x:{label:"plates", min:0, max:6, step:1}, y:{label:"happiness", bands:B([[0,2,"regret"],[2,4,"uncomfortable"],[4,6,"satisfied"],[6,8,"thrilled"],[8,10,"king of the buffet"]])}},
+  M("ff-cook-type", "Food", "What kind of cook are you?", "In your kitchen on a weeknight.", { lo: "Follows the recipe", hi: "Wings it" }, { lo: "Microwave master", hi: "Chef" }),
+  {id:"ff-leftovers", cat:"Food", title:"Will to eat leftovers vs days in the fridge", sub:"Same meal, a little older each day.", x:{label:"days in the fridge", min:0, max:7, step:1}, y:{label:"will to eat it", lo:"science experiment", hi:"better than day one"}},
+  R("ff-kitchen-tools", "Food", "Rank the kitchen tools", "Most useful to most useless.", ["Air fryer","Instant Pot","Microwave","Cast iron pan","Blender","Toaster","Rice cooker","Stand mixer","Waffle maker","Spiralizer"], "most useful", "most useless"),
+  {id:"ff-menu", cat:"Food", title:"Ordering stress vs menu length", sub:"Pages on the menu. The server is back again.", x:{label:"menu pages", min:1, max:20, step:3}, y:{label:"stress", lo:"easy pick", hi:"ordering what they're having"}},
+  M("ff-eater", "Food", "What kind of eater are you?", "At dinner with friends.", { lo: "Picky", hi: "Will try anything" }, { lo: "Small plates", hi: "Clean plate club" }),
+ ], games: FF_GAMES([
+  { name: "Kitchen", tot: [["Gas stove", "Electric stove"], ["Bake", "Fry"], ["Recipe", "Wing it"], ["Cast iron", "Nonstick"], ["Meal prep", "Cook daily"]], rate: ["Doing dishes", "Cutting onions", "Smoke alarms", "Food processors", "Cookbooks"] },
+  { name: "Eating out", tot: [["Booth", "Table"], ["Appetizer", "Dessert"], ["Tasting menu", "Big portion"], ["Food truck", "Fancy restaurant"], ["Split the bill", "Take turns paying"]], rate: ["Shared plates", "QR code menus", "Small portions", "Tipping screens", "Bottomless brunch"] },
+  { name: "Comfort food", tot: [["Mac and cheese", "Grilled cheese"], ["Soup", "Chili"], ["Fried chicken", "Pot roast"], ["Mashed potatoes", "Fries"], ["Cookies", "Brownies"]], rate: ["Meatloaf", "Casseroles", "Instant ramen", "Pot pie", "Chicken noodle soup"] },
+ ]) },
+ custom: { name: "Custom", desc: "Your group's top-voted ideas", graphs: [], games: [] },
+ random: { name: "Random", desc: "A different theme every Friday", graphs: [], games: [] },
+};
+const PACK_IDS = ["science", "gaming", "nature", "business", "media", "sports", "food", "custom", "random"];
+const RAND_POOL = ["science", "gaming", "nature", "business", "media", "sports", "food"];
+const ffDay = () => S.qid ? todayIndex() : todayIndex() + S.dayOffset;
+/* the group's theme for the day being shown; "Random" picks a different one each Friday */
+const packKey = (gid, d) => { const k = gid && S.gthemes[gid]; if (!PACKS[k]) return null; if (k !== "random") return k; const n = ffN(d == null ? ffDay() : d), L = RAND_POOL.length; return RAND_POOL[((n * 3) % L + L) % L]; };
+const packOf = (gid, d) => PACKS[packKey(gid, d)] || null;
+const isFriday = (d) => (((d - 3) % 7) + 7) % 7 === 0; // day 3 is Fri Nov 6 2026
+const ffN = (d) => Math.floor((d - 3) / 7);
+const ffPick = (arr, d) => arr.length ? arr[((ffN(d) % arr.length) + arr.length) % arr.length] : null;
+const ffOn = (d) => !!(isFriday(d) && packOf(S.gid));
+const ffMode = (d) => !!(S.ff && ffOn(d));
+const ffGraph = (d) => { const pk = packOf(S.gid); if (!pk) return null; return packKey(S.gid, d) === "custom" ? ((S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || null) : ffPick(pk.graphs, d); };
+const ffGamesOK = () => { const pk = packOf(S.gid); return !!(pk && pk.games.length); };
+let themesBusy = false;
+async function loadGroupThemes(){
+  if (!S.secret || themesBusy) return; themesBusy = true;
+  try { const t = await rpc("get_group_themes", { p_secret: S.secret }), before = JSON.stringify(S.gthemes); S.gthemes = t && typeof t === "object" ? t : {}; if (JSON.stringify(S.gthemes) !== before) { if (S.me && !$("groupsPanel").hidden) renderGroupsPanel(); go(); } }
+  catch (e) {} // database without group-themes.sql: no Fun Friday
+  themesBusy = false;
+}
 const TOT = GTHEMES.flatMap(t => t.tot), RATE = GTHEMES.flatMap(t => t.rate);
 const GAMES = { tot: { name: "This or that", list: TOT }, rate: { name: "Rate it", list: RATE } }, GN = 5;
 S.game = ls.get("gg-game", "graph"); if (!GAMES[S.game]) S.game = "graph";
 S.gres = {}; S.gedit = null; S.gdraft = {};
 const isGameQid = (k) => /^(tot|rate)-/.test(k);
 const gDayIdx = () => S.qid ? todayIndex() : todayIndex() + S.dayOffset;
-const gThemeIdx = (d) => { if (d === 9) return GT_BASE + 3; const t = ((d % GT_BASE) + GT_BASE) % GT_BASE; return d >= GEN_FROM && GT_SWAP[t] != null ? GT_SWAP[t] : t; };
+const gThemeIdx = (d) => ffMode(d) && ffGamesOK() ? ffPick(packOf(S.gid, d).games, d) : gThemeBase(d);
+const gThemeBase = (d) => { if (d === 9) return GT_BASE + 3; const t = ((d % GT_BASE) + GT_BASE) % GT_BASE; return d >= GEN_FROM && GT_SWAP[t] != null ? GT_SWAP[t] : t; };
 function gItems(kind, d){ const t = gThemeIdx(d), out = []; for (let k = 0; k < GN; k++) out.push(t * GN + k); return out; }
 const bonusQ = (d) => (S.gid && S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || null;
-const gQid = (kind, d) => kind + "-" + idxISO(d);
+const gQid = (kind, d) => kind + (ffMode(d) && ffGamesOK() ? "-ff-" + packKey(S.gid, d) : "") + "-" + idxISO(d);
 const gEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 const gValid = (kind, p, items) => p && Array.isArray(p.items) && p.items.join() === items.join() && (kind === "tot" ? Array.isArray(p.picks) && p.picks.length === GN && p.picks.every(v => v === 0 || v === 1) : Array.isArray(p.r) && p.r.length === GN && p.r.every(v => Number.isInteger(v) && v >= 1 && v <= 10));
 function setGame(g){
@@ -2193,7 +2325,7 @@ function renderGame(){
   const mine = gValid(g, S.mine[qid], items) ? S.mine[qid] : null, editing = S.gedit === qid || !mine;
   V.innerHTML = "";
   const head = gEl("div", "q-head gq"); const eb = gEl("div", "eyebrow");
-  if (!S.qid && S.dayOffset === 0) eb.appendChild(gEl("span", "today", "Today's " + (g === "tot" ? "picks" : "ratings")));
+  if (!S.qid && S.dayOffset === 0) eb.appendChild(gEl("span", "today", (ffMode(d) ? "Fun Friday " : "Today's ") + (g === "tot" ? "picks" : "ratings")));
   eb.appendChild(gEl("span", null, GAMES[g].name)); eb.appendChild(gEl("span", null, "Day " + (d + 1)));
   head.append(eb, gEl("h1", "prompt", "Theme: " + GTHEMES[gThemeIdx(d)].name),
     gEl("p", "sub", (g === "tot" ? "Pick one from each pair. Go with your gut." : "Rate each one from 1 (awful) to 10 (perfect).") + (S.gid ? " You'll see your group's answers once you've answered." : " Everyone gets the same set today.")));
@@ -2393,6 +2525,20 @@ function renderGroupsPanel(){
       mem.appendChild(c);
     });
     wrap.appendChild(mem);
+    { const cur = S.gthemes[g.id] || "", box = document.createElement("div"); box.className = "ffbox";
+      const h4 = document.createElement("h4"); h4.textContent = "Fun Friday theme";
+      const nt = document.createElement("p"); nt.className = "gthint"; nt.textContent = (isHost ? "Only you can change this. " : "The host picks this. ") + "Every Friday the group gets one extra graph, This or that and Rate it on this theme, under the Fun Friday switch.";
+      const list = document.createElement("div"); list.className = "ffpick"; list.setAttribute("role", "radiogroup"); list.setAttribute("aria-label", "Fun Friday theme for " + g.name);
+      [["", "None", "Just today's questions"], ...PACK_IDS.map(k => [k, PACKS[k].name, PACKS[k].desc])].forEach(([k, nm, ds]) => {
+        if (!isHost && k !== cur) return;
+        const b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "radio"); b.setAttribute("aria-checked", String(k === cur)); b.disabled = !isHost;
+        const tx = document.createElement("span"), bb = document.createElement("b"), sm = document.createElement("small"); bb.textContent = nm; sm.textContent = ds; tx.append(bb, sm);
+        const rd = document.createElement("span"); rd.className = "rd"; b.append(tx, rd);
+        if (isHost) b.addEventListener("click", async () => { if (k === cur) return; $("groupErr").textContent = ""; list.querySelectorAll("button").forEach(x => x.disabled = true);
+          try { await rpc("set_group_theme", { p_secret: S.secret, p_group: g.id, p_theme: k }); await loadGroupThemes(); renderGroupsPanel(); go(); }
+          catch (e) { $("groupErr").textContent = errText(e); renderGroupsPanel(); } });
+        list.appendChild(b); });
+      box.append(h4, nt, list); wrap.appendChild(box); }
     if (isHost) {
       const f = document.createElement("div"); f.className = "field";
       const lab = document.createElement("label"); lab.textContent = "Add someone by username"; lab.htmlFor = "find-" + g.id;
@@ -3144,7 +3290,7 @@ function renderHeader(){
   $("prevDay").disabled = isDaily && ti + S.dayOffset <= 0;
   const eb = $("eyebrow"); eb.innerHTML = "";
   const qi = Q.indexOf(q) + 1;
-  if (isDaily && S.dayOffset === 0) { const t = document.createElement("span"); t.className = "today"; t.textContent = S.game === "bonus" ? "Group bonus" : "Today's graph"; eb.appendChild(t); }
+  if (isDaily && S.dayOffset === 0) { const t = document.createElement("span"); t.className = "today"; t.textContent = S.game === "bonus" ? "Group bonus" : ffMode(ti + S.dayOffset) ? "Fun Friday graph" : "Today's graph"; eb.appendChild(t); }
   const c = document.createElement("span"); c.textContent = q.cat; eb.appendChild(c);
   const n = document.createElement("span"); n.textContent = "Day " + (ti + S.dayOffset + 1); eb.appendChild(n);
   $("prompt").textContent = q.title; $("sub").textContent = q.sub || "";
@@ -3266,8 +3412,8 @@ const GAME_NAMES = { graph: "Graph", tot: "This or that", rate: "Rate it", bonus
 const GAME_COLOR = { graph: "var(--g-graph)", tot: "var(--g-tot)", rate: "var(--g-rate)", bonus: "var(--g-bonus)" };
 const initialOf = (s) => (String(s || "?").trim()[0] || "?").toUpperCase();
 const homeDay = () => todayIndex() + S.dayOffset;
-const dayGraphQ = () => withPeople(qForDay(homeDay()));
-const gamesToday = () => bonusQ(homeDay()) ? ["graph", "bonus", "tot", "rate"] : ["graph", "tot", "rate"];
+const dayGraphQ = () => withPeople((ffMode(homeDay()) && ffGraph(homeDay())) || qForDay(homeDay()));
+const gamesToday = () => ffMode(homeDay()) ? (ffGraph(homeDay()) ? ["graph"] : []).concat(ffGamesOK() ? ["tot", "rate"] : []) : bonusQ(homeDay()) && !(ffOn(homeDay()) && packKey(S.gid, homeDay()) === "custom") ? ["graph", "bonus", "tot", "rate"] : ["graph", "tot", "rate"];
 function gameDone(k){
   const d = homeDay();
   if (k === "graph") { const q = dayGraphQ(); return !!(q && S.mine[q.id]); }
@@ -3312,15 +3458,24 @@ function renderHome(){
      ;
   }
 
+  /* Fun Friday switch */
+  const ffOK = ffOn(d), ff = ffMode(d), pk = packOf(S.gid, d), rnd = S.gthemes[S.gid] === "random";
+  document.body.classList.toggle("ffm", ff); $("hSw").hidden = !ffOK;
+  $("hSw").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String((b.dataset.ff === "1") === ff)));
+  if (ffOK) { const was = S.ff; S.ff = true; const all = gamesToday(), left = all.some(k => !gameDone(k)); S.ff = was; $("hSwDot").hidden = ff || !left || !all.length; }
+  const ffEmpty = ff && !ffGraph(d);
+  $("hHero").classList.toggle("ffempty", ffEmpty);
+
   /* today's graph */
   const gq = dayGraphQ(), gDone = !!S.mine[gq.id], n = g ? groupCount(gq.id) : 0;
-  $("hHeroLab").textContent = S.dayOffset === 0 ? "Today's graph" : "Graph · " + short;
-  $("hHeroT").textContent = gq.title; $("hHeroS").textContent = gq.sub || "";
-  $("hHeroCta").textContent = gDone ? "See results" : ({ rank: "Rank yours", map: "Place yours" }[gq.kind] || "Draw yours");
+  $("hHeroLab").textContent = ff ? "Fun Friday graph · " + pk.name + (rnd ? " (random)" : "") : S.dayOffset === 0 ? "Today's graph" : "Graph · " + short;
+  $("hHeroT").textContent = ffEmpty ? "No idea voted in yet" : gq.title; $("hHeroS").textContent = ffEmpty ? "Suggest a question and vote. The top idea becomes your Fun Friday graph." : gq.sub || "";
+  $("hHeroCta").textContent = ffEmpty ? "Suggest an idea" : gDone ? "See results" : ({ rank: "Rank yours", map: "Place yours" }[gq.kind] || "Draw yours");
   $("hHeroMeta").textContent = gDone ? (g ? "You're in" + (n > 1 ? " · " + n + " answered" : "") : "You're in") : n ? n + " answered" : "";
 
   /* group bonus, This or that, Rate it */
-  const bq = bonusQ(d), bt = $("hBonus"); bt.hidden = !bq;
+  const bq = !ff && !(ffOK && packKey(S.gid, d) === "custom") && bonusQ(d), bt = $("hBonus"); bt.hidden = !bq;
+  $("hTot").hidden = $("hRate").hidden = ff && !ffGamesOK();
   if (bq) { const q = withPeople(bq), done = !!S.mine[q.id]; $("hBonusT").textContent = q.title; $("hBonusOk").hidden = !done; $("hBonusSt").textContent = done ? "Done · See results" : "Just for " + (g ? g.name : "your group"); }
   const theme = GTHEMES[gThemeIdx(d)].name, td = gameDone("tot"), rd = gameDone("rate");
   $("hTotT").textContent = theme + " picks"; $("hRateT").textContent = theme + " ratings";
@@ -3366,7 +3521,8 @@ function closeFocus(){ if (history.state && history.state.gf) history.back(); el
 window.addEventListener("popstate", () => { if (!$("menuBack").hidden) setMenu(false); if (S.view === "focus") leaveFocus(); });
 $("fClose").addEventListener("click", closeFocus);
 $("fNextBtn").addEventListener("click", (e) => { const k = e.currentTarget.dataset.g; if (k) openFocus(k); else closeFocus(); });
-$("hHero").addEventListener("click", () => openFocus("graph"));
+$("hHero").addEventListener("click", () => { if ($("hHero").classList.contains("ffempty")) openIdeas(); else openFocus("graph"); });
+$("hSw").addEventListener("click", (e) => { const b = e.target.closest("button[data-ff]"); if (!b) return; const v = b.dataset.ff === "1"; if (v === S.ff) return; S.ff = v; S.qid = null; S.results = S.results || {}; go(); });
 $("hBonus").addEventListener("click", () => openFocus("bonus"));
 $("hTot").addEventListener("click", () => openFocus("tot"));
 $("hRate").addEventListener("click", () => openFocus("rate"));
