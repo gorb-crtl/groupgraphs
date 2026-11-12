@@ -2181,17 +2181,43 @@ function afterSignIn(sess, fresh){
 }
 
 /* ---------------- plot geometry ---------------- */
+/* y labels get only as much room as their longest line needs, so the plot can use the rest of the box */
+let measureCtx = null;
+function textW(txt, px){
+  if (!measureCtx) measureCtx = document.createElement("canvas").getContext("2d");
+  const fam = getComputedStyle(document.documentElement).getPropertyValue("--f-hand").trim() || "system-ui, sans-serif";
+  measureCtx.font = `500 ${px}px ${fam}`; return measureCtx.measureText(txt).width;
+}
+function wrapPx(txt, maxW, px){
+  const out = []; let cur = "";
+  String(txt).split(/\s+/).filter(Boolean).forEach(w => { const nxt = cur ? cur + " " + w : w; if (cur && textW(nxt, px) > maxW) { out.push(cur); cur = w; } else cur = nxt; });
+  if (cur) out.push(cur);
+  if (out.length > 3) { out[2] = out.slice(2).join(" "); out.length = 3; }
+  return out;
+}
+function yLabels(y, W, narrow){
+  const texts = y.bands ? y.bands.map(b => b.label) : [y.hi, y.lo].filter(Boolean);
+  const cap = narrow ? 72 : 108;
+  const fit = {}; let need = 0;
+  texts.forEach(txt => {
+    let px = 12.5, lines = wrapPx(txt, cap, px), w = Math.max(...lines.map(l => textW(l, px)));
+    while (w > cap && px > 9.5) { px -= 0.5; lines = wrapPx(txt, cap, px); w = Math.max(...lines.map(l => textW(l, px))); }
+    fit[txt] = { lines, px }; need = Math.max(need, Math.min(w, cap));
+  });
+  if (!y.bands && y.fmt === "pct") need = Math.max(need, 30);
+  return { fit, w: Math.ceil(need) + 4 };
+}
 function geom(box, q){
   const W = Math.max(300, Math.round(box.clientWidth));
   const narrow = W < 520;
-  const y = yInfo(q);
-  const labelW = narrow ? 82 : 112;
-  const m = { l: labelW + 14, r: narrow ? 12 : 22, t: 30, b: 52 };
-  const H = Math.round(clamp(W * 0.6, 300, 470));
+  const y = yInfo(q), yl = yLabels(y, W, narrow);
+  // left: label text + 10px gap + rail; right: half of the last x tick label
+  const m = { l: yl.w + 20, r: narrow ? 14 : 16, t: 28, b: 48 };
+  const H = Math.round(narrow ? clamp(W * 0.92, 300, 440) : clamp(W * 0.6, 320, 480));
   const pw = W - m.l - m.r, ph = H - m.t - m.b;
   const X = (t) => m.l + t*pw, Y = (v) => m.t + (1 - (v - y.min)/(y.max - y.min)) * ph;
   const Tinv = (px) => clamp((px - m.l)/pw, 0, 1), Yinv = (py) => clamp(y.min + (1 - (py - m.t)/ph) * (y.max - y.min), y.min, y.max);
-  return { W, H, m, pw, ph, X, Y, Tinv, Yinv, narrow, y };
+  return { W, H, m, pw, ph, X, Y, Tinv, Yinv, narrow, y, yl };
 }
 const tToX = (q, t) => q.x.min + t*(q.x.max - q.x.min);
 function drawFrame(svg, g, q){
@@ -2206,7 +2232,8 @@ function drawFrame(svg, g, q){
   for (let i=0;i<=minor;i++){ const px = m.l + pw*i/minor; el("line", { x1:px, x2:px, y1:m.t, y2:m.t+ph, stroke:"var(--grid)", "stroke-width":1 }, gridG); }
   const ySteps = 20; for (let i=0;i<=ySteps;i++){ const py = m.t + ph*i/ySteps; el("line", { x1:m.l, x2:m.l+pw, y1:py, y2:py, stroke: i%2===0 ? "var(--grid-major)" : "var(--grid)", "stroke-width":1 }, gridG); }
   // x ticks
-  const skip = g.narrow && nMaj > 8 ? 2 : 1;
+  const tickW = Math.max(...Array.from({ length: nMaj + 1 }, (_, i) => fmtX(q.x, tToX(q, i / nMaj)).length)) * 7 + 8;
+  const skip = Math.max(1, Math.ceil(tickW / (pw / nMaj)));
   for (let i=0;i<=nMaj;i++){ const t = i/nMaj, px = X(t); el("line", { x1:px, x2:px, y1:m.t, y2:m.t+ph, stroke:"var(--grid-major)", "stroke-width":1 }, gridG); if (i % skip === 0) { const tx = el("text", { x:px, y:m.t+ph+18, "text-anchor":"middle", class:"tick" }, svg); tx.textContent = fmtX(q.x, tToX(q,t)); } }
   // axes
   el("path", { d:`M${m.l},${m.t} V${m.t+ph} H${m.l+pw}`, fill:"none", stroke:"var(--ink)", "stroke-width":1.6, "stroke-linecap":"round" }, svg);
@@ -2215,20 +2242,19 @@ function drawFrame(svg, g, q){
   const rail = m.l - 8, gid = "yg" + Math.random().toString(36).slice(2, 8);
   const defs = el("defs", {}, svg); const lg = el("linearGradient", { id: gid, x1: 0, y1: 1, x2: 0, y2: 0 }, defs);
   el("stop", { offset: "0%", "stop-color": "var(--pen)", "stop-opacity": .12 }, lg); el("stop", { offset: "100%", "stop-color": "var(--pen)", "stop-opacity": 1 }, lg);
-  const wrapLines = (txt, max) => { const out = []; let cur = ""; txt.split(" ").forEach(w => { if ((cur + " " + w).trim().length > max && cur) { out.push(cur); cur = w; } else cur = (cur + " " + w).trim(); }); if (cur) out.push(cur); return out.slice(0, 3); };
-  const maxCh = g.narrow ? 11 : 15;
-  const label = (txt, x, yMid, cls, anchor) => { const lines = wrapLines(txt, maxCh); const t = el("text", { x, y: yMid - (lines.length - 1) * 6.5 + 4, "text-anchor": anchor || "end", class: cls }, svg); lines.forEach((ln, i) => { const ts = el("tspan", { x, dy: i ? 13 : 0 }, t); ts.textContent = ln; }); return t; };
+  const label = (txt, x, yMid, cls, anchor) => { const f = g.yl.fit[txt] || { lines: [String(txt)], px: 12.5 }, lh = Math.round(f.px + 0.5); const t = el("text", { x, y: yMid - (f.lines.length - 1) * lh / 2 + 4, "text-anchor": anchor || "end", class: cls }, svg); if (f.px !== 12.5) t.setAttribute("font-size", f.px); f.lines.forEach((ln, i) => { const ts = el("tspan", { x, dy: i ? lh : 0 }, t); ts.textContent = ln; }); return t; };
   if (y.bands) {
     const nb = y.bands.length;
     y.bands.forEach((b, i) => {
       const y1 = Y(b.to) + 1.5, y2 = Y(b.from) - 1.5, mid = (y1 + y2) / 2;
       el("rect", { x: rail - 3, y: y1, width: 5, height: Math.max(2, y2 - y1), rx: 2.5, fill: "var(--pen)", opacity: (0.16 + 0.84 * i / Math.max(1, nb - 1)).toFixed(2) }, svg);
-      const lb = label(b.label, rail - 10, mid, "band-l"); if (y2 - y1 < 14) lb.setAttribute("font-size", 11);
+      const lb = label(b.label, rail - 10, mid, "band-l"); if (y2 - y1 < 14 && !lb.getAttribute("font-size")) lb.setAttribute("font-size", 11);
     });
   } else {
     el("rect", { x: rail - 3, y: m.t, width: 5, height: ph, rx: 2.5, fill: `url(#${gid})` }, svg);
-    label(y.hi, rail - 10, m.t + 10, "band-l");
-    label(y.lo, rail - 10, m.t + ph - 14, "band-l");
+    const nl = (txt) => ((g.yl.fit[txt] || { lines: [1] }).lines.length - 1) * 6.5;
+    label(y.hi, rail - 10, m.t + 6 + nl(y.hi), "band-l");
+    label(y.lo, rail - 10, m.t + ph - 10 - nl(y.lo), "band-l");
     if (y.fmt === "pct") [0, .5, 1].forEach(f => { const v = y.min + f * (y.max - y.min); if (f === .5) { const t = el("text", { x: rail - 10, y: Y(v) + 4, "text-anchor": "end", class: "tick" }, svg); t.textContent = Math.round(v) + "%"; } });
   }
   const yt = el("text", { x: 2, y: m.t - 14, class: "ax-cap" }, svg); yt.textContent = y.label.toUpperCase() + " ↑";
@@ -2945,6 +2971,7 @@ $("submit").addEventListener("click", async ()=>{
 });
 function fromHash(){ S.qid = null; go(); } // one question a day: links to other questions are ignored
 window.addEventListener("hashchange", fromHash);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!S.loaded) return; if (S.tab === "draw") renderDraw(); else renderResults(); });
 let rz; window.addEventListener("resize", ()=>{ clearTimeout(rz); rz = setTimeout(()=>{ if (S.tab === "draw") renderDraw(); else renderResults(); }, 120); });
 
 fromHash();
