@@ -3,13 +3,12 @@
 -- It only adds two new tables and four functions, so the live app keeps working.
 --
 -- How it works
---   * Every day each group gets one picture to draw together (the prompt is picked in the app,
---     the same prompt for everyone that day). The picture is split into one piece per member.
---   * Pieces are handed out in a shuffled order that changes every day. Until someone has drawn,
---     the pieces are re-dealt whenever the group's members change.
---   * You only see your own piece, plus a thin strip along the edges of the pieces next to yours
---     (so lines can join up). The whole picture is shown once everyone has drawn, when the host
---     reveals it early, or at midnight Central time.
+--   * Every day there's one scene to draw (picked in the app, the same for everyone). In each group,
+--     every member gets a different thing in the scene to draw, dealt in a shuffled order that changes
+--     daily. Until someone has drawn, the parts are re-dealt whenever the group's members change.
+--   * You only see your own drawing. Everything is shown together once everyone has drawn, when the
+--     host reveals it early, or at midnight Central time.
+--   * (draw_parts.edges is unused for now and always empty.)
 
 create table if not exists draw_rounds (
   group_id uuid not null references groups(id) on delete cascade,
