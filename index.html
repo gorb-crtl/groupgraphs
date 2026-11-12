@@ -811,7 +811,7 @@ h1.prompt { min-height: 2.24em; }
   <div class="mlist">
     <button type="button" id="mCal"><span>Past days</span><span class="mv">Calendar</span></button>
     <button type="button" id="mGroupsRow"><span>Groups</span><span class="mv">Members, Fun Friday</span></button>
-    <button type="button" id="mPrefs"><span>Preferences</span><span class="mv" id="mThemeName"></span></button>
+    <button type="button" id="mPrefs"><span>Profile and settings</span><span class="mv" id="mThemeName"></span></button>
     <button type="button" id="mNews"><span>What's new<span class="newsdot" id="newsDot" hidden></span></span><span class="mv">Changelog</span></button>
   </div>
   <button type="button" class="btn" id="mClose">Close</button>
@@ -878,13 +878,14 @@ h1.prompt { min-height: 2.24em; }
       <div class="cpprev" id="colorPrev"><svg viewBox="0 0 120 24" aria-hidden="true"><path d="M2 20 C 30 20, 40 4, 64 8 S 100 18, 118 4" fill="none" stroke-width="3" stroke-linecap="round"/></svg><span id="colorNote"></span></div>
       <div class="err" id="colorErr" role="alert"></div>
     </div>
-    <div data-pane="prefs" style="display:flex;flex-direction:column;gap:4px">
+    <div class="divider" data-pane="profile"></div>
+    <div data-pane="profile" style="display:flex;flex-direction:column;gap:4px">
       <h3>Look</h3>
       <div class="prefrow"><div class="pt"><b>Color theme</b><span id="prefThemeName"></span></div><button class="prefbtn" id="prefTheme" type="button">Change</button></div>
       <div class="prefrow"><div class="pt"><b id="seasonLbl">Seasonal background</b><span id="seasonNote"></span></div><button class="sw2" id="seasonSw" type="button" role="switch" aria-checked="true" aria-labelledby="seasonLbl"></button></div>
     </div>
-    <div class="divider" data-pane="prefs"></div>
-    <div class="remind" id="remindBox" data-pane="prefs" style="display:flex;flex-direction:column;gap:10px">
+    <div class="divider" data-pane="profile"></div>
+    <div class="remind" id="remindBox" data-pane="profile" style="display:flex;flex-direction:column;gap:10px">
       <h3>Daily reminder</h3>
       <div class="row" style="align-items:center"><label for="remindHour" style="font-weight:700;font-size:14px;color:var(--ink-2)">Remind me at</label><select id="remindHour"></select><span class="hint2">Notifications skip days you've already answered.</span></div>
       <div class="row" style="align-items:center"><button class="btn primary" id="pushBtn" type="button">Turn on notifications</button><span class="hint2" id="pushState"></span></div>
@@ -1472,12 +1473,22 @@ async function loadComments(force){
 function agoText(t){ const s = (Date.now() - Date.parse(t)) / 1000; if (!(s >= 0)) return ""; if (s < 60) return "just now"; if (s < 3600) return Math.floor(s/60) + "m ago"; if (s < 86400) return Math.floor(s/3600) + "h ago"; return Math.floor(s/86400) + "d ago"; }
 function delBtn(c){ const b = document.createElement("button"); b.type = "button"; b.className = "xdel"; b.textContent = "×"; b.title = "Delete"; b.setAttribute("aria-label", "Delete");
   b.addEventListener("click", async () => { if (!confirm("Delete this " + (c.kind === "rule" ? "rule" : "comment") + "?")) return; try { await rpc("delete_comment", { p_secret: S.secret, p_id: c.id }); } catch (e) {} loadComments(true); }); return b; }
+/* unread: only messages from others that arrived after you last had the chat on screen */
+function chatSeenMap(){ const m = ls.get("gg-chat-seen", {}); return m && typeof m === "object" ? m : {}; }
+function chatUnread(k){ const c = S.comments[k], me = S.me && S.me.username, seen = chatSeenMap()[k] || 0;
+  return c ? c.list.filter(x => x.username !== me && (Date.parse(x.at) || 0) > seen).length : 0; }
+var chatOnScreen = false;
+function markChatSeen(){ if (!S.gid) return; const k = rkey(currentQ().id), c = S.comments[k]; if (!c || !c.list.length) return;
+  const last = Math.max(...c.list.map(x => Date.parse(x.at) || 0)), m = chatSeenMap(); if ((m[k] || 0) >= last) return;
+  m[k] = last; const ks = Object.keys(m); if (ks.length > 80) ks.slice(0, ks.length - 80).forEach(x => delete m[x]); ls.set("gg-chat-seen", m); renderComments(); }
+if ("IntersectionObserver" in window) new IntersectionObserver(es => { chatOnScreen = es.some(e => e.isIntersecting); if (chatOnScreen) markChatSeen(); }, { threshold: 0.15 }).observe($("chatBox"));
 function renderComments(){
   homeSoon();
   const on = !!(S.secret && S.gid && S.me);
   $("chatBox").hidden = !on; $("qMenu").hidden = !S.me; if (!on) { $("rulesBox").hidden = true; $("chatJump").hidden = true; return; }
   const c = S.comments[rkey(currentQ().id)], list = c ? c.list : [];
-  $("chatJump").hidden = false; $("chatCount").textContent = list.length; $("chatCount").hidden = !list.length;
+  $("chatJump").hidden = false; { const un = chatUnread(rkey(currentQ().id)); $("chatCount").textContent = un; $("chatCount").hidden = !un; }
+  if (chatOnScreen && !$("chatBox").hidden && S.view === "focus") setTimeout(markChatSeen, 0);
   const rules = list.filter(x => x.kind === "rule"), rl = $("rulesList"); rl.innerHTML = "";
   rules.forEach(r => { const li = document.createElement("li"); const t = document.createElement("span"); t.textContent = r.body; const by = document.createElement("span"); by.className = "by"; by.textContent = "from " + r.name; li.append(t, by); if (r.can_delete) li.appendChild(delBtn(r)); rl.appendChild(li); });
   $("rulesBox").hidden = !rules.length;
@@ -1555,7 +1566,7 @@ $("pushBtn").addEventListener("click", async () => {
   btn.disabled = false; renderRemind();
 });
 $("remindHour").addEventListener("change", async () => { ls.set("gg-remind-hour", remindHour()); const sub = await currentSub(); if (sub) { try { await savePush(sub); } catch (e) {} } renderRemind(); });
-$("notifJump").addEventListener("click", () => { showScreen("groups", "prefs"); setTimeout(() => $("remindBox").scrollIntoView({ behavior: "smooth", block: "start" }), 50); });
+$("notifJump").addEventListener("click", () => { showScreen("groups", "profile"); setTimeout(() => $("remindBox").scrollIntoView({ behavior: "smooth", block: "start" }), 50); });
 
 $("chatJump").addEventListener("click", () => { if (S.view !== "focus" || S.game !== "graph") openFocus("graph"); $("chatBox").scrollIntoView({ behavior: "smooth", block: "start" }); setTimeout(() => $("chatInput").focus({ preventScroll: true }), 400); });
 
@@ -1766,11 +1777,13 @@ async function loadIdeas(){
   if (!$("ideaBack").hidden) renderIdeas();
   if (S.gid === gid && before !== Object.keys(byDay).join()) go();
 }
-function renderIdeaPill(){ homeSoon(); const n = S.ideas && S.ideas.gid === S.gid ? S.ideas.pending.length : 0; $("ideaCount").textContent = n; $("ideaCount").hidden = !n; }
+function ideasSeen(gid){ const m = ls.get("gg-ideas-seen", {}); return (m && m[gid]) || 0; }
+function markIdeasSeen(){ if (!S.gid) return; const m = ls.get("gg-ideas-seen", {}) || {}; m[S.gid] = Date.now(); ls.set("gg-ideas-seen", m); renderIdeaPill(); }
+function renderIdeaPill(){ homeSoon(); const n = S.ideas && S.ideas.gid === S.gid ? S.ideas.pending.filter(it => !it.mine_author && !it.voted && (Date.parse(it.created_at) || 0) > ideasSeen(S.gid)).length : 0; $("ideaCount").textContent = n; $("ideaCount").hidden = !n; }
 let ideaKind = "curve";
 function setIdeaKind(k){ ideaKind = k; document.querySelectorAll("#ideaKinds button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k))); document.querySelectorAll("#ideaForm [data-for]").forEach(e => { e.hidden = !e.dataset.for.split(" ").includes(k); }); $("ideaMsg").textContent = ""; }
 document.querySelectorAll("#ideaKinds button").forEach(b => b.addEventListener("click", () => setIdeaKind(b.dataset.k)));
-function openIdeas(){ const g = group(); if (!g) return; $("ideaGroup").textContent = g.name; setIdeaKind(ideaKind); renderIdeas(); $("ideaBack").hidden = false; document.body.style.overflow = "hidden"; loadIdeas(); }
+function openIdeas(){ const g = group(); if (!g) return; $("ideaGroup").textContent = g.name; setIdeaKind(ideaKind); renderIdeas(); markIdeasSeen(); $("ideaBack").hidden = false; document.body.style.overflow = "hidden"; loadIdeas(); }
 function closeIdeas(){ $("ideaBack").hidden = true; document.body.style.overflow = ""; }
 $("ideaJump").addEventListener("click", openIdeas);
 $("ideaClose").addEventListener("click", closeIdeas);
@@ -2112,8 +2125,8 @@ const CHANGES = [
     ["Fun Friday", "Group hosts can pick a theme for an extra set of questions every Friday."],
     ["Everyday questions", "Daily questions now cover everyday life, so anyone can play."],
     ["Seasonal backgrounds", "Subtle animations that change with the seasons. Turn them off in Preferences."],
-    ["Preferences and Groups", "Settings and group management now have their own screens in the menu."],
-    ["Fixes and improvements", "Graphs fill their space, plus smaller polish."],
+    ["Profile and Groups", "Settings now live in your profile, and groups have their own screen in the menu."],
+    ["Fixes and improvements", "Notification counts clear once you have seen them, graphs fill their space, plus smaller polish."],
   ] },
   { id: "2026-11-10b", date: "Nov 10", items: [
     ["New games", "This or that and Rate it, alongside the daily graph."],
@@ -2507,9 +2520,9 @@ function renderRateRes(box, items, list, me, solo){
 document.addEventListener("visibilitychange", () => { if (document.hidden && S.gedit) { S.gedit = null; S.gdraft = {}; renderGame(); } });
 
 /* ---------------- screens: sign in, groups ---------------- */
-const PANE_TITLES = { profile: "Profile", groups: "Groups", prefs: "Preferences" };
+const PANE_TITLES = { profile: "Profile", groups: "Groups" };
 function showScreen(name, pane){
-  if (name === "groups") { S.pane = PANE_TITLES[pane] ? pane : "groups"; $("gpTitle").textContent = PANE_TITLES[S.pane]; document.querySelectorAll("#groupsPanel [data-pane]").forEach(el => el.hidden = el.dataset.pane !== S.pane); }
+  if (name === "groups") { if (pane === "prefs") pane = "profile"; S.pane = PANE_TITLES[pane] ? pane : "groups"; $("gpTitle").textContent = PANE_TITLES[S.pane]; document.querySelectorAll("#groupsPanel [data-pane]").forEach(el => el.hidden = el.dataset.pane !== S.pane); }
   $("authPanel").hidden = name !== "auth"; $("codePanel").hidden = name !== "code"; $("groupsPanel").hidden = name !== "groups";
   $("appMain").hidden = name !== "app"; $("homeView").hidden = name !== "app"; $("bankBox").hidden = true;
   ["auth", "code", "groups", "app"].forEach(n => document.body.classList.toggle("scr-" + n, n === name));
@@ -3648,7 +3661,7 @@ function renderHome(){
   const ch = $("hChat"); ch.hidden = !g;
   if (g) { const c = S.comments[rkey(gq.id)], all = c ? c.list : [], said = all.filter(x => x.kind !== "rule"), last = said[said.length - 1], tx = $("hChatTx");
     tx.innerHTML = ""; if (last) { const b = document.createElement("b"); b.textContent = last.name + ": "; tx.append(b, last.body); } else tx.textContent = "Group chat: nothing yet today";
-    $("hChatN").textContent = all.length; $("hChatN").hidden = !all.length; ch.setAttribute("aria-label", "Group chat" + (last ? ", latest from " + last.name : "") + (all.length ? ", " + all.length + " messages" : "")); }
+    { const un = chatUnread(rkey(gq.id)); $("hChatN").textContent = un; $("hChatN").hidden = !un; } ch.setAttribute("aria-label", "Group chat" + (last ? ", latest from " + last.name : "") + (all.length ? ", " + all.length + " messages" : "")); }
 }
 function renderFocus(){
   if (S.view !== "focus") return;
@@ -3702,11 +3715,11 @@ function renderMenu(){
     b.addEventListener("click", () => { setMenu(false); if (x.id === S.gid) return; S.gid = x.id; ls.set("gg-group", S.gid); renderGroupbar(); go(); }); box.appendChild(b); });
   const add = document.createElement("button"); add.type = "button"; add.className = "add"; add.textContent = S.groups.length ? "+ New group" : "Start or join a group";
   add.addEventListener("click", () => { setMenu(false); showScreen("groups"); }); box.appendChild(add);
-  $("mThemeName").textContent = "Theme, background";
+  $("mThemeName").textContent = "Theme, reminders";
 }
 $("mProfile").addEventListener("click", () => { setMenu(false); showScreen("groups", "profile"); });
 $("mGroupsRow").addEventListener("click", () => { setMenu(false); showScreen("groups", "groups"); });
-$("mPrefs").addEventListener("click", () => { setMenu(false); showScreen("groups", "prefs"); });
+$("mPrefs").addEventListener("click", () => { setMenu(false); showScreen("groups", "profile"); });
 $("prefTheme").addEventListener("click", () => $("themeBtn").click());
 $("mCal").addEventListener("click", () => { setMenu(false); openCal(); });
 $("mNews").addEventListener("click", () => { setMenu(false); openNews(); });
