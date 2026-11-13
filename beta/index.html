@@ -2254,7 +2254,7 @@ const GT_SWAP = { 1: GT_BASE, 7: GT_BASE + 1, 9: GT_BASE + 2 };
    on the theme, under the Fun Friday switch. Today's questions stay the same for everyone. */
 const FF_GAMES = (list) => list.map(t => { GTHEMES.push(t); return GTHEMES.length - 1; });
 const PACKS = {
- science: { name: "Science", desc: "Lab life, research, experiments", graphs: SCI.slice(1).concat(SCI[0]), games: [1, 7, 9] },
+ science: { name: "Science", desc: "Lab life, research, experiments", graphs: SCI.slice(1).concat(SCI[0]), games: [] },
  gaming: { name: "Gaming", desc: "Consoles, classics, game nights", graphs: [
   {id:"ff-rage-quit", cat:"Gaming", title:"Rage vs times you've died on the same level", sub:"Same boss, same pattern, same mistake.", x:{label:"deaths", min:0, max:50, step:10}, y:{label:"rage", bands:B([[0,2,"zen"],[2,4,"focused"],[4,6,"muttering"],[6,8,"yelling"],[8,10,"controller at risk"]])}},
   R("ff-consoles", "Gaming", "Rank the consoles", "Best to worst, all time. Nostalgia is allowed.", ["NES","SNES","N64","GameCube","Wii","Switch","PlayStation 2","PlayStation 5","Xbox 360","Game Boy"]),
@@ -2343,10 +2343,12 @@ const PACKS = {
  random: { name: "Random", desc: "A different theme every Friday", graphs: [], games: [] },
 };
 const PACK_IDS = ["science", "gaming", "nature", "business", "media", "sports", "food", "custom", "random"];
-/* More science sets, chemistry-heavy. Added after every other theme so earlier answers keep their items,
-   and after the first three so past Fridays keep theirs. Custom groups play these too (their graph is the
+/* Science sets, chemistry-heavy. Added after every other theme so earlier answers keep their items.
+   Only new sets: the lab, grad school and chemistry themes already ran as daily themes. Custom groups play these too (their graph is the
    group's top idea), sharing the Science answers so one answer counts in every group. */
 PACKS.science.games.push(...FF_GAMES([
+  { name: "Chemistry class", tot: [["Lab section", "Lecture"], ["Balancing equations", "Stoichiometry"], ["Lewis structures", "Molecular model kits"], ["Ionic", "Covalent"], ["Curved arrows", "Memorizing reactions"]],
+    rate: ["Significant figures", "The mole", "Lab reports", "Electron orbitals", "Chemistry sets"] },
   { name: "Periodic table", tot: [["Noble gases", "Halogens"], ["Gold", "Platinum"], ["Sodium", "Potassium"], ["Helium", "Neon"], ["Mercury", "Gallium"]],
     rate: ["Element symbols that make no sense", "Hydrogen", "The lanthanides", "Naming new elements", "Carbon"] },
   { name: "Glassware", tot: [["Erlenmeyer flask", "Beaker"], ["Round-bottom flask", "Test tube"], ["Glass pipette", "Plastic pipette"], ["Graduated cylinder", "Volumetric flask"], ["Stir bar", "Overhead stirrer"]],
@@ -2365,8 +2367,6 @@ PACKS.science.games.push(...FF_GAMES([
     rate: ["Caffeine", "Capsaicin", "Menthol", "Vanillin", "Dopamine"] },
   { name: "Famous scientists", tot: [["Marie Curie", "Rosalind Franklin"], ["Newton", "Einstein"], ["Mendeleev", "Lavoisier"], ["Darwin", "Mendel"], ["Tesla", "Edison"]],
     rate: ["Nobel Prize speeches", "Science biopics", "Having a unit named after you", "Scientist feuds", "Lab names on buildings"] },
-  { name: "Chemistry class", tot: [["Lab section", "Lecture"], ["Balancing equations", "Stoichiometry"], ["Lewis structures", "Molecular model kits"], ["Ionic", "Covalent"], ["Curved arrows", "Memorizing reactions"]],
-    rate: ["Significant figures", "The mole", "Lab reports", "Electron orbitals", "Chemistry sets"] },
   { name: "Smells", tot: [["Thiols", "Amines"], ["Acetone", "Ethyl acetate"], ["Rotten eggs", "Rotten fish"], ["Cinnamon", "Vanilla"], ["Sniff it", "Waft it"]],
     rate: ["Pyridine", "Acetic acid", "Rain on pavement", "New car smell", "Fresh cut grass"] },
   { name: "Light and fire", tot: [["Bunsen burner", "Hot plate"], ["Sparklers", "Glow sticks"], ["Green copper flame", "Red strontium flame"], ["Fluorescence", "Phosphorescence"], ["Fireworks", "Lasers"]],
