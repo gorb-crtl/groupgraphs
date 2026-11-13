@@ -719,7 +719,7 @@ h1.prompt { min-height: 2.24em; }
   </header>
   <div class="sumback" id="ideaBack" hidden role="dialog" aria-label="Question ideas"><div class="sumwrap">
     <div class="sumtop"><div><div class="k" id="ideaGroup"></div><h2>Question ideas</h2></div><button id="ideaClose" type="button">Close</button></div>
-    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight Central time, the idea with the most votes becomes the next day's bonus question, just for this group. If your Fun Friday theme is Custom, Friday's winning idea becomes your Fun Friday graph instead. Today's questions stay the same for everyone.</p>
+    <p class="note" style="margin:0">Suggest a question for the group and vote on everyone's ideas. Every night at midnight Central time, the idea with the most votes becomes the next day's bonus question, just for this group. If your Fun Friday theme is Custom, Friday's winning idea becomes your Fun Friday graph instead, alongside science This or that and Rate it. Today's questions stay the same for everyone.</p>
     <div class="sumcard" id="ideaNext" hidden></div>
     <div class="sumcard"><h3>Vote</h3><div class="idlist" id="ideaList"></div></div>
     <form class="sumcard idform" id="ideaForm" autocomplete="off">
@@ -2336,10 +2336,60 @@ const PACKS = {
   { name: "Eating out", tot: [["Booth", "Table"], ["Appetizer", "Dessert"], ["Tasting menu", "Big portion"], ["Food truck", "Fancy restaurant"], ["Split the bill", "Take turns paying"]], rate: ["Shared plates", "QR code menus", "Small portions", "Tipping screens", "Bottomless brunch"] },
   { name: "Comfort food", tot: [["Mac and cheese", "Grilled cheese"], ["Soup", "Chili"], ["Fried chicken", "Pot roast"], ["Mashed potatoes", "Fries"], ["Cookies", "Brownies"]], rate: ["Meatloaf", "Casseroles", "Instant ramen", "Pot pie", "Chicken noodle soup"] },
  ]) },
- custom: { name: "Custom", desc: "Your group's top-voted ideas", graphs: [], games: [] },
+ custom: { name: "Custom", desc: "Your group's top-voted ideas, with science games", graphs: [], games: [] },
  random: { name: "Random", desc: "A different theme every Friday", graphs: [], games: [] },
 };
 const PACK_IDS = ["science", "gaming", "nature", "business", "media", "sports", "food", "custom", "random"];
+/* More science sets, chemistry-heavy. Added after every other theme so earlier answers keep their items,
+   and after the first three so past Fridays keep theirs. Custom groups play these too (their graph is the
+   group's top idea), sharing the Science answers so one answer counts in every group. */
+PACKS.science.games.push(...FF_GAMES([
+  { name: "Periodic table", tot: [["Noble gases", "Halogens"], ["Gold", "Platinum"], ["Sodium", "Potassium"], ["Helium", "Neon"], ["Mercury", "Gallium"]],
+    rate: ["Element symbols that make no sense", "Hydrogen", "The lanthanides", "Naming new elements", "Carbon"] },
+  { name: "Glassware", tot: [["Erlenmeyer flask", "Beaker"], ["Round-bottom flask", "Test tube"], ["Glass pipette", "Plastic pipette"], ["Graduated cylinder", "Volumetric flask"], ["Stir bar", "Overhead stirrer"]],
+    rate: ["Washing glassware", "Stuck ground glass joints", "Losing a stir bar down the drain", "Rotovaps", "Septa"] },
+  { name: "Reactions", tot: [["Exothermic", "Endothermic"], ["Fast reaction", "High yield"], ["Reflux", "Room temperature"], ["One-pot", "Multistep"], ["Color change", "Gas evolution"]],
+    rate: ["Overnight reactions", "Reactions that turn black", "Grignard reactions", "Elephant toothpaste", "Quenching"] },
+  { name: "Instruments", tot: [["IR", "UV-Vis"], ["GC", "HPLC"], ["X-ray crystallography", "Cryo-EM"], ["Proton NMR", "Carbon NMR"], ["Benchtop", "Core facility"]],
+    rate: ["Instrument sign-up sheets", "Shimming the NMR", "Baseline drift", "Instrument downtime", "Instrument manuals"] },
+  { name: "Lab safety", tot: [["Goggles", "Safety glasses"], ["Nitrile gloves", "Latex gloves"], ["Eyewash", "Safety shower"], ["Lab coat buttoned", "Lab coat open"], ["Grab the spill kit", "Walk away slowly"]],
+    rate: ["Fire drills", "Chemical inventory", "Lab coats that never get washed", "Safety data sheets", "Waste labels"] },
+  { name: "States of matter", tot: [["Solid", "Liquid"], ["Gas", "Plasma"], ["Melting", "Boiling"], ["Dry ice", "Liquid nitrogen"], ["Crystal", "Glass"]],
+    rate: ["Supercritical fluids", "Sublimation", "Non-Newtonian fluids", "Ferrofluid", "Aerogel"] },
+  { name: "Kitchen chemistry", tot: [["Baking soda", "Baking powder"], ["Maillard reaction", "Caramelization"], ["Salt", "Sugar"], ["Fermented", "Pickled"], ["Cast iron seasoning", "Nonstick coating"]],
+    rate: ["Sourdough starters", "Molecular gastronomy", "MSG", "Liquid nitrogen ice cream", "Homemade rock candy"] },
+  { name: "Molecules", tot: [["Caffeine", "Theobromine"], ["Water", "Ethanol"], ["Glucose", "Fructose"], ["DNA", "Protein"], ["Ozone", "Oxygen"]],
+    rate: ["Caffeine", "Capsaicin", "Menthol", "Vanillin", "Dopamine"] },
+  { name: "Famous scientists", tot: [["Marie Curie", "Rosalind Franklin"], ["Newton", "Einstein"], ["Mendeleev", "Lavoisier"], ["Darwin", "Mendel"], ["Tesla", "Edison"]],
+    rate: ["Nobel Prize speeches", "Science biopics", "Having a unit named after you", "Scientist feuds", "Lab names on buildings"] },
+  { name: "Chemistry class", tot: [["Lab section", "Lecture"], ["Balancing equations", "Stoichiometry"], ["Lewis structures", "Molecular model kits"], ["Ionic", "Covalent"], ["Curved arrows", "Memorizing reactions"]],
+    rate: ["Significant figures", "The mole", "Lab reports", "Electron orbitals", "Chemistry sets"] },
+  { name: "Smells", tot: [["Thiols", "Amines"], ["Acetone", "Ethyl acetate"], ["Rotten eggs", "Rotten fish"], ["Cinnamon", "Vanilla"], ["Sniff it", "Waft it"]],
+    rate: ["Pyridine", "Acetic acid", "Rain on pavement", "New car smell", "Fresh cut grass"] },
+  { name: "Light and fire", tot: [["Bunsen burner", "Hot plate"], ["Sparklers", "Glow sticks"], ["Green copper flame", "Red strontium flame"], ["Fluorescence", "Phosphorescence"], ["Fireworks", "Lasers"]],
+    rate: ["Glow-in-the-dark stars", "Neon signs", "Thermite", "Black lights", "Chemiluminescence"] },
+  { name: "Materials", tot: [["Steel", "Titanium"], ["Glass", "Plastic"], ["Graphene", "Diamond"], ["Rubber", "Silicone"], ["Velcro", "Zippers"]],
+    rate: ["Kevlar", "Teflon", "Super glue", "Bubble wrap", "Memory foam"] },
+  { name: "Physics", tot: [["Classical", "Quantum"], ["Wave", "Particle"], ["Dark matter", "Dark energy"], ["Black hole", "Wormhole"], ["Speed of light", "Absolute zero"]],
+    rate: ["Schrödinger's cat", "Gravity", "String theory", "Friction", "Entropy"] },
+  { name: "Units", tot: [["Metric", "Imperial"], ["Celsius", "Fahrenheit"], ["Kelvin", "Celsius"], ["Analog scale", "Digital scale"], ["Round up", "Round down"]],
+    rate: ["Unit conversions", "Avogadro's number", "Scientific notation", "The metric system", "Light-years"] },
+  { name: "Biology", tot: [["Mitochondria", "Ribosome"], ["Bacteria", "Virus"], ["Plant cell", "Animal cell"], ["Nature", "Nurture"], ["Microscope", "Petri dish"]],
+    rate: ["Tardigrades", "CRISPR", "Fruit flies", "Mold in the break room fridge", "Photosynthesis"] },
+  { name: "Lab life", tot: [["Early lab hours", "Late lab hours"], ["Music in the lab", "Silence"], ["Shared bench", "Your own bench"], ["Label everything", "Remember it later"], ["Order supplies", "Borrow from next door"]],
+    rate: ["Lab potlucks", "Broken ice machines", "Sharpie on glass", "Lab group chats", "Meetings that could be an email"] },
+  { name: "Space", tot: [["Mars", "The Moon"], ["Astronaut", "Mission control"], ["Telescope", "Space probe"], ["Comet", "Asteroid"], ["Saturn", "Jupiter"]],
+    rate: ["Pluto not being a planet", "Astronaut ice cream", "Rocket launches", "Eclipses", "Meteor showers"] },
+  { name: "Papers and data", tot: [["Bar chart", "Line graph"], ["Methods section", "Results section"], ["Open access", "Paywall"], ["First author", "Last author"], ["Error bars", "Trust me"]],
+    rate: ["Supplementary information", "Peer review", "Writing abstracts", "Making figures", "Citing papers"] },
+  { name: "Earth science", tot: [["Volcano", "Earthquake"], ["Quartz", "Amethyst"], ["Fossils", "Crystals"], ["Ocean floor", "Mountain top"], ["Geode", "Meteorite"]],
+    rate: ["Rock collections", "Plate tectonics", "Hard water", "Salt flats", "Glaciers"] },
+  { name: "Science on screen", tot: [["Lab coat", "Hazmat suit"], ["Mad scientist", "Evil genius"], ["Shrink ray", "Clone machine"], ["Breaking Bad", "The Big Bang Theory"], ["Jurassic Park", "Frankenstein"]],
+    rate: ["Science in movies", "Cartoon lab explosions", "Bill Nye", "MythBusters", "Bubbling green potions"] },
+]));
+PACKS.custom.games = PACKS.science.games;
+/* which answers a theme's games share: Custom plays the Science games */
+const gamesKey = (k) => k === "custom" ? "science" : k;
 const RAND_POOL = ["science", "gaming", "nature", "business", "media", "sports", "food"];
 const ffDay = () => S.qid ? todayIndex() : todayIndex() + S.dayOffset;
 /* the group's theme for the day being shown; "Random" picks a different one each Friday */
@@ -2369,7 +2419,7 @@ const gThemeIdx = (d) => ffMode(d) && ffGamesOK() ? ffPick(packOf(S.gid, d).game
 const gThemeBase = (d) => { if (d === 9) return GT_BASE + 3; const t = ((d % GT_BASE) + GT_BASE) % GT_BASE; return d >= GEN_FROM && GT_SWAP[t] != null ? GT_SWAP[t] : t; };
 function gItems(kind, d){ const t = gThemeIdx(d), out = []; for (let k = 0; k < GN; k++) out.push(t * GN + k); return out; }
 const bonusQ = (d) => (S.gid && S.ideas && S.ideas.gid === S.gid && S.ideas.byDay[d]) || null;
-const gQid = (kind, d) => kind + (ffMode(d) && ffGamesOK() ? "-ff-" + packKey(S.gid, d) : "") + "-" + idxISO(d);
+const gQid = (kind, d) => kind + (ffMode(d) && ffGamesOK() ? "-ff-" + gamesKey(packKey(S.gid, d)) : "") + "-" + idxISO(d);
 const gEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 const gValid = (kind, p, items) => p && Array.isArray(p.items) && p.items.join() === items.join() && (kind === "tot" ? Array.isArray(p.picks) && p.picks.length === GN && p.picks.every(v => v === 0 || v === 1) : Array.isArray(p.r) && p.r.length === GN && p.r.every(v => Number.isInteger(v) && v >= 1 && v <= 10));
 function setGame(g){
