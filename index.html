@@ -2126,7 +2126,7 @@ const CHANGES = [
     ["Everyday questions", "Daily questions now cover everyday life, so anyone can play."],
     ["Seasonal backgrounds", "Subtle animations that change with the seasons. Turn them off in your profile."],
     ["Profile and Groups", "Settings now live in your profile, and groups have their own screen in the menu."],
-    ["Fixes and improvements", "Notification counts clear once you have seen them, graphs fill their space, background animations play on every device, plus smaller polish."],
+    ["Fixes and improvements", "Notification counts clear once you have seen them, graphs fill their space, background animations play on every device, Fun Friday always opens the right question, plus smaller polish."],
   ] },
   { id: "2026-11-10b", date: "Nov 10", items: [
     ["New games", "This or that and Rate it, alongside the daily graph."],
@@ -2375,7 +2375,7 @@ function setGame(g){
   if (S.gedit) S.gedit = null;
   const prev = S.game; S.game = g; if (g !== "bonus") ls.set("gg-game", g);
   $("gameNav").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.g === g)));
-  if (g === "bonus" || prev === "bonus") { S.qid = null; go(); } else renderGame();
+  if (g === "bonus" || prev === "bonus") { S.qid = null; go(); } else { renderGame(); if (g === "graph" && prev !== "graph") { renderAll(false); loadResults(false); } } // the graph view was last drawn for another game: redraw its question, wording and lock
   window.scrollTo({ top: 0 });
 }
 $("gameNav").addEventListener("click", (e) => { const b = e.target.closest("button[data-g]"); if (b) setGame(b.dataset.g); });
