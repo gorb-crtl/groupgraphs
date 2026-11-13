@@ -2124,9 +2124,9 @@ const CHANGES = [
     ["New look", "A cleaner home screen that opens one game at a time."],
     ["Fun Friday", "Group hosts can pick a theme for an extra set of questions every Friday."],
     ["Everyday questions", "Daily questions now cover everyday life, so anyone can play."],
-    ["Seasonal backgrounds", "Subtle animations that change with the seasons. Turn them off in Preferences."],
+    ["Seasonal backgrounds", "Subtle animations that change with the seasons. Turn them off in your profile."],
     ["Profile and Groups", "Settings now live in your profile, and groups have their own screen in the menu."],
-    ["Fixes and improvements", "Notification counts clear once you have seen them, graphs fill their space, plus smaller polish."],
+    ["Fixes and improvements", "Notification counts clear once you have seen them, graphs fill their space, background animations play on every device, plus smaller polish."],
   ] },
   { id: "2026-11-10b", date: "Nov 10", items: [
     ["New games", "This or that and Rate it, alongside the daily graph."],
@@ -3573,7 +3573,6 @@ function sbDraw(){
     }
     ctx.restore();
   } }
-const sbReduced = matchMedia("(prefers-reduced-motion: reduce)");
 function sbFrame(now){
   SB.raf = 0; if (!SB.on) return;
   const dt = Math.min(.05, (now - (SB.last || now)) / 1000); SB.last = now;
@@ -3583,17 +3582,15 @@ function seasonSync(){
   b.classList.toggle("season-on", want);
   if (!want) { SB.on = false; if (SB.raf) cancelAnimationFrame(SB.raf); SB.raf = 0; return; }
   if (!SB.ctx || SB.season !== seasonNow() || SB.theme !== sbTheme() || SB.w !== innerWidth || SB.h !== innerHeight) sbReset();
-  if (sbReduced.matches) { SB.on = false; sbDraw(); return; }
   SB.on = true; if (!SB.raf) { SB.last = 0; SB.raf = requestAnimationFrame(sbFrame); } }
 function seasonRefresh(){ SB.ctx = null; seasonSync(); }
 document.addEventListener("visibilitychange", seasonSync);
 let sbRz; addEventListener("resize", () => { clearTimeout(sbRz); sbRz = setTimeout(seasonRefresh, 200); });
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", seasonRefresh);
-sbReduced.addEventListener("change", seasonRefresh);
 function renderPrefs(){
   const t = THEMES.find(x => x.id === curTheme()); $("prefThemeName").textContent = t ? t.name : "Auto";
   const on = seasonPref(); $("seasonSw").setAttribute("aria-checked", String(on));
-  $("seasonNote").textContent = "Right now: " + SEASON_NAMES[seasonNow()].toLowerCase() + ". Changes with the seasons." + (sbReduced.matches ? " Stays still with reduced motion." : ""); }
+  $("seasonNote").textContent = "Right now: " + SEASON_NAMES[seasonNow()].toLowerCase() + ". Changes with the seasons."; }
 $("seasonSw").addEventListener("click", () => { ls.set("gg-season", seasonPref() ? "off" : "on"); renderPrefs(); seasonSync(); });
 function applyView(){ document.body.classList.toggle("v-home", S.view !== "focus"); document.body.classList.toggle("v-focus", S.view === "focus"); if (typeof seasonSync === "function") seasonSync(); }
 function checkEl(cls){ const s = document.createElement("span"); s.className = cls; s.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 6.3l2 2 4-4.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>'; return s; }
